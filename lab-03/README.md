@@ -95,12 +95,32 @@ Select the integration types to deploy.
 | **Agentless Workload Scanning** | Vulnerability and secret scanning with no agent on the instance |
 | **Kubernetes audit log** | EKS audit log ingestion. Skip it unless this account runs EKS. |
 
-Select **Configuration**, **CloudTrail** and **Agentless Workload Scanning**.
+Select **Configuration** and **Agentless Workload Scanning**.
 
-<!-- IMAGE: forticnapp-configure.png -->
+Leave **CloudTrail** off for this workshop. See the troubleshooting section below for why:
+it fails on any account that sits inside an AWS Organization with an organization trail.
+
+![Configure step showing the four integration types, each labelled with its CNAPP capability](images/forticnapp-configure-selected.png)
 
 > This one selection covers what Labs 2 and 3 of the CloudFormation workshop deploy as two
 > separate stacks.
+
+#### Set the agentless scanning regions
+
+The Configure step runs three tasks. After you select the integration types and discovery
+completes, Task 3 asks for per-integration settings.
+
+1. On the **Agentless Workload Scanning** tab, set **Scanning regions** to the region where
+   your workloads run, for example **ap-southeast-1**.
+2. On the **Configuration** tab, leave **Advanced options** alone.
+
+![Agentless Workload Scanning tab with the scanning regions selector](images/forticnapp-configure-agentless-regions.png)
+
+> **Advanced options** on the Configuration tab holds a **Use an existing IAM role** toggle.
+> Use it when a customer already has a Lacework cross-account role they want to keep.
+> Automated configuration does not detect an existing role on its own.
+
+![Configuration tab advanced options showing the use an existing IAM role toggle](images/forticnapp-configure-advanced.png)
 
 ### Step 5: Review and Deploy (Step 4 of 4)
 
@@ -112,7 +132,7 @@ resources it can reuse rather than duplicate.
 2. Expand an integration if you want to change its settings before deploying.
 3. Click **Integrate**.
 
-<!-- IMAGE: forticnapp-review-deploy.png -->
+![Review and Deploy step showing account overview, scanning regions and configuration](images/forticnapp-review-deploy.png)
 
 > **This is the step the CloudFormation path does not have.** A CloudFormation stack finds
 > out about a missing permission when it fails halfway through. Automated configuration
@@ -127,10 +147,13 @@ integration itself, it deploys short-lived Lambda helpers and then removes them.
 
 Wait for all selected integration types to complete. Allow 5 to 10 minutes.
 
-<!-- IMAGE: forticnapp-deployment-progress.png -->
+![Live Terraform output during the deployment](images/forticnapp-deploy-progress.png)
 
-> **If one integration type fails, FortiCNAPP rolls back all of them.** Nobody ends up
-> half onboarded. Fix the cause and run the wizard again.
+> **Rollback is per integration type, not global.** The administration guide states that a
+> failure rolls back the resources created for *all* integration types. That is not what
+> happens. In our test run Agentless succeeded and stayed deployed while Configuration
+> failed and rolled back its own 18 resources. You can end up partly onboarded, so always
+> read the per-integration status on the deployment record.
 
 Every run is recorded under **Settings** > **Integrations** > **Cloud accounts** >
 **Deployment History**, successes and failures alike. That is where you troubleshoot a
@@ -144,7 +167,7 @@ failed onboarding.
 You can return to this record at any time. Go to **Settings** > **Integrations** >
 **Cloud accounts** and select the **Deployment History** tab.
 
-![Deployment record showing account ID, caller identity, and each integration with its status and Terraform files link](images/forticnapp-deployment-detail.png)
+![Deployment record showing both integrations SUCCEEDED with Terraform files links](images/forticnapp-deployment-succeeded.png)
 
 The record holds four things worth knowing about:
 
@@ -178,6 +201,55 @@ Switch to the AWS Console and confirm the resources exist.
 3. Open the role and select the **Trust relationships** tab. The trusted principal is the
    FortiCNAPP AWS account, protected by an external ID.
 4. Go to **Amazon ECS** > **Clusters**. Confirm the agentless scanner cluster exists.
+
+## Troubleshooting
+
+These are the three failures we hit building this lab, on a real Fortinet AWS account.
+
+### Discovery fails on an AWS Organization trail
+
+```
+TrailNotFoundException: Unknown trail: aws-controltower-BaselineCloudTrail
+for the user: <your account id>
+```
+
+**Cause**: your account is a member of an AWS Organization that has an organization-wide
+CloudTrail, often created by Control Tower. The trail is visible to your account but owned
+by the management account, so the `GetTrail` call discovery makes returns a 400.
+
+**Effect**: the whole wizard stops. It does not skip CloudTrail and carry on.
+
+**Workaround**: deselect **CloudTrail** and deploy the other integration types. To get
+CloudTrail coverage for an organization, run an **organization level** integration from the
+management account instead of an account level one from a member account.
+
+![Discovery failure caused by an organization CloudTrail](images/forticnapp-discovery-controltower-error.png)
+
+### The AWS account already has that integration type
+
+```
+Error creating AwsCfg integration: [400]
+The provided aws account is already used in this Lacework Application.
+```
+
+**Cause**: a Configuration integration already exists for this AWS account in this
+FortiCNAPP tenant.
+
+**Effect**: discovery passes, Terraform creates 18 resources, the registration API call
+fails, and Terraform destroys all 18 again. Nothing is left behind, but you only find out
+at the end.
+
+**Workaround**: delete the existing integration first, then redeploy.
+
+![Deployment record showing the duplicate integration failure](images/forticnapp-deployment-failed-duplicate.png)
+
+### Retrying without restarting the wizard
+
+The deployment record has a **Redeploy integrations** button. It reuses the stored
+configuration, so you do not add the cloud account again. Integration types that already
+succeeded are greyed out. You do have to supply temporary credentials again.
+
+![Redeploy integrations dialog with the failed integration selected](images/forticnapp-redeploy-modal.png)
 
 ## Data timing
 
