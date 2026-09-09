@@ -12,10 +12,7 @@ integration, then discards them and runs on the cross-account role it created.
 ## Prerequisites
 
 - AWS account with administrator access
-- One of: AWS IAM Identity Center access, an IAM user with MFA, or an assumable IAM role
-
-Methods B and C run in **AWS CloudShell**. CloudShell has the AWS CLI preinstalled and is
-already signed in as your console identity, so you install nothing and configure nothing.
+- One of: AWS IAM Identity Center access, an IAM user, or an assumable IAM role
 
 ## The guide is built into the console
 
@@ -42,6 +39,22 @@ constraint.
 > with `AccessDenied: Cannot call GetSessionToken with session credentials`. Fortinet staff
 > onboarding their own accounts will hit this every time. Use Method A.
 
+#### Not sure which one you are?
+
+Open CloudShell and run:
+
+```bash
+aws sts get-caller-identity --query Arn --output text
+```
+
+Read the ARN:
+
+| The ARN looks like | You are | Use |
+|---|---|---|
+| `arn:aws:sts::<id>:assumed-role/AWSReservedSSO_...` | Federated through Identity Center | Method A |
+| `arn:aws:iam::<id>:user/<name>` | A plain IAM user | Method B |
+| `arn:aws:sts::<id>:assumed-role/<your-role>/...` | Already in an assumed role | Method C |
+
 ### Method A: AWS IAM Identity Center
 
 1. Go to your AWS access portal.
@@ -59,18 +72,15 @@ Go to Lab 3.
 
 Methods B and C need it. Method A does not.
 
+CloudShell has the AWS CLI preinstalled and already signed in as your console identity, so
+you install nothing and configure nothing.
+
 1. Log into the AWS Console.
 2. Change to your local region using the region selector at the top right, for example
    **Asia Pacific (Singapore)**.
 3. Click the **CloudShell** icon in the toolbar at the top right, or search for
    **CloudShell** in the console search bar.
 4. Wait for the shell prompt.
-
-CloudShell already holds credentials for the identity you signed in as. Confirm with:
-
-```bash
-aws sts get-caller-identity
-```
 
 ### Method B: CloudShell, signed in as an IAM user
 
