@@ -123,6 +123,10 @@ We found exactly this in a real Fortinet demo account: an agentless deployment f
 had been deleted from the tenant. Nothing in the FortiCNAPP console showed it, because
 there was no integration left to show.
 
+Orphaned storage grows quietly too. The CloudTrail bucket left behind by that same 2025
+deployment held **816,721 objects** by the time we emptied it, eighteen months of logs
+nobody was reading. Deleting the integration in the console did nothing to it.
+
 Check the EventBridge rule in every region you scanned:
 
 ```bash
