@@ -116,7 +116,7 @@ sudo tail -f /var/log/lacework/datacollector.log
 ```
 Press `Ctrl+C` to stop tailing the log.
 
-### Step 7: Verify Agent in FortiCNAPP via CLI
+### Step 7: Verify Agent in FortiCNAPP
 
 Once the agent checks in (up to 1 hour), you can verify it appears in FortiCNAPP.
 

@@ -152,7 +152,7 @@ ls C:\ProgramData\Lacework\
 ls C:\ProgramData\Lacework\Logs\
 ```
 
-### Step 7: Verify Agent in FortiCNAPP via CLI
+### Step 7: Verify Agent in FortiCNAPP
 
 Once the agent checks in (up to 1 hour), you can verify it appears in FortiCNAPP.
 
