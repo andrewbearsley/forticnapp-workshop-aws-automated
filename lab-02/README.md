@@ -29,8 +29,31 @@ sit waiting while you go and find them.
 
 ## Lab Steps
 
-**In this workshop, use Method B.** Methods A and C are here for customer environments
-that work differently.
+**Pick your method from how you signed in to AWS.** This is not a preference, it is a
+constraint.
+
+| How you signed in | Use | Why |
+|---|---|---|
+| AWS IAM Identity Center (SSO) | **Method A** | Your console session already runs on temporary credentials, and AWS refuses to mint a session from a session. CloudShell cannot help you. |
+| IAM user with a password | **Method B** | CloudShell can request a session for an IAM user. |
+| You have a dedicated onboarding role | **Method C** | Assume the role and use its session. |
+
+> **The trap.** Running `aws sts get-session-token` from CloudShell in an SSO session fails
+> with `AccessDenied: Cannot call GetSessionToken with session credentials`. Fortinet staff
+> onboarding their own accounts will hit this every time. Use Method A.
+
+### Method A: AWS IAM Identity Center
+
+1. Go to your AWS access portal.
+2. Select the account you want to integrate.
+3. Click **Access keys** next to the role you will use.
+4. Select **Option 3: Use individual values in your AWS service client**.
+5. Copy these three values:
+   - **AccessKeyId**
+   - **SecretAccessKey**
+   - **SessionToken**
+
+Go to Lab 3.
 
 ### Opening CloudShell
 
@@ -49,20 +72,7 @@ CloudShell already holds credentials for the identity you signed in as. Confirm 
 aws sts get-caller-identity
 ```
 
-### Method A: AWS IAM Identity Center
-
-1. Go to your AWS access portal.
-2. Select the account you want to integrate.
-3. Click **Access keys** next to the role you will use.
-4. Select **Option 3: Use individual values in your AWS service client**.
-5. Copy these three values:
-   - **AccessKeyId**
-   - **SecretAccessKey**
-   - **SessionToken**
-
-Go to Lab 3.
-
-### Method B: CloudShell (workshop default)
+### Method B: CloudShell, signed in as an IAM user
 
 You signed into the console as an IAM user, so CloudShell can mint temporary credentials
 for you in one command. No MFA setup, no access keys to handle.
@@ -83,8 +93,18 @@ for you in one command. No MFA setup, no access keys to handle.
 That is the whole step. Go to Lab 3.
 
 > **If the command fails** with `Cannot call GetSessionToken with session credentials`,
-> you signed in through IAM Identity Center or another federated route rather than as an
-> IAM user. Use Method A instead.
+> your console session is federated rather than a plain IAM user session. Use Method A.
+>
+> If your account has no Identity Center either, and you hold a long-lived access key pair
+> for the IAM user, configure it in CloudShell first and request the session from that
+> profile:
+>
+> ```bash
+> aws configure --profile onboarding      # paste the long-lived key pair
+> aws sts get-session-token --profile onboarding --duration-seconds 21600
+> ```
+>
+> A long-lived key pair is long-term credentials, so STS will issue a session from it.
 
 #### Variant: when the account requires MFA
 
