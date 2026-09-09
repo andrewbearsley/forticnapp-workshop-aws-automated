@@ -31,9 +31,14 @@ exact tags applied, for example:
 > All cloud resources are tagged with `lacework_tag: self-deployment` and
 > `lacework_integration: aws_config`
 
-> **Read the tag values from this screen.** The administration guide lists the
-> `lacework_integration` value for the configuration integration as `configuration`, while
-> the product applies `aws_config`. The deployment record is authoritative.
+> **Read the tag values from this screen, and search on the tag key.** The values are not
+> stable. The administration guide documents `lacework_tag: self-deployment` and
+> `lacework_integration: configuration`. A 2026 deployment record shows
+> `lacework_integration: aws_config`. Resources deployed in March 2025 carry
+> `lacework_tag: lacework-self-deploy`. All three are real, seen in the same tenant.
+>
+> Search on the key `lacework_tag` with any value. Do not filter on a value, or you will
+> miss resources and leave them running.
 
 Keep this page open. It is your cleanup checklist.
 
@@ -58,8 +63,12 @@ Remove them with the tag search.
 5. Set **Resource types** to **All supported resource types**.
 6. Add this tag filter:
    - **Tag key**: `lacework_tag`
-   - **Tag value**: `self-deployment`
+   - **Tag value**: leave empty, so the search matches every value
 7. Click **Search resources**.
+
+Agentless scanning also tags its networking with `LWTAG_LACEWORK_AGENTLESS`. Run a second
+search on that key to catch the VPC, subnet, route table, internet gateway and security
+group it creates in each scanned region.
 
 The result is every resource automated configuration created. Work through the list and
 delete each one. Cross-check against the Resources table on the deployment record.
@@ -99,6 +108,27 @@ ECS cluster for agentless scanning, and Lambda functions.
 Labs 8 to 11 create their own resources. See
 [Lab 12: Scripted Cleanup of All Workshop Resources](../lab-12/README.md), which runs
 `terraform destroy` for the Lab 9 deployment and sweeps the account.
+
+## Why this lab matters more than it looks
+
+Orphaned agentless infrastructure keeps running.
+
+The agentless scanner is driven by an **EventBridge rule on an hourly schedule**. Deleting
+the integration in FortiCNAPP does not delete that rule. The rule keeps firing, keeps
+starting an ECS task, and keeps costing money, while reporting to an integration that no
+longer exists.
+
+We found exactly this in a real Fortinet demo account: an agentless deployment from March
+2025 still running `rate(1 hour)` in September 2026, pointing at an integration GUID that
+had been deleted from the tenant. Nothing in the FortiCNAPP console showed it, because
+there was no integration left to show.
+
+Check the EventBridge rule in every region you scanned:
+
+```bash
+aws events list-rules --region <region> \
+  --query "Rules[?contains(Name,'lacework')].[Name,State,ScheduleExpression]" --output text
+```
 
 ## What did we do here?
 
