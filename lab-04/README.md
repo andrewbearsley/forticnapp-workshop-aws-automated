@@ -1,4 +1,4 @@
-# Lab 5: Install Linux Agent
+# Lab 4: Install Linux Agent
 
 ## Objectives
 

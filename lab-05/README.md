@@ -1,4 +1,4 @@
-# Lab 6: Install Windows Agent
+# Lab 5: Install Windows Agent
 
 ## Objectives
 
