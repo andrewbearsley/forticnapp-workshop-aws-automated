@@ -133,7 +133,17 @@ Read the plan before you apply it. It should list the AWS resources **and** a
 `lacework_integration_*` resource. That last one is the integration record, and it is why
 this route cannot leave an orphan.
 
-Repeat for each bundle.
+Repeat for each bundle. A full three-integration teardown took about four minutes in
+testing, most of it the agentless VPC and ECS cluster. Terraform prints `Still
+destroying...` every ten seconds, so it is working, not stuck.
+
+For reference, a full run on one account destroyed:
+
+| Bundle | Resources |
+|---|---|
+| Agentless | 41 |
+| CloudTrail | 29 |
+| Configuration | 19 |
 
 ---
 
@@ -151,10 +161,40 @@ own.
 
 ## Verify
 
-1. In AWS, re-run the Tag Editor search for the key `lacework_tag`. It should return nothing.
-2. Run the `LWTAG_LACEWORK_AGENTLESS` search. It should return nothing.
-3. Confirm both EC2 instances show **terminated**.
-4. In FortiCNAPP, confirm your AWS account no longer appears under **Cloud accounts**.
+1. In FortiCNAPP, confirm your AWS account no longer appears under **Cloud accounts**.
+2. Confirm both EC2 instances show **terminated**.
+3. In AWS, check that nothing is still running:
+
+```bash
+aws cloudtrail describe-trails --query "trailList[].Name" --output text
+aws ecs list-clusters --query clusterArns --output text
+aws events list-rules --query "Rules[?contains(Name,'lacework')].[Name,State]" --output text
+aws s3api list-buckets --query "Buckets[?contains(Name,'lacework')].Name" --output text
+```
+
+All four should come back empty. The EventBridge one matters most, because that is the
+hourly trigger.
+
+### A tag search will still return a few resources, and that is normal
+
+Re-run the Tag Editor search and you may still see four or five entries. Check their state
+before chasing them:
+
+| Resource | Expected state after cleanup |
+|---|---|
+| KMS key | `PendingDeletion`, scheduled 7 to 30 days out. AWS does not delete keys immediately. |
+| Secrets Manager secret | Deleted, inside its recovery window |
+| ECS cluster | `INACTIVE` |
+| ECS task definition | `INACTIVE`. Deregistered task definitions stay in the account permanently. |
+| Security group, subnet, VPC | Often already gone. The tag index lags. |
+
+```bash
+aws kms describe-key --key-id <key-id> --query 'KeyMetadata.[KeyState,DeletionDate]' --output text
+aws ecs describe-clusters --clusters <name> --query 'clusters[0].status' --output text
+```
+
+None of these are running or scanning. The one to watch is the KMS key, which carries a
+small monthly charge until its deletion date passes.
 
 ## Why this lab matters more than it looks
 
