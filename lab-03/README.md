@@ -163,11 +163,10 @@ Wait for all selected integration types to complete. Allow 5 to 10 minutes.
 
 ![Live Terraform output during the deployment](images/forticnapp-deploy-progress.png)
 
-> **Rollback is per integration type, not global.** The administration guide states that a
-> failure rolls back the resources created for *all* integration types. That is not what
-> happens. In our test run Agentless succeeded and stayed deployed while Configuration
-> failed and rolled back its own 18 resources. You can end up partly onboarded, so always
-> read the per-integration status on the deployment record.
+> **Read the status per integration type.** Rollback applies to the integration type that
+> failed, not to the others. In our test run Agentless completed and stayed deployed while
+> Configuration rolled back its own 18 resources. So check each row on the deployment
+> record rather than assuming the run was all-or-nothing.
 
 Every run is recorded under **Settings** > **Integrations** > **Cloud accounts** >
 **Deployment History**, successes and failures alike. That is where you troubleshoot a
@@ -231,7 +230,7 @@ lacework-cloudtrail-7689faee   False   lacework-ct-bucket-7d009af2
 
 ## Troubleshooting
 
-These are the three failures we hit building this lab, on a real Fortinet AWS account.
+Three situations you may hit, all seen while building this lab.
 
 ### Discovery fails on an AWS Organization trail
 
@@ -240,15 +239,13 @@ TrailNotFoundException: Unknown trail: aws-controltower-BaselineCloudTrail
 for the user: <your account id>
 ```
 
-**Cause**: your account is a member of an AWS Organization that has an organization-wide
-CloudTrail, often created by Control Tower. The trail is visible to your account but owned
-by the management account, so the `GetTrail` call discovery makes returns a 400.
+**Cause**: the account is a member of an AWS Organization with an organization-wide
+CloudTrail, often created by Control Tower. A member account sees that trail as a shadow
+trail, and AWS requires the full trail ARN to look one up rather than the name.
 
-**Effect**: the whole wizard stops. It does not skip CloudTrail and carry on.
-
-**Workaround**: deselect **CloudTrail** and deploy the other integration types. To get
-CloudTrail coverage for an organization, run an **organization level** integration from the
-management account instead of an account level one from a member account.
+**What to do**: deselect **CloudTrail** and deploy the other integration types. For
+CloudTrail coverage across an organization, run an **organization level** integration from
+the management account.
 
 ![Discovery failure caused by an organization CloudTrail](images/forticnapp-discovery-controltower-error.png)
 
@@ -262,11 +259,10 @@ The provided aws account is already used in this Lacework Application.
 **Cause**: a Configuration integration already exists for this AWS account in this
 FortiCNAPP tenant.
 
-**Effect**: discovery passes, Terraform creates 18 resources, the registration API call
-fails, and Terraform destroys all 18 again. Nothing is left behind, but you only find out
-at the end.
+**What happens**: the run completes its Terraform stage, then rolls back cleanly. Nothing
+is left behind in AWS.
 
-**Workaround**: delete the existing integration first, then redeploy.
+**What to do**: delete the existing integration first, then use **Redeploy integrations**.
 
 ![Deployment record showing the duplicate integration failure](images/forticnapp-deployment-failed-duplicate.png)
 

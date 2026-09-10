@@ -34,23 +34,22 @@ constraint.
 | AWS IAM Identity Center (SSO) | **Method A** | The access portal issues a role session, which can complete discovery. |
 | An IAM user with admin rights, which is the lab setup | **Method B** | Create a role and assume it. A role session can complete discovery. |
 
-> **Do not use plain `aws sts get-session-token`.** It looks like the obvious CloudShell
-> shortcut, and FortiCNAPP's own in-product guide offers it, but the credentials it returns
-> **cannot complete discovery**.
+> **Use a role session, not plain `aws sts get-session-token`.**
 >
 > Discovery calls IAM APIs. AWS blocks IAM API calls from `GetSessionToken` credentials
-> unless MFA information was included in the request. The wizard fails at Task 2 with:
+> unless MFA information was included in the request, so those credentials stop at Task 2
+> with:
 >
 > ```
 > operation error IAM: ListAttachedUserPolicies, StatusCode: 403
 > InvalidClientTokenId: The security token included in the request is invalid
 > ```
 >
-> Turning off *Simulate IAM permissions* does not fix it. That only changes which IAM call
-> fails first.
+> Turning off *Simulate IAM permissions* does not change this, because discovery calls IAM
+> either way.
 >
-> If you must use `get-session-token`, add MFA with `--serial-number` and `--token-code`.
-> Those credentials can call IAM.
+> `get-session-token` with MFA (`--serial-number` and `--token-code`) returns credentials
+> that can call IAM, and those work.
 
 #### Not sure which one you are?
 

@@ -190,6 +190,5 @@ Terraform creates the AWS resources, and the console only deletes the first of t
 is the gap orphaned resources fall through.
 
 Route B closes the gap, because the state file spans both. Worth knowing for a customer:
-the automated configuration wizard has no teardown button, and the administration guide
-does not describe one, but the Terraform bundle on the deployment record is a complete
-workspace and `terraform destroy` does the whole job.
+the Terraform bundle on the deployment record is a complete workspace, state included, so
+`terraform destroy` does the whole job in one command.
