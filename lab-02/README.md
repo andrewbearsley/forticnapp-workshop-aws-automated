@@ -12,7 +12,7 @@ integration, then discards them and runs on the cross-account role it created.
 ## Prerequisites
 
 - AWS account with administrator access
-- Either AWS IAM Identity Center access, or an assumable IAM role
+- Either AWS IAM Identity Center access, or an IAM user with permission to create a role
 
 ## The guide is built into the console
 
@@ -32,7 +32,7 @@ constraint.
 | How you signed in | Use | Why |
 |---|---|---|
 | AWS IAM Identity Center (SSO) | **Method A** | The access portal issues a role session, which can complete discovery. |
-| An IAM user, or anything else | **Method B** | Assume a role. A role session can complete discovery. |
+| An IAM user with admin rights, which is the lab setup | **Method B** | Create a role and assume it. A role session can complete discovery. |
 
 > **Do not use plain `aws sts get-session-token`.** It looks like the obvious CloudShell
 > shortcut, and FortiCNAPP's own in-product guide offers it, but the credentials it returns
@@ -92,31 +92,60 @@ you install nothing and configure nothing.
    **CloudShell** in the console search bar.
 4. Wait for the shell prompt.
 
-### Method B: Assume a role
+### Method B: Create an onboarding role, then assume it
 
-Your account needs a role with the required permissions and a trust policy that lets your
-IAM user assume it. Run this in CloudShell.
+You are an administrator in your own lab account, so you can create the role yourself.
+Nobody needs to provision it for you. Run all of this in CloudShell.
 
-1. Assume the role:
+1. Create the role, trusting your own user:
 
    ```bash
-   aws sts assume-role \
-     --role-arn "YourRoleArn" \
-     --role-session-name "lacework-onboarding" \
-     --duration-seconds 21600
+   ACCT=$(aws sts get-caller-identity --query Account --output text)
+   USER=$(aws sts get-caller-identity --query Arn --output text | cut -d/ -f2)
+
+   cat > trust.json <<EOF
+   {"Version":"2012-10-17","Statement":[{
+     "Effect":"Allow",
+     "Principal":{"AWS":"arn:aws:iam::${ACCT}:user/${USER}"},
+     "Action":"sts:AssumeRole"}]}
+   EOF
+
+   aws iam create-role --role-name forticnapp-onboarding \
+     --assume-role-policy-document file://trust.json
    ```
 
-2. Copy these three values from the `Credentials` block:
-   - `AccessKeyId`
-   - `SecretAccessKey`
-   - `SessionToken`
+2. Give it the permissions the integration needs:
+
+   ```bash
+   aws iam attach-role-policy --role-name forticnapp-onboarding \
+     --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+   ```
+
+3. Wait about ten seconds for the role to propagate, then assume it. This prints the three
+   values with labels, so you know which goes in which field:
+
+   ```bash
+   sleep 10
+   read -r AK SK ST < <(aws sts assume-role \
+     --role-arn "arn:aws:iam::${ACCT}:role/forticnapp-onboarding" \
+     --role-session-name lacework-onboarding --duration-seconds 3600 \
+     --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text)
+
+   printf '\n=== Access key ID ===\n%s\n\n=== Secret access key ===\n%s\n\n=== Session token ===\n%s\n\n' "$AK" "$SK" "$ST"
+   ```
+
+4. Copy each of the three values into the matching field in Lab 3.
 
    To copy from CloudShell, select the text and use **Actions** > **Copy**.
 
-![Authorization Guide showing the AWS CLI commands](images/forticnapp-authorization-guide-cli.png)
+> **Do not raise `--duration-seconds` above 3600.** CloudShell may already be running as a
+> role session, and AWS caps role chaining at one hour. A larger value fails with
+> *"The requested DurationSeconds exceeds the 1 hour session limit for roles assumed by
+> role chaining."* An hour is ample; the deployment takes 5 to 10 minutes.
 
-> **Instructor note.** The in-product Authorization Guide also lists
-> `aws sts get-session-token` without MFA. Do not use it. See the warning above.
+> **Least privilege.** `AdministratorAccess` keeps the lab moving. For a customer, attach
+> the four downloadable policies from the Authorization Guide instead. See **Permissions**
+> below.
 
 ## Permissions
 
