@@ -94,9 +94,11 @@ lacework cloud-account list
 You should see entries for your AWS account including:
 - `AwsCfg` (Configuration integration from Lab 3)
 
-You will not see `AwsCtSqs`. Lab 3 leaves CloudTrail out, because discovery fails on any
-account inside an AWS Organization that has an organization trail. See the troubleshooting
-section in [Lab 3](../lab-03/README.md).
+- `AwsCtSqs` (CloudTrail integration from Lab 3)
+
+You will only see `AwsCtSqs` if you selected CloudTrail in Lab 3. Accounts inside an AWS
+Organization with an organization trail cannot deploy it. See the troubleshooting section
+in [Lab 3](../lab-03/README.md).
 - `AwsSidekick` (Agentless Workload Scanning from Lab 3)
 
 ### Step 7: Trigger Inventory Scan

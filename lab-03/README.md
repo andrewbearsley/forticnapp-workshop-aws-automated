@@ -91,14 +91,18 @@ Select the integration types to deploy.
 | Integration type | What it gives you |
 |---|---|
 | **Configuration** | Resource inventory, compliance assessment, risk analysis |
-| **CloudTrail / Audit log** | AWS CloudTrail ingestion for threat detection |
+| **CloudTrail** | AWS CloudTrail ingestion for threat detection. Creates its own trail by default. |
 | **Agentless Workload Scanning** | Vulnerability and secret scanning with no agent on the instance |
 | **Kubernetes audit log** | EKS audit log ingestion. Skip it unless this account runs EKS. |
 
-Select **Configuration** and **Agentless Workload Scanning**.
+Select **Configuration**, **CloudTrail** and **Agentless Workload Scanning**.
 
-Leave **CloudTrail** off for this workshop. See the troubleshooting section below for why:
-it fails on any account that sits inside an AWS Organization with an organization trail.
+> **Skip CloudTrail if your AWS account is a member of an AWS Organization that has an
+> organization trail**, which most corporate accounts are. Discovery fails on it. See the
+> troubleshooting section below.
+>
+> Student and standalone accounts are not affected. Select CloudTrail and you get threat
+> detection working in the same pass.
 
 ![Configure step showing the four integration types, each labelled with its CNAPP capability](images/forticnapp-configure-selected.png)
 
@@ -112,7 +116,17 @@ completes, Task 3 asks for per-integration settings.
 
 1. On the **Agentless Workload Scanning** tab, set **Scanning regions** to the region where
    your workloads run, for example **ap-southeast-1**.
-2. On the **Configuration** tab, leave **Advanced options** alone.
+2. On the **CloudTrail** tab, expand **Advanced options** and leave **Use an existing
+   CloudTrail** off.
+
+   Off is the default, and off is what you want. FortiCNAPP then creates its own trail,
+   S3 bucket, SNS topic and SQS queue. Nothing has to exist in the account beforehand.
+
+   Turn it on only for a customer who already has a trail they want FortiCNAPP to read.
+
+3. On the **Configuration** tab, leave **Advanced options** alone.
+
+![CloudTrail Advanced options showing Use an existing CloudTrail off by default](images/forticnapp-cloudtrail-advanced.png)
 
 ![Agentless Workload Scanning tab with the scanning regions selector](images/forticnapp-configure-agentless-regions.png)
 
@@ -257,7 +271,7 @@ Data does not appear instantly.
 
 | Data | First appears |
 |---|---|
-| CloudTrail events | Within 15 minutes |
+| CloudTrail events | Within 15 minutes of the trail being created |
 | Resource inventory and compliance | Up to 24 hours on the scheduled cycle |
 | Agentless scan results | After the first scan, on a 24 hour cycle by default |
 
