@@ -181,7 +181,7 @@ failed onboarding.
 You can return to this record at any time. Go to **Settings** > **Integrations** >
 **Cloud accounts** and select the **Deployment History** tab.
 
-![Deployment record showing both integrations SUCCEEDED with Terraform files links](images/forticnapp-deployment-succeeded.png)
+![Deployment record showing all three integrations SUCCEEDED with Terraform files links](images/forticnapp-deployment-succeeded.png)
 
 The record holds four things worth knowing about:
 
@@ -208,7 +208,20 @@ Remember these tags. Lab 6 uses them for cleanup.
 
 ### Step 9: Confirm the AWS Side
 
-Switch to the AWS Console and confirm the resources exist.
+Switch to the AWS Console and confirm the resources exist. You can also check from
+CloudShell:
+
+```bash
+aws cloudtrail describe-trails --region ap-southeast-1 \
+  --query "trailList[].[Name,IsOrganizationTrail,S3BucketName]" --output text
+```
+
+A successful run returns a trail FortiCNAPP created, with `IsOrganizationTrail` **False**
+and its own bucket, for example:
+
+```
+lacework-cloudtrail-7689faee   False   lacework-ct-bucket-7d009af2
+```
 
 1. Go to **CloudTrail** > **Trails**. Confirm a trail exists and is logging.
 2. Go to **IAM** > **Roles**. Find the cross-account role FortiCNAPP created.
