@@ -158,7 +158,7 @@ Once the agent checks in (up to 1 hour), you can verify it appears in FortiCNAPP
 
 In the console, go to **Inventory** and look for the host by its instance ID.
 
-If you took the optional [Lab 7](../lab-07/README.md) and have the Lacework CLI configured in CloudShell, you can also check from the command line:
+If you took [Lab 6](../lab-06/README.md) and have the Lacework CLI configured in CloudShell, you can also check from the command line:
 
 ```bash
 lacework agent list

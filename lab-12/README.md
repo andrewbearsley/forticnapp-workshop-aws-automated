@@ -1,4 +1,4 @@
-# Lab 12: Clean Up All Workshop Resources
+# Lab 12: Scripted Cleanup of All Workshop Resources
 
 This lab provides a cleanup script that removes every workshop resource, on both the FortiCNAPP side and the AWS side.
 
@@ -14,7 +14,7 @@ That means deleting the CloudFormation stack removes the S3 bucket, the cross-ac
 Data loading error: Unable to access scan results within storage bucket
 ```
 
-Lab 9 does not have this problem, because Terraform owns its integrations in state and `terraform destroy` removes both sides.
+Lab 11 does not have this problem, because Terraform owns its integrations in state and `terraform destroy` removes both sides.
 
 Deleting the stack is not enough. The FortiCNAPP integration has to be deleted through FortiCNAPP, which is what Step 2 of the script does.
 
@@ -38,7 +38,7 @@ The order matters. The FortiCNAPP integrations are removed while the Lacework CL
 
 | Step | Action |
 |---|---|
-| 1 | `terraform destroy` for the Lab 9 deployment, which removes its own integrations and AWS resources |
+| 1 | `terraform destroy` for the Lab 11 deployment, which removes its own integrations and AWS resources |
 | 2 | Delete any remaining FortiCNAPP cloud integrations for this AWS account (Labs 2 and 3) |
 | 3 | Per region: terminate EC2 instances, delete CloudFormation stacks, delete CloudTrail trails, delete key pairs, delete non-default security groups |
 | 4 | Empty and delete Lacework-related S3 buckets, resolving each bucket's own region |

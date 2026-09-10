@@ -1,120 +1,108 @@
-# Lab 7: Install Lacework CLI and Trigger Inventory Scan
-
-Normally, FortiCNAPP collects resource inventory on a scheduled cycle (up to 24 hours). To avoid waiting, we can trigger an immediate scan from the Lacework CLI!
+# Lab 7: Code Security for Infrastructure as Code (IaC)
 
 ## Objectives
 
-FortiCNAPP collects resource inventory on a scheduled cycle that can take up to 24 hours. We don't want to wait that long. In this lab, we'll install the Lacework CLI in AWS CloudShell, verify our integrations from Lab 3 are working, and trigger an immediate inventory scan so compliance data starts populating right away.
+The best time to catch a misconfigured security group or unencrypted S3 bucket is before it gets deployed - not after it's running in production. In this lab, we'll scan Terraform code for security issues using FortiCNAPP's IaC scanner. This is shift-left security: finding misconfigurations in code so they never reach AWS.
 
 ## Prerequisites
 
-- AWS account access
-- FortiCNAPP account credentials
-- Completed [Lab 3: Onboard AWS with Automated Configuration](../lab-03/README.md)
+- Completed [Lab 6: Install the Lacework CLI](../lab-06/README.md)
+- Lacework CLI configured with FortiCNAPP credentials
+- AWS CloudShell access
 
 ## Lab Steps
 
-### Step 1: Log into AWS Console and Open CloudShell
+### Step 1: Open AWS CloudShell
 
-1. Navigate to <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a>
-2. Click **Sign into console**
-3. After logging in, change to your local region (e.g., **Asia Pacific (Singapore)**) using the region selector in the top right of the AWS Console
-4. Click the **CloudShell** icon in the top navigation bar (cloud icon with `>_` symbol)
-5. Wait for CloudShell to initialize (this may take a minute the first time)
-6. Once CloudShell opens, you'll have a Linux-based terminal environment ready to use
+1. Log into AWS Console at <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a>
+2. Change to your local region (e.g., **Asia Pacific (Singapore)**) using the region selector in the top right
+3. Click the **CloudShell** icon in the top navigation bar
+4. Wait for CloudShell to initialize
 
-### Step 2: Set Up Installation Directory
+### Step 2: Clone the Example Repository
 
-Create a bin directory in your home folder and add it to your PATH:
+Clone the repository containing Terraform code with intentional security issues:
 
 ```bash
-mkdir -p "$HOME/bin"
-echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
-source ~/.bashrc
+cd ~
+git clone https://github.com/andrewbearsley/lacework-iac-scan-example.git
+cd lacework-iac-scan-example/example-terraform
 ```
 
-### Step 3: Install Lacework CLI
+This repository contains Terraform configurations with various security issues that FortiCNAPP can detect.
 
-In the CloudShell terminal, run:
+### Step 3: Verify Lacework CLI Configuration
+
+Ensure your Lacework CLI is still configured:
 
 ```bash
-curl https://raw.githubusercontent.com/lacework/go-sdk/main/cli/install.sh | bash -s -- -d "$HOME/bin"
+lacework version
 ```
 
-This will download and install the Lacework CLI tool to your home bin directory.
-
-![CloudShell showing Lacework CLI successfully installed](images/cloudshell-lacework-cli-installed.png)
-
-### Step 4: Download API Key from FortiCNAPP
-
-An existing service user **AWS Lab** has been pre-configured with the necessary permissions. Download the API key for this user:
-
-1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
-2. Ensure tenant is set to **FORTINETAPACDEMO**
-3. Navigate to **Settings** > **Configuration** > **API keys**
-4. Click on the **Service user API keys** tab
-5. Find the API key for the **AWS Lab** service user
-6. Click on the ellipsis (three dots) next to the API key and select **Download** to download the key as JSON
-
-![API keys page showing Service user API keys with Download option](images/forticnapp-download-api-key.png)
-
-7. Open the downloaded JSON file and note the values. Keep these credentials ready for the next step
-
-### Step 5: Configure CLI
-
-In CloudShell, run:
+If you need to reconfigure, run:
 
 ```bash
 lacework configure
 ```
 
-Enter your FortiCNAPP account credentials when prompted. These values are taken from the JSON file downloaded in the previous step:
+### Step 4: Install the IaC Component
 
-```json
-{
-  "keyId": "FORTINET_5DFDAF3B...",
-  "secret": "_f1b528...",
-  "account": "partner-demo.lacework.net",
-  "subAccount": "fortinetapacdemo"
-}
-```
-
-- **Account**: `partner-demo.lacework.net` (the `account` value from the JSON file)
-- **API Key**: The `keyId` value from the JSON file
-- **API Secret**: The `secret` value from the JSON file
-- **Sub-Account** (if prompted): The `subAccount` value from the JSON file
-
-### Step 6: Verify CLI Installation and List Integrations
+Install the Lacework IaC scanning component:
 
 ```bash
-lacework version
-lacework cloud-account list
+lacework component install iac
 ```
 
-You should see entries for your AWS account including:
-- `AwsCfg` (Configuration integration from Lab 3)
+This installs the Infrastructure as Code scanner that can analyze Terraform, CloudFormation, and other IaC formats.
 
-- `AwsCtSqs` (CloudTrail integration from Lab 3)
+### Step 5: Update the IaC Component (Optional)
 
-You will only see `AwsCtSqs` if you selected CloudTrail in Lab 3. Accounts inside an AWS
-Organization with an organization trail cannot deploy it. See the troubleshooting section
-in [Lab 3](../lab-03/README.md).
-- `AwsSidekick` (Agentless Workload Scanning from Lab 3)
-
-### Step 7: Trigger Inventory Scan
-
-Normally, FortiCNAPP collects resource inventory on a scheduled cycle (up to 24 hours). To avoid waiting, you can trigger an immediate scan.
+If the component is already installed, update it to ensure you have the latest version:
 
 ```bash
-lacework compliance aws scan
+lacework component update iac
 ```
 
-This triggers a resource inventory collection for all integrated AWS accounts. The scan will run in the background and takes 1-2 hours to complete. Once finished, compliance reports and resource inventory data will be populated in the FortiCNAPP console.
+### Step 6: Scan the Terraform Code
 
-**Note:** Only one scan can run at a time. If another student has already triggered a scan, your request will be ignored until the current scan completes.
+Run the IaC scan on the current directory:
+
+```bash
+lacework iac scan
+```
+
+This will:
+- Analyze the Terraform files in the current directory
+- Detect security misconfigurations and vulnerabilities
+- Upload the scan results to FortiCNAPP (controlled by `--upload`, default `true`)
+- Display findings in the terminal
+
+> **Note:** The CLI uploads results to the FortiCNAPP platform, but they will not appear in **Risk Center > Code Security > Infrastructure (IaC) > Assessments** unless the repository is onboarded via **Code Security > Add integration** (GitHub/GitLab/Bitbucket connector) or the scan runs from a registered CI/CD pipeline. A CLI scan from CloudShell or a developer laptop alone won't surface in this view - this lab focuses on demonstrating the scanner locally.
+
+### Step 7: Review Scan Results
+
+The scan output will show:
+- Total number of findings
+- Policy IDs and severity levels (Critical, High, Medium, Low)
+- File paths and line numbers where issues are found
+- Whether each finding passed or failed
+- Upload reference for viewing results in the FortiCNAPP console
+
+Review the findings and note:
+- How many critical and high severity issues were found
+- What types of security issues are present (encryption, access controls, networking, etc.)
+- Which files contain the most security issues
 
 ## What did we do here?
 
-We installed the Lacework CLI in CloudShell and connected it to FortiCNAPP using an API key. This gives us command-line access to FortiCNAPP - useful for automation, scripting, and doing things the console can't do.
+We shifted security left by scanning Terraform code before it gets deployed. The IaC scanner analysed the example repository and found over 100 security issues - things like unencrypted storage, overly permissive security groups, and missing access controls.
 
-The big win here was triggering an inventory scan immediately. Normally FortiCNAPP collects resource inventory on a scheduled cycle that can take up to 24 hours. Instead of waiting, we kicked it off manually so compliance data starts populating right away.
+The point is to catch these misconfigurations in code, not in production. If this were part of a CI/CD pipeline, those findings would show up as pull request comments before the code ever reaches AWS. Fix it in the code, not after the breach.
+
+## Additional Resources
+
+- <a href="https://docs.fortinet.com/document/lacework-forticnapp/latest/administration-guide/651014/getting-started-with-opal" target="_blank">Lacework IaC Scanning Documentation</a>
+- <a href="https://github.com/andrewbearsley/lacework-iac-scan-example" target="_blank">Example Repository</a>
+
+
+

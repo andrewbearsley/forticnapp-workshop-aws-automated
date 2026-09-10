@@ -1,234 +1,120 @@
-# Lab 6: Clean Up Workshop Resources
+# Lab 6: Install the Lacework CLI
+
+Normally, FortiCNAPP collects resource inventory on a scheduled cycle (up to 24 hours). To avoid waiting, we can trigger an immediate scan from the Lacework CLI!
 
 ## Objectives
 
-Leaving workshop resources running in AWS costs money. In this lab, we'll remove
-everything the workshop created: the integrations from Lab 3, the resources they built in
-AWS, and the EC2 instances from Labs 4 and 5.
-
-There are two ways to do it. Read both before you start.
-
-| Route | Needs | Removes both sides? |
-|---|---|---|
-| **A. Console and tag search** | Nothing. A browser. | No. Two separate jobs, done by hand. |
-| **B. Terraform destroy** | Terraform, from [Lab 8](../lab-08/README.md) | **Yes. One command per integration.** |
-
-**Route A is the main path** because it needs no tooling and everyone can follow it. Take
-**Route B if you did Lab 8**, because it is the only way to remove the AWS resources and
-the FortiCNAPP integration in a single operation.
+FortiCNAPP collects resource inventory on a scheduled cycle that can take up to 24 hours. We don't want to wait that long. In this lab, we'll install the Lacework CLI in AWS CloudShell, verify our integrations from Lab 3 are working, and trigger an immediate inventory scan so compliance data starts populating right away.
 
 ## Prerequisites
 
-- Access to the AWS Console
-- FortiCNAPP console access, tenant **FORTINETAPACDEMO**
+- AWS account access
+- FortiCNAPP account credentials
+- Completed [Lab 3: Onboard AWS with Automated Configuration](../lab-03/README.md)
 
-## First, find what was created
+## Lab Steps
 
-Whichever route you take, start here.
+### Step 1: Log into AWS Console and Open CloudShell
 
-1. Go to **Settings** > **Integrations** > **Cloud accounts**.
-2. Select the **Deployment History** tab.
-3. Open the deployment you created in Lab 3.
-4. Expand each integration to see its **Resources** table.
+1. Navigate to <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a>
+2. Click **Sign into console**
+3. After logging in, change to your local region (e.g., **Asia Pacific (Singapore)**) using the region selector in the top right of the AWS Console
+4. Click the **CloudShell** icon in the top navigation bar (cloud icon with `>_` symbol)
+5. Wait for CloudShell to initialize (this may take a minute the first time)
+6. Once CloudShell opens, you'll have a Linux-based terminal environment ready to use
 
-![Deployment record showing the resource list and the tags applied to every resource](images/forticnapp-deployment-resources.png)
+### Step 2: Set Up Installation Directory
 
-Each integration lists every resource by ARN, name and type, and states the exact tags
-applied, for example:
-
-> All cloud resources are tagged with `lacework_tag: self-deployment` and
-> `lacework_integration: aws_config`
-
-> **Read the tag values from this screen, and search on the tag key.** The values are not
-> stable. The administration guide documents `lacework_tag: self-deployment` and
-> `lacework_integration: configuration`. A 2026 deployment record shows
-> `lacework_integration: aws_config`. Resources deployed in March 2025 carry
-> `lacework_tag: lacework-self-deploy`. All three are real, seen in the same tenant.
->
-> Search on the key `lacework_tag` with any value. Filter on a value and you will miss
-> resources and leave them running.
-
-Keep this page open. It is your checklist either way.
-
----
-
-## Route A: Console and tag search
-
-No tooling required. Two jobs, because deleting the integration does not touch AWS.
-
-### Step 1: Delete the Integrations in FortiCNAPP
-
-1. Go to **Settings** > **Integrations** > **Cloud accounts**.
-2. Select the **Cloud Accounts** tab.
-3. Find your AWS account ID in the list.
-4. Delete each integration on that account: Configuration, CloudTrail and Agentless.
-
-### Step 2: Delete the AWS Resources by Tag
-
-1. Log into the AWS Console.
-2. Select the region you used in Lab 3.
-3. Go to **Resource Groups & Tag Editor** > **Tag Editor**.
-4. Set **Regions** to your workshop region, or **All regions** to be thorough.
-5. Set **Resource types** to **All supported resource types**.
-6. Add this tag filter:
-   - **Tag key**: `lacework_tag`
-   - **Tag value**: leave empty, so the search matches every value
-7. Click **Search resources**.
-
-Work through the result and delete each resource, cross-checking the deployment record.
-Expect IAM roles and policies, S3 buckets, KMS keys, SNS topics, SQS queues, a CloudTrail
-trail, an ECS cluster and Lambda functions.
-
-Agentless scanning also tags its networking `LWTAG_LACEWORK_AGENTLESS`, which the
-`lacework_tag` search does **not** return. Run a second search on that key to catch the
-VPC, subnet, route table, internet gateway and security group in every scanned region.
-
-> **Order matters.** Empty an S3 bucket before deleting it. Delete resources that depend on
-> an IAM role before the role. A KMS key can only be scheduled for deletion, minimum seven
-> days.
-
----
-
-## Route B: Terraform destroy
-
-Better, and the only route that removes both sides at once. The bundle FortiCNAPP gives you
-contains **full Terraform state**, including the FortiCNAPP integration itself, so
-`terraform destroy` deregisters the integration and deletes the AWS resources in one pass.
-
-You need Terraform. CloudShell does not ship it, so complete [Lab 8](../lab-08/README.md)
-first, or install it now.
-
-### Step 1: Download the Terraform bundle
-
-On the deployment record, click **Terraform files** next to an integration. Repeat for each
-integration; **the bundle is per integration**, so three integrations means three bundles.
-
-> **You cannot `curl` this URL.** It is authenticated by your browser session, not by an
-> API token. Fetching it without a browser returns `401` and an HTML login page. Download
-> it in the browser, then upload it to CloudShell.
-
-### Step 2: Upload it to CloudShell
-
-1. Open CloudShell.
-2. Choose **Actions** > **Upload file**.
-3. Select the `tf-files.tar.gz` you just downloaded.
-
-### Step 3: Destroy
-
-Get fresh credentials the same way you did in [Lab 2](../lab-02/README.md), then:
+Create a bin directory in your home folder and add it to your PATH:
 
 ```bash
-mkdir -p ct && tar -xzf tf-files.tar.gz -C ct && cd ct
-
-terraform init
-
-terraform plan -destroy \
-  -var access_key="$AK" -var secret_key="$SK" -var token="$ST"
-
-terraform destroy \
-  -var access_key="$AK" -var secret_key="$SK" -var token="$ST"
+mkdir -p "$HOME/bin"
+echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
 ```
 
-Read the plan before you apply it. It should list the AWS resources **and** a
-`lacework_integration_*` resource. That last one is the integration record, and it is why
-this route cannot leave an orphan.
+### Step 3: Install Lacework CLI
 
-Repeat for each bundle. A full three-integration teardown took about four minutes in
-testing, most of it the agentless VPC and ECS cluster. Terraform prints `Still
-destroying...` every ten seconds, so it is working, not stuck.
-
-For reference, a full run on one account destroyed:
-
-| Bundle | Resources |
-|---|---|
-| Agentless | 41 |
-| CloudTrail | 29 |
-| Configuration | 19 |
-
----
-
-## Terminate the EC2 Instances
-
-Both routes need this. The agents in Labs 4 and 5 run on instances the integrations do not
-own.
-
-1. Go to the **EC2** service.
-2. Find the instance from Lab 4, for example `FortiCNAPP-Linux-Agent`.
-3. Select it, then **Instance state** > **Terminate instance**. Confirm.
-4. Repeat for the Lab 5 Windows instance.
-
-![Terminating an EC2 instance from the AWS Console](images/aws-ec2-terminate-instance.png)
-
-## Verify
-
-1. In FortiCNAPP, confirm your AWS account no longer appears under **Cloud accounts**.
-2. Confirm both EC2 instances show **terminated**.
-3. In AWS, check that nothing is still running:
+In the CloudShell terminal, run:
 
 ```bash
-aws cloudtrail describe-trails --query "trailList[].Name" --output text
-aws ecs list-clusters --query clusterArns --output text
-aws events list-rules --query "Rules[?contains(Name,'lacework')].[Name,State]" --output text
-aws s3api list-buckets --query "Buckets[?contains(Name,'lacework')].Name" --output text
+curl https://raw.githubusercontent.com/lacework/go-sdk/main/cli/install.sh | bash -s -- -d "$HOME/bin"
 ```
 
-All four should come back empty. The EventBridge one matters most, because that is the
-hourly trigger.
+This will download and install the Lacework CLI tool to your home bin directory.
 
-### A tag search will still return a few resources, and that is normal
+![CloudShell showing Lacework CLI successfully installed](images/cloudshell-lacework-cli-installed.png)
 
-Re-run the Tag Editor search and you may still see four or five entries. Check their state
-before chasing them:
+### Step 4: Download API Key from FortiCNAPP
 
-| Resource | Expected state after cleanup |
-|---|---|
-| KMS key | `PendingDeletion`, scheduled 7 to 30 days out. AWS does not delete keys immediately. |
-| Secrets Manager secret | Deleted, inside its recovery window |
-| ECS cluster | `INACTIVE` |
-| ECS task definition | `INACTIVE`. Deregistered task definitions stay in the account permanently. |
-| Security group, subnet, VPC | Often already gone. The tag index lags. |
+An existing service user **AWS Lab** has been pre-configured with the necessary permissions. Download the API key for this user:
+
+1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
+2. Ensure tenant is set to **FORTINETAPACDEMO**
+3. Navigate to **Settings** > **Configuration** > **API keys**
+4. Click on the **Service user API keys** tab
+5. Find the API key for the **AWS Lab** service user
+6. Click on the ellipsis (three dots) next to the API key and select **Download** to download the key as JSON
+
+![API keys page showing Service user API keys with Download option](images/forticnapp-download-api-key.png)
+
+7. Open the downloaded JSON file and note the values. Keep these credentials ready for the next step
+
+### Step 5: Configure CLI
+
+In CloudShell, run:
 
 ```bash
-aws kms describe-key --key-id <key-id> --query 'KeyMetadata.[KeyState,DeletionDate]' --output text
-aws ecs describe-clusters --clusters <name> --query 'clusters[0].status' --output text
+lacework configure
 ```
 
-None of these are running or scanning. The one to watch is the KMS key, which carries a
-small monthly charge until its deletion date passes.
+Enter your FortiCNAPP account credentials when prompted. These values are taken from the JSON file downloaded in the previous step:
 
-## Why this lab matters more than it looks
+```json
+{
+  "keyId": "FORTINET_5DFDAF3B...",
+  "secret": "_f1b528...",
+  "account": "partner-demo.lacework.net",
+  "subAccount": "fortinetapacdemo"
+}
+```
 
-Orphaned agentless infrastructure keeps running.
+- **Account**: `partner-demo.lacework.net` (the `account` value from the JSON file)
+- **API Key**: The `keyId` value from the JSON file
+- **API Secret**: The `secret` value from the JSON file
+- **Sub-Account** (if prompted): The `subAccount` value from the JSON file
 
-The agentless scanner is driven by an **EventBridge rule on an hourly schedule**. Deleting
-the integration in FortiCNAPP does not delete that rule. It keeps firing, keeps starting an
-ECS task, and keeps costing money, while reporting to an integration that no longer exists.
-
-We found exactly this in a real Fortinet demo account: an agentless deployment from March
-2025 still running `rate(1 hour)` in September 2026, pointing at an integration GUID that
-had been deleted from the tenant. Nothing in the FortiCNAPP console showed it, because there
-was no integration left to show.
-
-Orphaned storage grows quietly too. The CloudTrail bucket left behind by that same
-deployment held **816,721 objects** by the time we emptied it, eighteen months of logs
-nobody was reading.
-
-Check the EventBridge rule in every region you scanned:
+### Step 6: Verify CLI Installation and List Integrations
 
 ```bash
-aws events list-rules --region <region> \
-  --query "Rules[?contains(Name,'lacework')].[Name,State,ScheduleExpression]" --output text
+lacework version
+lacework cloud-account list
 ```
+
+You should see entries for your AWS account including:
+- `AwsCfg` (Configuration integration from Lab 3)
+
+- `AwsCtSqs` (CloudTrail integration from Lab 3)
+
+You will only see `AwsCtSqs` if you selected CloudTrail in Lab 3. Accounts inside an AWS
+Organization with an organization trail cannot deploy it. See the troubleshooting section
+in [Lab 3](../lab-03/README.md).
+- `AwsSidekick` (Agentless Workload Scanning from Lab 3)
+
+### Step 7: Trigger Inventory Scan
+
+Normally, FortiCNAPP collects resource inventory on a scheduled cycle (up to 24 hours). To avoid waiting, you can trigger an immediate scan.
+
+```bash
+lacework compliance aws scan
+```
+
+This triggers a resource inventory collection for all integrated AWS accounts. The scan will run in the background and takes 1-2 hours to complete. Once finished, compliance reports and resource inventory data will be populated in the FortiCNAPP console.
+
+**Note:** Only one scan can run at a time. If another student has already triggered a scan, your request will be ignored until the current scan completes.
 
 ## What did we do here?
 
-We removed both sides of the workshop: the integration records in FortiCNAPP and the
-resources in AWS.
+We installed the Lacework CLI in CloudShell and connected it to FortiCNAPP using an API key. This gives us command-line access to FortiCNAPP - useful for automation, scripting, and doing things the console can't do.
 
-Route A teaches you where the seams are. FortiCNAPP creates the integration record, and
-Terraform creates the AWS resources, and the console only deletes the first of those. That
-is the gap orphaned resources fall through.
-
-Route B closes the gap, because the state file spans both. Worth knowing for a customer:
-the Terraform bundle on the deployment record is a complete workspace, state included, so
-`terraform destroy` does the whole job in one command.
+The big win here was triggering an inventory scan immediately. Normally FortiCNAPP collects resource inventory on a scheduled cycle that can take up to 24 hours. Instead of waiting, we kicked it off manually so compliance data starts populating right away.

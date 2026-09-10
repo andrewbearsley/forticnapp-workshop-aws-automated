@@ -1,132 +1,131 @@
-# Lab 8: Install Lacework CLI and Terraform
+# Lab 8: Code Security for Applications (SCA)
 
 ## Objectives
 
-In Labs 2 and 3, we used CloudFormation to deploy integrations - that's one infrastructure as code approach. But many enterprises prefer Terraform since it's not AWS-specific and works across multiple cloud providers. In this lab, we'll install the two tools needed for the Terraform approach: the Lacework CLI (to generate Terraform configuration) and Terraform (to deploy it). This sets up everything for the next lab.
+Your application's security is only as strong as its dependencies. In this lab, we'll scan application code for vulnerabilities in third-party packages, hard-coded credentials, and license risks using FortiCNAPP's SCA scanner. We'll also generate a Software Bill of Materials (SBOM) - increasingly required for compliance, and essential for knowing your exposure when the next major vulnerability drops.
 
 ## Prerequisites
 
-- AWS account access
-- FortiCNAPP account credentials
-
-**Note:** If you completed Lab 7, the Lacework CLI is already installed and configured. You can skip Steps 1-6 and proceed directly to Step 7 (Install Terraform).
+- Completed [Lab 6: Install the Lacework CLI](../lab-06/README.md)
+- Lacework CLI configured with FortiCNAPP credentials
+- AWS CloudShell access
 
 ## Lab Steps
 
-### Step 1: Log into AWS Console and Open CloudShell
+### Step 1: Open AWS CloudShell
 
 1. Navigate to <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a>
 2. Click **Sign into console**
 3. After logging in, change to your local region (e.g., **Asia Pacific (Singapore)**) using the region selector in the top right of the AWS Console
 4. Click the **CloudShell** icon in the top navigation bar (cloud icon with `>_` symbol)
-5. Wait for CloudShell to initialize (this may take a minute the first time)
-6. Once CloudShell opens, you'll have a Linux-based terminal environment ready to use
+5. Wait for CloudShell to initialize
 
-### Step 2: Set Up Installation Directory
+### Step 2: Verify Lacework CLI Configuration
 
-Create a bin directory in your home folder and add it to your PATH:
-
-```bash
-mkdir -p "$HOME/bin"
-echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
-source ~/.bashrc
-```
-
-This directory will be used for both Lacework CLI and Terraform installations.
-
-### Step 3: Install Lacework CLI
-
-In the CloudShell terminal, run:
-
-```bash
-curl https://raw.githubusercontent.com/lacework/go-sdk/main/cli/install.sh | bash -s -- -d "$HOME/bin"
-```
-
-This will download and install the Lacework CLI tool to your home bin directory.
-
-![CloudShell showing Lacework CLI successfully installed](../lab-07/images/cloudshell-lacework-cli-installed.png)
-
-**Note**: For Windows installation (if needed outside CloudShell), download from the <a href="https://github.com/lacework/go-sdk/releases" target="_blank">Lacework CLI releases page</a>.
-
-### Step 4: Download API Key from FortiCNAPP
-
-An existing service user **AWS Lab** has been pre-configured with the necessary permissions. Download the API key for this user:
-
-1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
-2. Ensure tenant is set to **FORTINETAPACDEMO**
-3. Navigate to **Settings** > **Configuration** > **API keys**
-4. Click on the **Service user API keys** tab
-5. Find the API key for the **AWS Lab** service user
-6. Click on the ellipsis (three dots) next to the API key and select **Download** to download the key as JSON
-
-![API keys page showing Service user API keys with Download option](../lab-07/images/forticnapp-download-api-key.png)
-
-7. Open the downloaded JSON file and note the values. Keep these credentials ready for the next step
-
-### Step 5: Configure CLI
-
-In CloudShell, run:
-
-```bash
-lacework configure
-```
-
-Enter your FortiCNAPP account credentials when prompted. These values are taken from the JSON file downloaded in the previous step:
-
-```json
-{
-  "keyId": "FORTINET_5DFDAF3B...",
-  "secret": "_f1b528...",
-  "account": "partner-demo.lacework.net",
-  "subAccount": "fortinetapacdemo"
-}
-```
-
-- **Account**: `partner-demo.lacework.net` (the `account` value from the JSON file)
-- **API Key**: The `keyId` value from the JSON file
-- **API Secret**: The `secret` value from the JSON file
-- **Sub-Account** (if prompted): The `subAccount` value from the JSON file
-
-### Step 6: Verify CLI Installation
+Verify that the Lacework CLI is configured and working:
 
 ```bash
 lacework version
 ```
 
-This should return the installed version, confirming the CLI is ready to use.
+![CloudShell with lacework version output](../lab-11/images/aws-cloudshell-lacework-version.png)
 
-**Note:** If you completed Lab 6, the AWS integrations from Lab 3 have been cleaned up. We'll redeploy them using Terraform in the next lab.
+### Step 3: Install the SCA Component
 
-### Step 7: Install Terraform
-
-Install Terraform in AWS CloudShell:
-
-1. Download Terraform (Linux amd64) and unzip it to your bin folder:
-
-First, get the latest Terraform version:
+Install the Lacework SCA scanning component:
 
 ```bash
-TERRAFORM_VERSION=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+lacework component install sca
 ```
 
-Then download and install that version:
+This installs the Software Composition Analysis scanner that can analyze application dependencies, detect vulnerabilities, and identify license risks.
+
+### Step 4: Update the SCA Component (Optional)
+
+If the component is already installed, update it to ensure you have the latest version:
 
 ```bash
-wget -O terraform.zip "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
-unzip terraform.zip
-mv terraform "$HOME/bin/"
-rm terraform.zip
-# Configure Terraform to use the temporary directory for cache to prevent running out of cloudshell storage space
-echo 'export TF_PLUGIN_CACHE_DIR="/tmp"' >> ~/.bashrc
-source ~/.bashrc
+lacework component update sca
 ```
 
-**Alternative**: If you prefer to check manually, visit <a href="https://releases.hashicorp.com/terraform/" target="_blank">HashiCorp's Terraform releases page</a> and replace `${TERRAFORM_VERSION}` in the URL with the latest version number (e.g., `1.9.5`).
+### Step 5: Clone the Example Repository
 
+Clone the repository containing application code with intentional security issues:
+
+```bash
+cd ~
+git clone https://github.com/andrewbearsley/lacework-sca-scan-example.git
+cd lacework-sca-scan-example
+```
+
+This repository contains JavaScript/TypeScript application code with various security vulnerabilities, weaknesses, and license risks that FortiCNAPP can detect.
+
+### Step 6: Scan the Application Code
+
+Run the SCA scan on the current directory:
+
+```bash
+lacework sca scan .
+```
+
+To upload results to the FortiCNAPP platform, add `--save-results=true` (requires git metadata, which the cloned repo has):
+
+```bash
+lacework sca scan . --save-results=true
+```
+
+> **Note:** Unlike the IaC scanner (which uploads by default), SCA does not upload unless you pass `--save-results=true`. Even with the flag, uploaded results will not appear in **Risk Center > Code Security > Applications > Assessments** unless the repository is onboarded via **Code Security > Add integration** (GitHub/GitLab/Bitbucket connector) or the scan runs from a registered CI/CD pipeline. A CLI scan from CloudShell or a developer laptop alone won't surface in this view - this lab focuses on demonstrating the scanner locally.
+
+### Step 7: Review Scan Results
+
+The scan output will show:
+- Summary statistics (artifacts analyzed, vulnerabilities found, secrets detected, etc.)
+- **Vulnerabilities**: List of CVEs with severity levels (Critical, High, Medium, Low)
+  - Direct and transitive dependencies affected
+  - CVE IDs and descriptions
+- **Weaknesses**: Common Weakness Enumeration (CWE) findings
+  - Hard-coded credentials
+  - SQL injection vulnerabilities
+  - Authentication issues
+  - And more
+- License risks detected
+- Copyrights detected
+
+Review the findings and note:
+- How many critical and high severity vulnerabilities were found
+- What types of weaknesses are present (hard-coded credentials, SQL injection, etc.)
+- Which packages have the most vulnerabilities
+- How many secrets were detected
+
+### Step 8: Generate Software Bill of Materials (SBOM)
+
+Generate a Software Bill of Materials in CycloneDX JSON format:
+
+```bash
+lacework sca scan ./ -f cdx-json -o sbom.json
+```
+
+This creates an SBOM file that lists all dependencies and their versions, which can be used for:
+- Compliance reporting
+- Supply chain security tracking
+- Dependency management
+- Security audits
+
+View the generated SBOM:
+
+```bash
+cat sbom.json
+```
 
 ## What did we do here?
 
-We set up the tooling needed for infrastructure as code. The Lacework CLI connects to FortiCNAPP's API, and Terraform lets us define and deploy cloud resources from code instead of clicking through consoles.
+We scanned application code for security issues - not infrastructure this time, but the application itself. The SCA scanner found vulnerabilities in third-party packages (CVEs), hard-coded credentials, SQL injection risks, and license compliance issues.
 
-In the next lab, we'll use these two tools together - the CLI generates Terraform configuration, and Terraform deploys it. This is the production-ready approach to FortiCNAPP integration: repeatable, version-controlled, and auditable.
+We also generated a Software Bill of Materials (SBOM). This is increasingly required for compliance and supply chain security - it's a complete inventory of every dependency in your application and its version. When the next Log4j-style vulnerability drops, you can instantly check which of your applications are affected.
+
+## Additional Resources
+
+- <a href="https://docs.fortinet.com/document/lacework-forticnapp/latest/administration-guide/433465/software-composition-analysis-sca" target="_blank">Lacework SCA Scanning Documentation</a>
+- <a href="https://github.com/andrewbearsley/lacework-sca-scan-example" target="_blank">Example Repository</a>
+
 

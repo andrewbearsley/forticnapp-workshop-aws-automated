@@ -34,34 +34,39 @@ Source: <a href="https://docs.fortinet.com/document/forticnapp/latest/administra
 
 ## Core path
 
-Work through these in order. Allow about 90 minutes.
+Work through these in order. Allow about three hours.
 
 - [Lab 1: Hands-on Cloud Security with FortiCNAPP](lab-01/README.md)
 - [Lab 2: Get Temporary AWS Credentials](lab-02/README.md)
 - [Lab 3: Onboard AWS with Automated Configuration](lab-03/README.md)
 - [Lab 4: Install Linux Agent](lab-04/README.md)
 - [Lab 5: Install Windows Agent](lab-05/README.md)
-- [Lab 6: Clean Up Workshop Resources](lab-06/README.md)
+- [Lab 6: Install the Lacework CLI](lab-06/README.md)
+- [Lab 7: Code Security for Infrastructure as Code (IaC)](lab-07/README.md)
+- [Lab 8: Code Security for Applications (SCA)](lab-08/README.md)
+- [Lab 9: Clean Up Workshop Resources](lab-09/README.md)
+
+Labs 1 to 5 cover the cloud side: onboard the account, then put agents on workloads. Lab 6
+installs the CLI, which Labs 7 and 8 need. Those two shift left into the code, scanning
+Terraform for misconfiguration and application dependencies for vulnerabilities.
+
+Everything runs in a browser and AWS CloudShell. Nothing is installed on your laptop.
 
 ## Optional: advanced track
 
-Take these when you want the infrastructure as code path, or when a customer runs
-onboarding through a pipeline. They need AWS CloudShell and the Lacework CLI.
+Take these when a customer wants onboarding through a pipeline rather than a wizard.
 
-- [Lab 7: Install Lacework CLI and Trigger Inventory Scan](lab-07/README.md)
-- [Lab 8: Install Lacework CLI and Terraform](lab-08/README.md)
-- [Lab 9: Install Integrations via Terraform](lab-09/README.md)
-- [Lab 10: Code Security for Infrastructure as Code (IaC)](lab-10/README.md)
-- [Lab 11: Code Security for Applications (SCA)](lab-11/README.md)
+- [Lab 10: Install Terraform](lab-10/README.md)
+- [Lab 11: Install Integrations via Terraform](lab-11/README.md)
 - [Lab 12: Scripted Cleanup of All Workshop Resources](lab-12/README.md)
 
 ## Which path do I run?
 
 | Audience | Path |
 |---|---|
-| Partner enablement, first look, short session | Core path only |
-| Customer running onboarding through a pipeline | Core path, then Labs 8 and 9 |
-| Developer or DevSecOps audience | Core path, then Labs 10 and 11 |
+| Partner enablement, first look, short session | Labs 1 to 5, then Lab 9 to clean up |
+| Developer or DevSecOps audience | Full core path. Labs 7 and 8 are the draw. |
+| Customer running onboarding through a pipeline | Core path, then Labs 10 and 11 |
 
 ## Resources
 
