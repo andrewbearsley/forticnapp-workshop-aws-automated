@@ -12,7 +12,7 @@ integration, then discards them and runs on the cross-account role it created.
 ## Prerequisites
 
 - AWS account with administrator access
-- One of: AWS IAM Identity Center access, an IAM user, or an assumable IAM role
+- Either AWS IAM Identity Center access, or an assumable IAM role
 
 ## The guide is built into the console
 
@@ -31,29 +31,39 @@ constraint.
 
 | How you signed in | Use | Why |
 |---|---|---|
-| AWS IAM Identity Center (SSO) | **Method A** | Your console session already runs on temporary credentials, and AWS refuses to mint a session from a session. CloudShell cannot help you. |
-| IAM user with a password | **Method B** | CloudShell can request a session for an IAM user. |
-| You have a dedicated onboarding role | **Method C** | Assume the role and use its session. |
+| AWS IAM Identity Center (SSO) | **Method A** | The access portal issues a role session, which can complete discovery. |
+| An IAM user, or anything else | **Method B** | Assume a role. A role session can complete discovery. |
 
-> **The trap.** Running `aws sts get-session-token` from CloudShell in an SSO session fails
-> with `AccessDenied: Cannot call GetSessionToken with session credentials`. Fortinet staff
-> onboarding their own accounts will hit this every time. Use Method A.
+> **Do not use plain `aws sts get-session-token`.** It looks like the obvious CloudShell
+> shortcut, and FortiCNAPP's own in-product guide offers it, but the credentials it returns
+> **cannot complete discovery**.
+>
+> Discovery calls IAM APIs. AWS blocks IAM API calls from `GetSessionToken` credentials
+> unless MFA information was included in the request. The wizard fails at Task 2 with:
+>
+> ```
+> operation error IAM: ListAttachedUserPolicies, StatusCode: 403
+> InvalidClientTokenId: The security token included in the request is invalid
+> ```
+>
+> Turning off *Simulate IAM permissions* does not fix it. That only changes which IAM call
+> fails first.
+>
+> If you must use `get-session-token`, add MFA with `--serial-number` and `--token-code`.
+> Those credentials can call IAM.
 
 #### Not sure which one you are?
 
-Open CloudShell and run:
+Run this in AWS CloudShell:
 
 ```bash
 aws sts get-caller-identity --query Arn --output text
 ```
 
-Read the ARN:
-
 | The ARN looks like | You are | Use |
 |---|---|---|
 | `arn:aws:sts::<id>:assumed-role/AWSReservedSSO_...` | Federated through Identity Center | Method A |
 | `arn:aws:iam::<id>:user/<name>` | A plain IAM user | Method B |
-| `arn:aws:sts::<id>:assumed-role/<your-role>/...` | Already in an assumed role | Method C |
 
 ### Method A: AWS IAM Identity Center
 
@@ -70,7 +80,7 @@ Go to Lab 3.
 
 ### Opening CloudShell
 
-Methods B and C need it. Method A does not.
+Method B needs it. Method A does not.
 
 CloudShell has the AWS CLI preinstalled and already signed in as your console identity, so
 you install nothing and configure nothing.
@@ -82,68 +92,12 @@ you install nothing and configure nothing.
    **CloudShell** in the console search bar.
 4. Wait for the shell prompt.
 
-### Method B: CloudShell, signed in as an IAM user
+### Method B: Assume a role
 
-You signed into the console as an IAM user, so CloudShell can mint temporary credentials
-for you in one command. No MFA setup, no access keys to handle.
+Your account needs a role with the required permissions and a trust policy that lets your
+IAM user assume it. Run this in CloudShell.
 
-1. Run this in CloudShell:
-
-   ```bash
-   aws sts get-session-token --duration-seconds 21600
-   ```
-
-2. Copy these three values from the `Credentials` block of the output:
-   - `AccessKeyId`
-   - `SecretAccessKey`
-   - `SessionToken`
-
-   To copy from CloudShell, select the text and use **Actions** > **Copy**.
-
-That is the whole step. Go to Lab 3.
-
-> **If the command fails** with `Cannot call GetSessionToken with session credentials`,
-> your console session is federated rather than a plain IAM user session. Use Method A.
->
-> If your account has no Identity Center either, and you hold a long-lived access key pair
-> for the IAM user, configure it in CloudShell first and request the session from that
-> profile:
->
-> ```bash
-> aws configure --profile onboarding      # paste the long-lived key pair
-> aws sts get-session-token --profile onboarding --duration-seconds 21600
-> ```
->
-> A long-lived key pair is long-term credentials, so STS will issue a session from it.
-
-#### Variant: when the account requires MFA
-
-Some accounts deny STS calls that are not MFA-authenticated. If `get-session-token`
-returns an access-denied error, add your MFA device.
-
-1. Enable an MFA device for the IAM user. See
-   <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable.html" target="_blank">Enable a MFA device</a>.
-2. Find the device serial number:
-
-   ```bash
-   aws iam list-mfa-devices --user-name YourIAMUserName
-   ```
-
-3. Request the credentials with the MFA code:
-
-   ```bash
-   aws sts get-session-token \
-     --serial-number "YourMFADeviceSerialNumber" \
-     --token-code "YourMFATokenCode" \
-     --duration-seconds 21600
-   ```
-
-### Method C: Assume an IAM Role
-
-Use this when your account has a dedicated onboarding role. Run it in CloudShell.
-
-1. Confirm the role holds the required permissions.
-2. Assume the role:
+1. Assume the role:
 
    ```bash
    aws sts assume-role \
@@ -152,9 +106,17 @@ Use this when your account has a dedicated onboarding role. Run it in CloudShell
      --duration-seconds 21600
    ```
 
-3. Copy `AccessKeyId`, `SecretAccessKey` and `SessionToken` from the `Credentials` block.
+2. Copy these three values from the `Credentials` block:
+   - `AccessKeyId`
+   - `SecretAccessKey`
+   - `SessionToken`
 
-![Authorization Guide showing the AWS CLI commands for both the MFA and assume-role methods](images/forticnapp-authorization-guide-cli.png)
+   To copy from CloudShell, select the text and use **Actions** > **Copy**.
+
+![Authorization Guide showing the AWS CLI commands](images/forticnapp-authorization-guide-cli.png)
+
+> **Instructor note.** The in-product Authorization Guide also lists
+> `aws sts get-session-token` without MFA. Do not use it. See the warning above.
 
 ## Permissions
 
@@ -173,8 +135,11 @@ four ready-made policy documents to download:
 
 > **Gotcha**: if you plan to use the optional **Simulate IAM permissions** check in Lab 3,
 > your credentials additionally need `iam:SimulatePrincipalPolicy`, plus `iam:GetRole` for
-> assumed roles. A least-privilege policy without these fails the simulation, not the
-> deployment.
+> assumed roles.
+>
+> Note this is a *permissions* requirement on top of the *credential type* requirement
+> above. A role session with the wrong policy fails the simulation; a `GetSessionToken`
+> session fails it no matter what policy is attached.
 
 ## Important
 
