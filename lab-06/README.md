@@ -1,31 +1,38 @@
 # Lab 6: Install the Lacework CLI
 
-Normally, FortiCNAPP collects resource inventory on a scheduled cycle (up to 24 hours). To avoid waiting, we can trigger an immediate scan from the Lacework CLI!
-
 ## Objectives
 
-FortiCNAPP collects resource inventory on a scheduled cycle that can take up to 24 hours. We don't want to wait that long. In this lab, we'll install the Lacework CLI in AWS CloudShell, verify our integrations from Lab 3 are working, and trigger an immediate inventory scan so compliance data starts populating right away.
+Everything so far has been the console. The CLI is the same platform through a different
+door, and it is the door you use when you want to script something, check twenty accounts
+at once, or answer a question the console has no page for.
+
+You will install it in **AWS CloudShell**, so there is nothing to install on your own
+machine and nothing to uninstall afterwards.
+
+Labs 7 and 8 need this CLI, so this lab is not optional if you are continuing.
 
 ## Prerequisites
 
-- AWS account access
-- FortiCNAPP account credentials
-- Completed [Lab 3: Onboard AWS with Automated Configuration](../lab-03/README.md)
+- Completed [Lab 3](../lab-03/README.md), so there are integrations to list
+- FortiCNAPP console access, tenant **FORTINETAPACDEMO**
 
 ## Lab Steps
 
-### Step 1: Log into AWS Console and Open CloudShell
+### Step 1: Open CloudShell
 
-1. Navigate to <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a>
-2. Click **Sign into console**
-3. After logging in, change to your local region (e.g., **Asia Pacific (Singapore)**) using the region selector in the top right of the AWS Console
-4. Click the **CloudShell** icon in the top navigation bar (cloud icon with `>_` symbol)
-5. Wait for CloudShell to initialize (this may take a minute the first time)
-6. Once CloudShell opens, you'll have a Linux-based terminal environment ready to use
+1. In the AWS console, check the region reads **Asia Pacific (Singapore)**.
+2. Click the **CloudShell** icon in the top bar, the cloud with `>_` in it. It also sits at
+   the bottom left of the console.
+3. Wait for the prompt. First launch takes a minute.
 
-### Step 2: Set Up Installation Directory
+> **CloudShell is a free Linux shell with your console credentials already loaded.** Nothing
+> to install, nothing to authenticate. It is wiped after long inactivity, apart from your
+> home directory, which is why the next step installs into `$HOME/bin`.
 
-Create a bin directory in your home folder and add it to your PATH:
+### Step 2: Install the CLI
+
+Make a `bin` directory in your home folder and put it on your PATH, so the CLI survives a
+CloudShell restart:
 
 ```bash
 mkdir -p "$HOME/bin"
@@ -33,19 +40,18 @@ echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-### Step 3: Install Lacework CLI
-
-In the CloudShell terminal, run:
+Then install:
 
 ```bash
 curl https://raw.githubusercontent.com/lacework/go-sdk/main/cli/install.sh | bash -s -- -d "$HOME/bin"
+lacework version
 ```
-
-This will download and install the Lacework CLI tool to your home bin directory.
 
 ![CloudShell showing Lacework CLI successfully installed](images/cloudshell-lacework-cli-installed.png)
 
-### Step 4: Download API Key from FortiCNAPP
+**Checkpoint:** `lacework version` prints a version instead of `command not found`.
+
+### Step 3: Download the API Key
 
 An existing service user **AWS Lab** has been pre-configured with the necessary permissions. Download the API key for this user:
 
@@ -59,63 +65,98 @@ An existing service user **AWS Lab** has been pre-configured with the necessary 
 
 ![API keys page showing Service user API keys with Download option](images/forticnapp-download-api-key.png)
 
-7. Open the downloaded JSON file and note the values. Keep these credentials ready for the next step
+7. Open the JSON file. You need four values from it.
 
-### Step 5: Configure CLI
+> **This file is a live credential.** It can read your tenant. Do not paste it into chat,
+> a shared document, or a ticket, and delete it when the workshop ends. Lab 9 revokes the
+> key itself.
 
-In CloudShell, run:
+### Step 4: Point the CLI at FortiCNAPP
 
 ```bash
 lacework configure
 ```
 
-Enter your FortiCNAPP account credentials when prompted. These values are taken from the JSON file downloaded in the previous step:
+It asks four questions. The answers all come from that JSON file, which looks like this:
 
 ```json
 {
-  "keyId": "FORTINET_5DFDAF3B...",
-  "secret": "_f1b528...",
+  "keyId": "FORTINET_XXXXXXXXXXXXXXXX",
+  "secret": "_xxxxxxxxxxxxxxxxxxxxxxx",
   "account": "partner-demo.lacework.net",
   "subAccount": "fortinetapacdemo"
 }
 ```
 
-- **Account**: `partner-demo.lacework.net` (the `account` value from the JSON file)
-- **API Key**: The `keyId` value from the JSON file
-- **API Secret**: The `secret` value from the JSON file
-- **Sub-Account** (if prompted): The `subAccount` value from the JSON file
+| It asks for | Use the JSON field |
+|---|---|
+| Account | `account` |
+| API Key | `keyId` |
+| API Secret | `secret` |
+| Sub-Account | `subAccount` |
 
-### Step 6: Verify CLI Installation and List Integrations
+The **sub-account** is the one people miss. It is the tenant, `fortinetapacdemo`. Leave it
+blank and the CLI talks to the wrong place and shows you nothing.
+
+### Step 5: List Your Integrations
 
 ```bash
 lacework version
 lacework cloud-account list
 ```
 
-You should see entries for your AWS account including:
-- `AwsCfg` (Configuration integration from Lab 3)
+The integration types have internal names, which is the first thing the CLI shows you that
+the console hides:
 
-- `AwsCtSqs` (CloudTrail integration from Lab 3)
+| CLI name | What you selected in Lab 3 |
+|---|---|
+| `AwsCfg` | Configuration |
+| `AwsCtSqs` | CloudTrail |
+| `AwsSidekick` | Agentless Workload Scanning |
 
-You will only see `AwsCtSqs` if you selected CloudTrail in Lab 3. Accounts inside an AWS
-Organization with an organization trail cannot deploy it. See the troubleshooting section
-in [Lab 3](../lab-03/README.md).
-- `AwsSidekick` (Agentless Workload Scanning from Lab 3)
+`AwsCtSqs` appears only if CloudTrail deployed. Accounts inside an AWS Organization that
+already has an organization trail cannot deploy it. See the troubleshooting section in
+[Lab 3](../lab-03/README.md).
 
-### Step 7: Trigger Inventory Scan
+**Checkpoint:** your AWS account number appears, with at least `AwsCfg` and `AwsSidekick`.
 
-Normally, FortiCNAPP collects resource inventory on a scheduled cycle (up to 24 hours). To avoid waiting, you can trigger an immediate scan.
+### Step 6: Trigger an Inventory Scan
+
+FortiCNAPP collects resource inventory on its own cycle, up to 24 hours. The CLI can ask
+for one now:
 
 ```bash
 lacework compliance aws scan
 ```
 
-This triggers a resource inventory collection for all integrated AWS accounts. The scan will run in the background and takes 1-2 hours to complete. Once finished, compliance reports and resource inventory data will be populated in the FortiCNAPP console.
+> **Your instructor runs this one, once. Do not all run it.**
+>
+> Three things make this command behave unlike the rest of the lab:
+>
+> - it is **tenant-wide**. There is no per-account form of it, so one person's scan covers
+>   every account integrated into this tenant, yours included
+> - **only one scan runs at a time.** While one is going, every other request is silently
+>   ignored. No error, no queue position, nothing
+> - it takes **one to two hours**
+>
+> In a room this size that means one scan happens and everyone benefits. Forty of you
+> typing it changes nothing.
 
-**Note:** Only one scan can run at a time. If another student has already triggered a scan, your request will be ignored until the current scan completes.
+So treat this as something you have now **seen**, and will use on a customer tenant where
+you are the only one driving. Do not expect fresh compliance data to land before the
+session ends.
+
+**Checkpoint:** you understand why this is the one command in the workshop you should not
+all run at once.
 
 ## What did we do here?
 
-We installed the Lacework CLI in CloudShell and connected it to FortiCNAPP using an API key. This gives us command-line access to FortiCNAPP - useful for automation, scripting, and doing things the console can't do.
+We swapped the console for a terminal, against the same platform and the same data.
 
-The big win here was triggering an inventory scan immediately. Normally FortiCNAPP collects resource inventory on a scheduled cycle that can take up to 24 hours. Instead of waiting, we kicked it off manually so compliance data starts populating right away.
+That matters more than it sounds. Everything you have done by clicking is an API call, and
+once you can make those calls yourself you can check twenty accounts as easily as one, put
+onboarding into a pipeline, and answer questions that have no console page. Labs 7 and 8
+take that straight into source code.
+
+The scan command is also a fair warning about shared tenants. Some operations are
+tenant-wide and serialised, and they do not tell you when they are ignoring you.
