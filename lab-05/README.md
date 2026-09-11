@@ -18,33 +18,43 @@ Most enterprise environments run a mix of Linux and Windows. In this lab, we'll 
 
 ### Step 2: Create Windows EC2 Instance
 
-1. Navigate to **EC2** service in AWS Console
+Same wizard as Lab 4, with two differences that matter: the image, and the key pair.
 
-![EC2 dashboard with Launch Instance button](images/aws-ec2-pre-launch.png)
+1. Open **EC2** and click **Launch instance**. Check the region still reads
+   **Asia Pacific (Singapore)**.
 
-2. Click **Launch Instance**
-3. Configure the instance:
+2. **Name**: `FortiCNAPP-Windows-Agent`
 
-![Launch an instance configuration page for Windows](images/aws-ec2-launch-details.png)
+3. **Application and OS Images**: click the **Windows** tile. The AMI becomes
+   **Microsoft Windows Server 2025 Base**, and storage jumps to 30 GiB on its own.
 
-   - **Name**: Enter a name (e.g., `FortiCNAPP-Windows-Agent`)
-   - **Application and OS Images**: Select **Microsoft Windows Server** (Windows Server 2022 or later)
-   - **Instance type**: Select **c5.large**
-   - **Key pair (login)**: 
-     - Click **Create new key pair**
-     - Enter a key pair name (e.g., `forticnapp-windows-key`)
-     - Select **RSA** as the key pair type
-     - Select **.pem** format
-     - Click **Create key pair**
-     - **Important**: Download the key pair file and save it securely - you'll need it to retrieve the Windows password
-4. **Network settings**: leave the defaults as-is. The launch wizard will create a new security group (named `launch-wizard-N`) with an inbound rule for RDP from anywhere, which is what you need to connect.
+![Launch an instance page with the Windows tile selected](images/aws-ec2-launch-details.png)
 
-   > Don't switch this to "Select existing security group" and pick the VPC's `default` SG. That one only allows traffic between resources sharing the same SG, so your RDP client won't be able to reach the instance.
-![Instance type, key pair, and network settings](images/aws-ec2-launch-details-2.png)
+4. **Instance type**: leave **t3.micro**.
 
-5. **Configure storage**: Leave default (30 GB gp3)
-6. Click **Launch Instance**
-7. Wait for the instance to reach **Running** status
+5. **Key pair (login)**: this time you do need one.
+
+   > **Windows is different from Lab 4.** There is no Instance Connect for Windows. AWS
+   > encrypts the Administrator password with your public key, so without the private key
+   > you cannot log in at all, and there is no way to recover it later.
+
+   - Click **Create new key pair**
+   - Name it `forticnapp-windows-key`, type **RSA**, format **.pem**
+   - Click **Create key pair**. The `.pem` file downloads. Keep it, you need it in Step 3.
+
+![Key pair section, explaining that the key decrypts the administrator password](images/aws-ec2-launch-details-2.png)
+
+6. **Network settings**: leave them alone. The wizard creates a `launch-wizard-N` group
+   allowing RDP from anywhere.
+
+   > As in Lab 4, do not switch to **Select existing security group** and pick `default`.
+   > Your RDP client will not reach the instance.
+
+7. **Configure storage**: leave the default, 30 GiB gp3.
+
+8. Click **Launch instance**, then wait for **Instance state** to read **Running**.
+   Windows takes longer to boot than Linux. Allow about four minutes before you try to
+   fetch the password.
 
 ![Windows EC2 instance in Running state](images/aws-ec2-instance-running.png)
 

@@ -180,10 +180,16 @@ own.
 
 1. Go to the **EC2** service.
 2. Find the instance from Lab 4, for example `FortiCNAPP-Linux-Agent`.
-3. Select it, then **Instance state** > **Terminate instance**. Confirm.
-4. Repeat for the Lab 5 Windows instance.
+3. Tick its checkbox, then **Instance state** > **Terminate (delete) instance**.
 
-![Terminating an EC2 instance from the AWS Console](images/aws-ec2-terminate-instance.png)
+![Instance state menu open on Terminate (delete) instance](images/aws-ec2-instance-state-menu.png)
+
+4. Confirm in the dialog. The root EBS volume goes with the instance, so there is no
+   separate volume to clean up afterwards.
+
+![Terminate instance confirmation dialog](images/aws-ec2-terminate-instance.png)
+
+5. Repeat for the Lab 5 Windows instance.
 
 ## Verify
 

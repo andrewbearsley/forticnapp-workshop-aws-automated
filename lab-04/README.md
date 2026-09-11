@@ -18,30 +18,51 @@ Agentless scanning (Lab 3) gives you periodic snapshots, but for deeper monitori
 
 ### Step 2: Create Linux EC2 Instance
 
-1. Navigate to **EC2** service in AWS Console
+1. Open the **EC2** service. Check the region selector reads **Asia Pacific (Singapore)**
+   before you do anything else.
 
-![EC2 dashboard with Launch Instance button](images/aws-ec2-pre-launch.png)
+![EC2 dashboard, with the region selector and Launch instance button highlighted](images/aws-ec2-pre-launch.png)
 
-2. Click **Launch Instance**
-3. Configure the instance:
+2. Click **Launch instance**.
 
-![Launch an instance configuration page](images/aws-ec2-launch-details.png)
+3. **Name**: `FortiCNAPP-Linux-Agent`
 
-   - **Name**: Enter a name (e.g., `FortiCNAPP-Linux-Agent`)
-   - **Application and OS Images**: Select **Ubuntu**
-   - **Instance type**: Select **t3.micro**
-   - **Key pair (login)**: Select **Proceed without a key pair** (we'll use EC2 Instance Connect)
-4. **Network settings**: leave the defaults as-is. The launch wizard will create a new security group (named `launch-wizard-N`) with an inbound rule for SSH from anywhere, which is what Instance Connect needs.
+4. **Application and OS Images**: leave **Amazon Linux 2023** selected. It is the default,
+   and the agent installer does not care which distribution you pick.
 
-   > Don't switch this to "Select existing security group" and pick the VPC's `default` SG. That one only allows traffic between resources sharing the same SG, so Instance Connect won't be able to reach the instance.
-5. **Configure storage**: Leave default (8 GB gp3)
-6. Click **Launch Instance**
+![Launch an instance page with the name entered and Amazon Linux 2023 selected](images/aws-ec2-launch-details.png)
 
-![Proceed without a key pair dialog](images/aws-ec2-launch-no-keypair.png)
+5. **Instance type**: leave **t3.micro**.
 
-7. Wait for the instance to reach **Running** status
+6. **Key pair (login)**: open the dropdown and choose
+   **Proceed without a key pair (Not recommended)**.
 
-![EC2 instance in Running state](images/aws-ec2-instance-running.png)
+   You will connect through EC2 Instance Connect in the browser, which issues its own
+   temporary key. There is nothing for you to download or keep.
+
+![Key pair dropdown open on Proceed without a key pair](images/aws-ec2-launch-no-keypair.png)
+
+![Instance type and key pair set, with Network settings below](images/aws-ec2-launch-details-2.png)
+
+7. **Network settings**: leave them alone. The wizard creates a security group called
+   `launch-wizard-1` allowing SSH from anywhere, which is what Instance Connect needs.
+
+   > **This is the step that breaks the lab.** Do not switch to **Select existing security
+   > group** and pick the VPC's `default` group. That one only allows traffic between
+   > resources that share it, so Instance Connect cannot reach your instance and you get a
+   > timeout with no useful error.
+
+![Network settings with Create security group selected](images/aws-ec2-network-settings.png)
+
+8. **Configure storage**: leave the default, 8 GiB gp3.
+
+9. Click **Launch instance**, then **View all instances**.
+
+10. Wait for **Instance state** to read **Running**. Allow about a minute.
+
+![Instance list showing the new instance in the Running state](images/aws-ec2-instance-running.png)
+
+**Checkpoint:** one instance, state **Running**, and it has a public IPv4 address.
 
 ### Step 3: Get Agent Installation URL from FortiCNAPP
 
@@ -64,17 +85,17 @@ Agentless scanning (Lab 3) gives you periodic snapshots, but for deeper monitori
 
 ### Step 4: Connect to Linux EC2 Instance
 
-1. In AWS Console, navigate to **EC2** service
+1. Go to **EC2** > **Instances**.
+2. Tick the checkbox next to `FortiCNAPP-Linux-Agent`.
+3. Click **Connect** at the top of the page.
+4. Stay on the **In web browser** tab and leave **EC2 Instance Connect** selected. It is the
+   first of the four cards and it is already chosen.
 
-![EC2 dashboard showing 1 running instance](images/aws-ec2-find-running-instance.png)
+![Connect to Linux instance page, with EC2 Instance Connect selected](images/aws-ec2-instance-connect.png)
 
-2. Click on **Instances** in the left navigation
-3. Select the Linux EC2 instance you just created
-4. Click **Connect**
-5. Select **EC2 Instance Connect** tab
-![EC2 Instance Connect page with Connect button](images/aws-ec2-instance-connect.png)
+5. Leave **Username** as `ec2-user`, then click **Connect**.
 
-6. Click **Connect** (this will open a browser-based terminal - no key pair needed)
+   A terminal opens in the browser. No key pair, no SSH client, nothing to install.
 7. Once connected, verify system requirements:
    - Check available memory: `free -h`
    - Verify network connectivity: `ping -c 3 8.8.8.8`
