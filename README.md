@@ -1,58 +1,72 @@
-# FortiCNAPP Workshop: AWS Integration (Automated Configuration)
+# FortiCNAPP Workshop: AWS Integration
 
-Hands-on labs for integrating FortiCNAPP with AWS using **automated configuration**.
+Connect FortiCNAPP to an AWS account, then see what it finds. Everything runs in a browser
+and AWS CloudShell. Nothing is installed on your laptop.
 
-This is the fast path. FortiCNAPP builds the whole integration for you from temporary
-credentials, so you onboard an AWS account in one wizard instead of running two
-CloudFormation stacks by hand.
+Allow about three hours for Labs 1 to 9.
 
-> Looking for the CloudFormation and Terraform version? See the
-> <a href="https://github.com/andrewbearsley/forticnapp-workshop-aws-integration" target="_blank">original AWS integration workshop</a>.
-> The two workshops reach the same end state. This one takes fewer steps.
+## If you come from networking, start here
 
-## Why automated configuration
+You already run the on-premises version of most of this. The names change, the job does not.
 
-You give FortiCNAPP short-lived AWS credentials. FortiCNAPP then:
+| You already do this | In the cloud it is called | Lab |
+|---|---|---|
+| Audit firewall rules and device configs against a standard | **Configuration assessment**, or CSPM | 3 |
+| Collect syslog and NetFlow, alert on odd behaviour | **CloudTrail ingestion**, threat detection | 3 |
+| Scan hosts for missing patches without touching them | **Agentless scanning**, snapshot based | 3 |
+| Run an endpoint agent for live process and network visibility | **The FortiCNAPP agent** | 4, 5 |
+| Review a config change before it goes to production | **IaC scanning** | 7 |
+| Check firmware and library versions against CVE lists | **SCA**, software composition analysis | 8 |
 
-1. Validates your permissions and finds resources it can reuse.
-2. Generates a Terraform plan for your account.
-3. Applies the plan to create the IAM roles, buckets, keys and queues it needs.
-4. Registers the integration and validates it.
-5. Discards the temporary credentials and runs on the cross-account role.
+One idea worth holding onto: in a data centre you control the hardware, so you monitor the
+box. In the cloud there is no box you own. You monitor the **account** instead, by asking
+the cloud provider what exists and what changed.
 
-Two things matter for a workshop. If any integration type fails, FortiCNAPP rolls back
-**all** of them, so nobody ends up half onboarded. And every resource it creates carries
-the `lacework_tag` and `lacework_integration` tags, so cleanup is a tag search.
+## What you are building
 
-Source: <a href="https://docs.fortinet.com/document/forticnapp/latest/administration-guide/123850/automated-configuration" target="_blank">FortiCNAPP Administration Guide, "Automated configuration"</a>
+```mermaid
+flowchart LR
+    A[AWS account] -->|read-only role| B[FortiCNAPP]
+    A -.->|Lab 3<br/>config + CloudTrail + agentless| B
+    C[EC2 instances] -.->|Labs 4 and 5<br/>agent| B
+    D[Source code] -.->|Labs 7 and 8<br/>IaC and SCA scans| B
+    B --> E[Findings, compliance, alerts]
+```
 
-## Prerequisites
+Three sources feed one platform. Labs 1 to 5 cover the cloud and the workloads. Labs 6 to 8
+cover the code. Lab 9 takes it all away again.
 
-- AWS account with administrator access (a disposable workshop account)
-- FortiCNAPP console access, tenant **FORTINETAPACDEMO**
-- A browser. The core path needs no CLI and no local tooling.
+## Three ways to connect an AWS account
+
+FortiCNAPP gives you a choice. This workshop uses the first one.
+
+| Method | How it works | Use it when |
+|---|---|---|
+| **Automated configuration** | You give FortiCNAPP short-lived credentials. It builds everything for you. | Default. Fastest, and what the console recommends. |
+| CloudFormation | You launch a stack per integration and set the parameters yourself. | You want to read the template before anything is created. |
+| Terraform | You take the code and run it yourself. | The customer wants onboarding in a pipeline, reviewed in a pull request. |
+
+Same end state in all three. Automated configuration is the least typing, so the workshop
+uses it and Labs 10 and 11 show the Terraform route for comparison.
+
+> Coming from the <a href="https://github.com/andrewbearsley/forticnapp-workshop-aws-integration" target="_blank">CloudFormation version of this workshop</a>?
+> Labs 2 and 3 there become a single wizard here.
 
 ## Core path
 
-Work through these in order. Allow about three hours.
+| Lab | What you do | Why it matters |
+|---|---|---|
+| [1](lab-01/README.md) | Explore a populated console | See the destination before you build it |
+| [2](lab-02/README.md) | Get temporary AWS credentials | FortiCNAPP needs permission to build, briefly |
+| [3](lab-03/README.md) | Onboard the account | Config, CloudTrail and agentless in one pass |
+| [4](lab-04/README.md) | Install the Linux agent | Continuous visibility, not periodic snapshots |
+| [5](lab-05/README.md) | Install the Windows agent | Same idea, different OS |
+| [6](lab-06/README.md) | Install the Lacework CLI | Needed by Labs 7 and 8 |
+| [7](lab-07/README.md) | Scan Terraform for misconfiguration | Catch it before it reaches AWS |
+| [8](lab-08/README.md) | Scan an app for vulnerable dependencies | Know your exposure when the next CVE lands |
+| [9](lab-09/README.md) | Clean up | Leaving cloud resources running costs money |
 
-- [Lab 1: Hands-on Cloud Security with FortiCNAPP](lab-01/README.md)
-- [Lab 2: Get Temporary AWS Credentials](lab-02/README.md)
-- [Lab 3: Onboard AWS with Automated Configuration](lab-03/README.md)
-- [Lab 4: Install Linux Agent](lab-04/README.md)
-- [Lab 5: Install Windows Agent](lab-05/README.md)
-- [Lab 6: Install the Lacework CLI](lab-06/README.md)
-- [Lab 7: Code Security for Infrastructure as Code (IaC)](lab-07/README.md)
-- [Lab 8: Code Security for Applications (SCA)](lab-08/README.md)
-- [Lab 9: Clean Up Workshop Resources](lab-09/README.md)
-
-Labs 1 to 5 cover the cloud side: onboard the account, then put agents on workloads. Lab 6
-installs the CLI, which Labs 7 and 8 need. Those two shift left into the code, scanning
-Terraform for misconfiguration and application dependencies for vulnerabilities.
-
-Everything runs in a browser and AWS CloudShell. Nothing is installed on your laptop.
-
-## Optional: advanced track
+## Optional: infrastructure as code
 
 Take these when a customer wants onboarding through a pipeline rather than a wizard.
 
@@ -60,20 +74,25 @@ Take these when a customer wants onboarding through a pipeline rather than a wiz
 - [Lab 11: Install Integrations via Terraform](lab-11/README.md)
 - [Lab 12: Scripted Cleanup of All Workshop Resources](lab-12/README.md)
 
-## Which path do I run?
+## Short on time?
 
-| Audience | Path |
+| You have | Run |
 |---|---|
-| Partner enablement, first look, short session | Labs 1 to 5, then Lab 9 to clean up |
-| Developer or DevSecOps audience | Full core path. Labs 7 and 8 are the draw. |
-| Customer running onboarding through a pipeline | Core path, then Labs 10 and 11 |
+| 90 minutes | Labs 1 to 3, then 9 |
+| Half a day | Labs 1 to 9 |
+| A developer audience | Labs 1 to 3, then 6 to 8. Labs 7 and 8 are the draw. |
+
+## Prerequisites
+
+- An AWS account you can afford to break, with administrator access
+- FortiCNAPP console access, tenant **FORTINETAPACDEMO**
+- A browser. That is all.
 
 ## Resources
 
-- <a href="https://docs.fortinet.com/product/forticnapp" target="_blank">FortiCNAPP Documentation</a>
+- <a href="https://docs.fortinet.com/product/forticnapp" target="_blank">FortiCNAPP documentation</a>
 - <a href="https://docs.fortinet.com/document/forticnapp/latest/administration-guide/123850/automated-configuration" target="_blank">Automated configuration</a>
-- <a href="https://docs.fortinet.com/document/forticnapp/latest/administration-guide/331296/obtaining-temporary-cloud-account-credentials" target="_blank">Obtaining temporary cloud account credentials</a>
 
 ## Contributing
 
-For questions or improvements, open an issue or submit a pull request.
+Questions or improvements, open an issue or a pull request.
