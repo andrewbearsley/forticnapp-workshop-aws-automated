@@ -147,24 +147,37 @@ The view opens on **Critical and High, last month**.
 
 **Checkpoint:** you have opened one alert and can say which host it refers to.
 
-### Now find a composite alert
+### What you just opened
 
-Most alerts fire on a single rule. A **composite** alert is assembled from several signals
-that only mean something together, which is why they are rare and why they are worth
-looking at when they appear.
+**Potentially Compromised Host is a composite alert.** Worth stopping on, because it is not
+a rule firing.
 
-1. Click the filter bar at the top and set **Alert category** to **Composite** only.
-2. Set the date range to the **last 6 months**. A month is not long enough to catch one.
-3. Look for **Potentially Compromised AWS Keys**.
+Most alerts are one condition being met. A composite alert is assembled from several
+signals that only mean something together. No single one of them would have been worth
+waking anyone for.
 
-**Checkpoint:** a composite alert is open, with the behaviours that triggered it visible.
+Read the description again with that in mind. A process nobody has run before. A connection
+to somewhere this host has never talked to. A file changed that never changes. Any one of
+those is a Tuesday. Together, on the same host, in the same window, they are how a
+compromise actually looks.
 
-A key used from somewhere new is odd. A key used from somewhere new, at an unusual hour, to
-list resources it has never touched, is how a stolen credential behaves. Nothing in that
-list is an alert on its own.
+> This is the polygraph from Step 5 doing its job. You cannot assemble a composite alert
+> without knowing what normal looked like first, which is what the agent in Labs 4 and 5
+> gives you.
 
-> This is the same machinery as the polygraph from Step 5, pointed at identities instead of
-> hosts, and it is why Lab 3 onboards CloudTrail.
+### Another one, if you want to see it
+
+**Potentially Compromised AWS Keys** is the identity version: the same idea, pointed at
+credentials rather than hosts. A key used from somewhere new is odd. A key used from
+somewhere new, at an unusual hour, to list resources it has never touched, is how a stolen
+credential behaves.
+
+Composite alerts are rare by design, so you have to go looking:
+
+1. Set **Alert category** to **Composite** only.
+2. Set the date range to the **last 6 months**. A month will not find one.
+
+That one comes from CloudTrail, which is why Lab 3 onboards it.
 
 There is a second inbox at **Risk Center** > **Alerts**. Threat alerts say something is
 happening. Risk alerts say something is dangerous. Worth knowing both exist.
