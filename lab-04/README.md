@@ -2,21 +2,35 @@
 
 ## Objectives
 
-Agentless scanning (Lab 3) gives you periodic snapshots, but for deeper monitoring you need the agent. In this lab, we'll launch a Linux EC2 instance and install the FortiCNAPP agent (datacollector). Once running, it collects process, network, and file activity and sends it to FortiCNAPP every hour - this is how it builds behavioural baselines and detects anomalies.
+Lab 3 turned on agentless scanning. That reads your account from the outside: it takes a
+snapshot of each disk, finds the packages and the secrets, and tells you what is
+vulnerable. It never touches the running machine.
+
+This lab installs the **agent**, which sits inside the machine and watches it work.
+
+| | Agentless, Lab 3 | Agent, this lab |
+|---|---|---|
+| Where it runs | Outside, on a copy of the disk | On the host itself |
+| What it sees | What is installed | What is actually happening: processes, connections, file changes, logins |
+| How often | Periodic snapshot | Continuously, reporting hourly |
+| To install | Nothing | One script |
+
+Neither replaces the other. Agentless tells you a host **could** be exploited. The agent
+tells you something **is** behaving strangely on it, which is what a baseline and an
+anomaly alert are built from.
+
+You will launch a Linux EC2 instance, install the agent on it, and confirm both ends agree
+it is running.
 
 ## Prerequisites
 
-- AWS account with EC2 launch permissions
+- Completed [Lab 3](../lab-03/README.md)
+- AWS account with permission to launch EC2 instances
+- FortiCNAPP console access, tenant **FORTINETAPACDEMO**
 
 ## Lab Steps
 
-### Step 1: Log into AWS Console
-
-1. Navigate to <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a>
-2. Click **Sign into console**
-3. After logging in, change to your local region (e.g., **Asia Pacific (Singapore)**) using the region selector in the top right of the AWS Console
-
-### Step 2: Create Linux EC2 Instance
+### Step 1: Create Linux EC2 Instance
 
 1. Open the **EC2** service. Check the region selector reads **Asia Pacific (Singapore)**
    before you do anything else.
@@ -64,7 +78,7 @@ Agentless scanning (Lab 3) gives you periodic snapshots, but for deeper monitori
 
 **Checkpoint:** one instance, state **Running**, and it has a public IPv4 address.
 
-### Step 3: Get Agent Installation URL from FortiCNAPP
+### Step 2: Get the Agent Install URL from FortiCNAPP
 
 1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
 2. Ensure tenant is set to **FORTINETAPACDEMO**
@@ -83,7 +97,7 @@ Agentless scanning (Lab 3) gives you periodic snapshots, but for deeper monitori
 
 **Checkpoint:** you have a URL on your clipboard that starts with `https://`.
 
-### Step 4: Connect to Linux EC2 Instance
+### Step 3: Connect to the Instance
 
 1. Go to **EC2** > **Instances**.
 2. Tick the checkbox next to `FortiCNAPP-Linux-Agent`.
@@ -96,70 +110,92 @@ Agentless scanning (Lab 3) gives you periodic snapshots, but for deeper monitori
 5. Leave **Username** as `ec2-user`, then click **Connect**.
 
    A terminal opens in the browser. No key pair, no SSH client, nothing to install.
-7. Once connected, verify system requirements:
-   - Check available memory: `free -h`
-   - Verify network connectivity: `ping -c 3 8.8.8.8`
-   - Confirm sudo access: `sudo whoami`
 
-### Step 5: Install Agent
+6. Confirm the shell can do what the installer needs:
+
+```bash
+sudo whoami        # must print: root
+ping -c 3 8.8.8.8  # the agent needs to reach the internet
+```
+
+**Checkpoint:** `sudo whoami` prints `root` and the pings come back.
+
+### Step 4: Install the Agent
 
 In the EC2 Instance Connect terminal, run the following commands:
 
-1. Download the installation script using the URL you copied in Step 3:
-```bash
-wget <paste-the-copied-url-here>
-```
+Paste the URL from Step 2 where shown. Keep the `-O install.sh`, which names the
+downloaded file for you rather than trusting whatever the URL ends in.
 
-2. Make the script executable:
 ```bash
+wget -O install.sh "<paste-the-copied-url-here>"
 chmod +x install.sh
-```
-
-3. Execute the installation script:
-```bash
 sudo ./install.sh
 ```
 
-The script will automatically install and configure the FortiCNAPP agent (datacollector) with the correct account and token.
+The URL carries your agent token, so the script installs and registers the agent in one
+go. There is nothing to configure afterwards.
 
-### Step 6: Verify Agent Installation
+> **Pasting into the browser terminal.** Use **Ctrl+V** (**Cmd+V** on a Mac). If the paste
+> arrives empty, your clipboard did not survive the tab switch. Go back to Step 2 and click
+> **Copy URL** again.
 
-1. Check the agent status using the datacollector binary:
+### Step 5: Verify on the Host
+
+Ask the agent how it is doing:
+
 ```bash
 sudo /var/lib/lacework/datacollector -status
 ```
 
-This will return JSON output showing the agent status (e.g., `{"Version":2,"Datacollector":{"Status":"ACTIVE",...}}`). A status of "ACTIVE" indicates the agent is running and connected.
+It answers in JSON. The field that matters is `Status`:
 
-2. Check for agent logs:
+```json
+{"Version":2,"Datacollector":{"Status":"ACTIVE", ...}}
+```
+
+`ACTIVE` means it is running and talking to FortiCNAPP.
+
+To watch it work:
+
 ```bash
 ls -la /var/log/lacework/
-```
-
-3. Tail the agent log to see real-time activity:
-```bash
 sudo tail -f /var/log/lacework/datacollector.log
 ```
-Press `Ctrl+C` to stop tailing the log.
 
-### Step 7: Verify Agent in FortiCNAPP
+`Ctrl+C` stops the tail.
 
-Once the agent checks in (up to 1 hour), you can verify it appears in FortiCNAPP.
+**Checkpoint:** `Status` reads `ACTIVE`.
+
+### Step 6: Verify in FortiCNAPP
+
+> **The agent reports hourly, so it will not appear straight away.** That is expected, not a
+> failure. Carry on to Lab 5 and come back to this step later in the session.
 
 In the console, go to **Inventory** and look for the host by its instance ID.
 
-If you took [Lab 6](../lab-06/README.md) and have the Lacework CLI configured in CloudShell, you can also check from the command line:
+Once you have done [Lab 6](../lab-06/README.md) you can ask the same question from
+CloudShell instead:
 
 ```bash
 lacework agent list
 ```
 
-Look for your Linux instance hostname in the output. If you don't see it yet, the agent hasn't completed its first check-in - try again later.
+Look for your instance hostname. Nothing there yet means the first check-in has not landed.
 
-**Note:** The local `datacollector -status` check (Step 6) confirms the agent is running on the instance. The `lacework agent list` command confirms FortiCNAPP has received the agent's check-in.
+> **The two checks answer different questions.** `datacollector -status` on the host says
+> the agent is running. `lacework agent list` says FortiCNAPP has heard from it. You can
+> have the first without the second, and that gap is almost always a security group or a
+> route, not the agent.
 
 ## What did we do here?
 
-We installed the FortiCNAPP agent (datacollector) on a Linux EC2 instance. The agent monitors the host - processes, network connections, file changes, user activity - and sends that data to FortiCNAPP every hour to build a behavioural baseline.
+One script, and the host now reports what it is doing rather than only what is installed
+on it.
 
-This is the agent-based approach to workload security. Unlike the agentless scanning from Lab 3 (which takes periodic snapshots), the agent collects data continuously and reports hourly. It's how FortiCNAPP detects anomalies like unexpected processes, suspicious network connections, or lateral movement.
+That is the whole difference. Agentless found the vulnerable package. The agent is what
+notices the package being exploited: a process that has never run before, a connection to
+somewhere this host has never talked to, a login at the wrong hour. You cannot alert on
+behaviour you are not watching.
+
+Lab 5 does the same for Windows, where the install differs enough to be worth doing once.
