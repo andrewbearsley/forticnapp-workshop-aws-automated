@@ -8,6 +8,7 @@ In Lab 3, FortiCNAPP deployed the integrations for you from the console wizard. 
 
 - Completed [Lab 10: Install Terraform](../lab-10/README.md)
 
+> [!TIP]
 > **Shortcut worth knowing.** If you already onboarded with automated configuration in
 > Lab 3, you can download the Terraform FortiCNAPP generated instead of generating your
 > own. Go to **Settings** > **Integrations** > **Cloud accounts** > **Deployment History**,

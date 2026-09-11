@@ -12,6 +12,7 @@ in the console.
 
 - Your email address added to the FortiCNAPP demo environment
 
+> [!IMPORTANT]
 > Lab 1 takes you through a **read-only demo tenant**, populated with vulnerable
 > applications with signs of compromise. From Lab 3 onward you work in
 > **FORTINETAPACDEMO**, where you onboard your own AWS account. Watch the tenant name at

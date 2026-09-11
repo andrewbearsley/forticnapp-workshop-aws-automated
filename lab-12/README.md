@@ -2,7 +2,8 @@
 
 This lab provides a cleanup script that removes every workshop resource, on both the FortiCNAPP side and the AWS side.
 
-> **Warning**: this script assumes a disposable workshop AWS account. It sweeps every enabled region and removes all EC2 instances, key pairs and non-default security groups in the account, not only the ones the workshop created, along with every FortiCNAPP integration pointing at that AWS account. Do not run it in an account that hosts anything you want to keep.
+> [!CAUTION]
+> This script assumes a disposable workshop AWS account. It sweeps every enabled region and removes all EC2 instances, key pairs and non-default security groups in the account, not only the ones the workshop created, along with every FortiCNAPP integration pointing at that AWS account. Do not run it in an account that hosts anything you want to keep.
 
 ## Why both sides need cleaning
 

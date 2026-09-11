@@ -32,17 +32,18 @@ with your credentials already loaded.
 
 ![AWS Console Home, with the region selector and both CloudShell buttons highlighted](images/aws-console-cloudshell.png)
 
-CloudShell opens as a panel across the bottom. First launch takes a minute.
-
-![CloudShell panel open at a prompt, with the region tab showing ap-southeast-1](images/aws-cloudshell-open.png)
+CloudShell opens as a panel across the bottom. First launch takes a minute, and the panel
+stays black until it is ready.
 
 ### Who are you?
+
+At the `~ $` prompt:
 
 ```bash
 aws sts get-caller-identity --query Arn --output text
 ```
 
-![CloudShell showing the ARN returned by get-caller-identity](images/aws-cloudshell-whoami.png)
+![CloudShell open at the bottom of the console, showing the ARN returned by get-caller-identity](images/aws-cloudshell-whoami.png)
 
 Read the ARN it prints:
 
@@ -132,9 +133,11 @@ by tabs, and the session token is long enough that you cannot tell where it star
 To copy a value, select it with the mouse and press **Cmd+C**, or **Ctrl+Shift+C** on
 Windows and Linux. Select from the start of the value to the end of the line, not the label.
 
+> [!CAUTION]
 > **Paste these into the Lab 3 wizard only.** Not into chat, not into a shared document,
 > and take care if your screen is being shared. They are live credentials for an hour.
 
+> [!IMPORTANT]
 > **Do not raise `--duration-seconds` above 3600.** CloudShell may already be running as a
 > role session. AWS caps role chaining at one hour.
 

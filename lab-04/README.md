@@ -61,12 +61,13 @@ it is running.
 7. **Network settings**: leave them alone. The wizard creates a security group called
    `launch-wizard-1` allowing SSH from anywhere, which is what Instance Connect needs.
 
-   > **This is the step that breaks the lab.** Do not switch to **Select existing security
-   > group** and pick the VPC's `default` group. That one only allows traffic between
-   > resources that share it, so Instance Connect cannot reach your instance and you get a
-   > timeout with no useful error.
-
 ![Network settings with Create security group selected](images/aws-ec2-network-settings.png)
+
+> [!WARNING]
+> **This is the step that breaks the lab.** Do not switch to **Select existing security
+> group** and pick the VPC's `default` group. That one only allows traffic between
+> resources that share it, so Instance Connect cannot reach your instance and you get a
+> timeout with no useful error.
 
 8. **Configure storage**: leave the default, 8 GiB gp3.
 

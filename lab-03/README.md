@@ -38,6 +38,7 @@ Work through the screens, then wait five to ten minutes while it builds.
 
 1. Log into the FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
 2. Confirm the tenant selector at the bottom left shows **FORTINETAPACDEMO**.
+> [!IMPORTANT]
 > **This is a different tenant to Lab 1.** Lab 1 ran in `FORTIDEMO-2026-04`. From here on
 > you work in `FORTINETAPACDEMO`, because that is where you onboard your own account. If
 > your screen looks unexpectedly empty, check the tenant name first.
@@ -129,6 +130,7 @@ Select the integration types to deploy.
 
 Select **Configuration**, **CloudTrail** and **Agentless Workload Scanning**.
 
+> [!WARNING]
 > **Skip CloudTrail if your AWS account is a member of an AWS Organization that has an
 > organization trail**, which most corporate accounts are. Discovery fails on it. See the
 > troubleshooting section below.

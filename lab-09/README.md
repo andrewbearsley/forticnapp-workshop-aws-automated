@@ -39,6 +39,7 @@ applied, for example:
 > All cloud resources are tagged with `lacework_tag: self-deployment` and
 > `lacework_integration: aws_config`
 
+> [!WARNING]
 > **Read the tag values from this screen, and search on the tag key.** The values are not
 > stable. The administration guide documents `lacework_tag: self-deployment` and
 > `lacework_integration: configuration`. A 2026 deployment record shows
@@ -87,6 +88,7 @@ VPC, subnet, route table, internet gateway and security group in every scanned r
 **Checkpoint:** both tag searches come back empty, or return only the resources listed
 under "a tag search will still return a few resources" at the end of this lab.
 
+> [!IMPORTANT]
 > **Order matters.** Empty an S3 bucket before deleting it. Delete resources that depend on
 > an IAM role before the role. A KMS key can only be scheduled for deletion, minimum seven
 > days.

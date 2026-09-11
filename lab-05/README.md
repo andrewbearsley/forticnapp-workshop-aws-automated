@@ -53,8 +53,9 @@ Same wizard as Lab 4. What differs: the image, and the key pair.
 6. **Network settings**: leave them alone. The wizard creates a `launch-wizard-N` group
    allowing RDP from anywhere.
 
-   > As in Lab 4, do not switch to **Select existing security group** and pick `default`.
-   > Your RDP client will not reach the instance.
+> [!WARNING]
+> As in Lab 4, do not switch to **Select existing security group** and pick `default`.
+> Your RDP client will not reach the instance.
 
 7. **Configure storage**: leave the default, 30 GiB gp3.
 

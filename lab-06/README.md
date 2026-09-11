@@ -67,6 +67,7 @@ An existing service user **AWS Lab** has been pre-configured with the necessary 
 
 7. Open the JSON file. You need four values from it.
 
+> [!CAUTION]
 > **This file is a live credential.** It can read your tenant. Do not paste it into chat,
 > a shared document, or a ticket, and delete it when the workshop ends. Lab 9 revokes the
 > key itself.
@@ -129,6 +130,7 @@ for one now:
 lacework compliance aws scan
 ```
 
+> [!WARNING]
 > **Your instructor runs this one, once. Do not all run it.**
 >
 > This command behaves unlike anything else in the lab:
