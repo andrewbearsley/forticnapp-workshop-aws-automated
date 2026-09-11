@@ -1,313 +1,180 @@
-# Lab 1: Hands-on Cloud Security with FortiCNAPP
+# Lab 1: What FortiCNAPP Sees
 
 ## Objectives
 
-Before we start integrating anything, let's get familiar with what FortiCNAPP actually does. We'll explore the console end-to-end - discovery, threat detection, risk analysis, code security, and governance - using a pre-configured demo environment with real data. By the end of this lab, you'll understand what FortiCNAPP gives you and why the integrations in the following labs matter.
+Before you connect anything, look at an environment that is already connected and full of
+real findings. Five questions, in the order you would actually ask them on your first day
+owning a cloud estate.
+
+By the end you will know what the later labs are building towards, and roughly where
+things live in the console.
 
 ## Prerequisites
 
-- Email address added to the FortiCNAPP demo environment
+- Your email address added to the FortiCNAPP demo environment
 
-## Lab Steps
+> **This lab uses a different tenant to the rest of the workshop.** Lab 1 runs in
+> **FORTIDEMO-2026-04**, which is full of demo data. From Lab 3 onward you work in
+> **FORTINETAPACDEMO**, where you onboard your own AWS account. Watch the tenant name at
+> the bottom of the left navigation.
 
-### Step 1: Access FortiCNAPP Console
+## Step 1: Sign in and pick the tenant
 
-> How do we access the FortiCNAPP demo environment and select the appropriate tenant?
+1. Go to <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
+2. Enter your email address and click **Get sign in link**.
+3. Open the link from your email.
+4. If an onboarding wizard appears, choose **Go to platform**.
+5. At the **bottom of the left navigation**, click the account name and select
+   **FORTIDEMO-2026-04**.
 
-1. Navigate to <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
-2. Enter your email address
-3. Click **Get sign in link**
+![Tenant selector at the bottom of the left navigation, showing FORTIDEMO-2026-04 and FORTINETAPACDEMO](images/forticnapp-tenant-selector.png)
 
-![FortiCNAPP login page with email field highlighted](images/forticnapp-login.png)
+**Checkpoint:** the bottom of the left navigation reads `FORTIDEMO-2026-04`.
 
-4. Check your email and click the sign-in link
-5. If you see an onboarding wizard, skip it and select **Go to platform**
-6. Select the **FORTIDEMO-2026-04** tenant from the bottom of the navigation drawer
+## Step 2: Turn off email notifications
 
-![FortiCNAPP tenant selector at the bottom of the navigation drawer](images/forticnapp-choose-tenant.png)
+Do this now, before you go any further. This tenant is noisy, and by default it will email
+you about it.
 
-7. Review the main dashboard
+1. Go to **Settings** > **My profile**.
+2. Turn **off** **Default email notification**.
+3. Turn **off** **Receive monthly updates from FortiCNAPP**.
 
-#### What did we do here?
+![My profile preferences with Default email notification and monthly updates turned off](images/forticnapp-email-notifications.png)
 
-We logged into the FortiCNAPP demo environment and selected the FORTIDEMO-2026-04 tenant. This tenant has existing cloud integrations and data, so we can explore real security findings without waiting for data to populate.
+These are **your** preferences only. You are not changing anything for anyone else in the
+tenant.
 
-### Step 2: Explore Discovery Features
+> Repeat this in **Lab 3**, the first time you enter FORTINETAPACDEMO. The setting is per
+> tenant.
 
-> What exists in our cloud environment, and what should we worry about first?
+## Step 3: How bad is it?
 
-FortiCNAPP's Discovery features provide visibility into cloud resources, their relationships, and their risk context.
+Go to **Dashboard**.
 
-#### Resource Inventory
+Three numbers tell you where you stand. Everything else in the console is a way of drilling
+into one of them.
 
-> What cloud resources do we have, and which ones are riskiest?
+![Dashboard showing threat alerts, non-compliant resources and exposed fixable hosts](images/forticnapp-dashboard.png)
 
-Resource Inventory shows all cloud resources across accounts with vulnerability counts, misconfigurations, and risk context to prioritize remediation.
+| Widget | What it counts | Which lab creates it |
+|---|---|---|
+| **Threat alert overview** | Something is happening that looks like an attack | Lab 3, CloudTrail and agentless |
+| **Non-compliant resources** | Configuration that fails a benchmark | Lab 3, configuration |
+| **Exposed Fixable Hosts** | Internet-reachable hosts with a patchable vulnerability | Labs 3 to 5 |
 
-1. Navigate to **Discovery** > **Resource Inventory** in the left navigation panel
-2. Filter by **Resource Type = ec2:instance** using the filter dropdown
-3. Sort the table by **Vulnerabilities** (click the Vulnerabilities column header or use the "Sort: Vulnerabilities" option)
-4. Review the table to identify which EC2 instances have the highest number of vulnerabilities
+**Checkpoint:** you can read a number off each of the three widgets.
 
-![Resource Inventory filtered by EC2 instances and sorted by vulnerabilities](images/forticnapp-resource-inventory.png)
+> Worth pausing on **Exposed Fixable Hosts**. Not "hosts with vulnerabilities", which is
+> every host. Exposed, and fixable. That is the list you would actually work through on a
+> Monday morning.
 
-#### Explorer
+## Step 4: What have I got?
 
-> How do our cloud resources relate to each other, and where are the toxic combinations?
+Go to **Inventory** > **Resource Inventory**.
 
-Explorer lets you build custom queries and visualize relationships between resources, identities, and attack paths.
+![Resource Inventory listing cloud resources with alerts, compliance violations and attack paths](images/forticnapp-resource-inventory.png)
 
-1. Navigate to **Discovery** > **Explorer** in the left navigation panel
-2. Click **Build your own query**
-3. In the query builder, ensure **SHOW** is set to **Hosts**
-4. Click **+ Add clause**
-5. Add a **WHERE** clause: **Internet Exposed** = **true**
-6. Click **Search** to execute the query
+1. Look at the total resource count at the top.
+2. Scroll the table. Note the **Alerts**, **Compliance violations** and **Attack Paths**
+   columns beside each resource.
+3. Use **Show more** to filter, for example by resource type.
 
-![Explorer query builder showing SHOW Hosts with WHERE clause](images/forticnapp-explorer-query.png)
+**Checkpoint:** you can see a resource with a non-zero number in at least one of those
+three columns.
 
-7. Review the results to see hosts that are internet exposed
-8. For one or more hosts in the results, click **Graph** to visualize relationships
-9. Explore the graph view to understand how these hosts connect to other resources, identities, and potential attack vectors
+Nobody typed this inventory in. FortiCNAPP asked AWS what exists. In a data centre you know
+what is in the rack because you put it there; in a cloud account, anyone with credentials
+can create something at three in the morning. Asking the provider is the only way to know.
 
-![Explorer graph view showing host relationships and attack vectors](images/forticnapp-explorer-graph.png)
+## Step 5: What is happening right now?
 
-10. For a host in the results, review its details. How many vulnerabilities are actually active?
+Go to **Threat Center** > **Alerts**.
 
-#### Search
+![Threat Alerts filtered to high severity, showing compromised hosts and privileged containers](images/forticnapp-threat-alerts.png)
 
-> What is a specific application doing? What does it talk to? How much CPU and memory does it use?
+1. Open one alert titled **Potentially Compromised Host**.
+2. Read the description and the affected resource.
+3. Go back and look at **Threat Center** > **Cloud Activity**, which is the CloudTrail
+   record of who did what in the account.
 
-Search provides instant lookup of any known asset, showing its connections, processes, and resource consumption.
+**Checkpoint:** you have opened one alert and can say which host it refers to.
 
-1. Click the **Search** icon in the left navigation panel
-2. Search for **datacollector** (this is the FortiCNAPP agent application)
+Alerts come from behaviour, not configuration. A host reaching out to somewhere it never
+has before is a behavioural signal, and it needs the agent or CloudTrail to spot it. That is
+why Labs 3, 4 and 5 exist.
 
-![Search for datacollector in FortiCNAPP](images/forticnapp-search-query.png)
+## Step 6: What do I fix first?
 
-3. In the search results, click on **datacollector**
-4. Review the application details to investigate what datacollector is doing in the cloud environment:
-   - What network connections is it making?
-   - What processes is it running?
-   - How is it consuming resources?
-5. Answer the following questions:
-   - What is the datacollector memory usage trend?
-   - What is the CPU usage percentage?
+You have thousands of findings and a finite Tuesday. Two views help you choose.
 
-![Datacollector application details showing memory and CPU usage](images/forticnapp-search-datacollector.png)
+### Attack Path
 
-#### What did we do here?
+Go to **Risk Center** > **Findings** > **Attack Path**.
 
-We used three different ways to answer the question "what's in my environment?" Resource Inventory gave us a prioritized list of EC2 instances sorted by vulnerability count, so we know which ones to fix first. Explorer let us build a custom query to find internet-exposed hosts and then visualize how they connect to other resources - this is how you spot toxic combinations like an internet-facing host with exposed secrets. Search let us quickly look up a specific application and see exactly what it's doing - connections, processes, CPU, memory.
+![Attack Path showing top risky hosts, container images, exposed secrets and data assets](images/forticnapp-attack-path.png)
 
-The key takeaway: FortiCNAPP doesn't just list your resources. It gives you the context to understand which ones are actually risky.
+Attack Path only lists combinations that are genuinely reachable and genuinely damaging: a
+vulnerable host that is internet-facing **and** holds credentials to something valuable.
 
-### Step 3: Explore Threat Center Features
+**Checkpoint:** find the entry under **Top risky paths with exposed secrets**. That is a
+private key sitting on a reachable host.
 
-> Something happened in our environment - how do we investigate and respond?
+One vulnerability on an isolated box is a ticket. The same vulnerability on an
+internet-facing box with a key to the database is an incident. Attack Path is how you tell
+the two apart.
 
-Threat Center surfaces security incidents with timelines, severity, and behavioral analysis.
+### Compliance
 
-#### Alerts
+Go to **Risk Center** > **Findings** > **Compliance** > **Cloud**.
 
-> How do we know when something suspicious happens, and what do we do about it?
+![Cloud Compliance dashboard showing frameworks including CIS, ISO 27001, NIST CSF and SOC 2](images/forticnapp-cloud-compliance.png)
 
-Alerts notify you of security incidents with severity, timeline of events, and AI-assisted triage to guide response.
+1. Look at the framework list: CIS, ISO/IEC 27001, NIST CSF, SOC 2 and others.
+2. Pick a framework and open it to see which policies fail and on which resources.
 
-1. Navigate to **Threat Center** > **Alerts** in the left navigation panel
-2. Filter by **past 6 months** using the date range selector
-3. Filter for **Composite** alerts using the alert category filter
+**Checkpoint:** you can name one framework and the number of non-compliant resources
+against it.
 
-![Alerts page filtered by Composite alerts](images/forticnapp-alerts.png)
+The same underlying findings, scored against whichever standard your auditor cares about.
+You do not re-scan for each one.
 
-4. Open the **Potentially Compromised AWS Keys** alert
-5. Click on the **Observations** tab to see the timeline of events
-6. Review the observations table to understand the sequence of activities and how an attacker might have progressed through our environment
+## Step 7: Could I have caught it earlier?
 
-![Potentially Compromised AWS Keys alert with Observations tab](images/forticnapp-compromised-aws-keys.png)
+Go to **Risk Center** > **Findings** > **Code Security**.
 
-7. In **AI Assist**, click **Triage** to understand the alert
+**Infrastructure (IaC)** scans the Terraform and CloudFormation that builds the
+infrastructure.
 
-#### Workloads - Hosts
+![IaC assessments listing repositories with critical, high, medium and low findings](images/forticnapp-iac-findings.png)
 
-> What's running on our hosts and what does normal look like?
+**Applications** scans what your code depends on.
 
-The Hosts dashboard builds an hourly baseline of process and network activity, making it easy to spot anomalies.
+![Application vulnerabilities listing CVEs in third party libraries](images/forticnapp-app-vulnerabilities.png)
 
-1. Navigate to **Threat Center** > **Workloads** > **Hosts** in the left navigation panel
-2. Scroll down to view the polygraph visualization
-3. Review the polygraph, which is an hourly map of process and network activity in the cloud environment
-4. Click on the timeline at the bottom to explore different periods in time
-5. Scroll down to understand what is running in the environment
+**Checkpoint:** find a Log4j CVE in the Applications list. You already know that one.
 
-![Workloads Hosts polygraph visualization](images/forticnapp-workload-hosts.png)
+Everything up to this point finds problems that are already running. This finds them in the
+code, before they exist in AWS. You do both in Labs 7 and 8.
 
-#### Workloads - Kubernetes
+## Optional: ask your own question
 
-> What's happening inside our Kubernetes clusters?
+**Explorer** builds a visual query across resources and their relationships.
+**Search** runs a text query across everything FortiCNAPP holds.
 
-The Kubernetes dashboard shows pod, container, and network activity across namespaces and clusters.
+Both are worth five minutes if you have them. Neither is needed for the later labs.
 
-1. Navigate to **Threat Center** > **Workloads** > **Kubernetes** in the left navigation panel
-2. Click on the **Pod Network** tab to see process activity within the Kubernetes cluster
+## What did we do here?
 
-![Workloads Kubernetes resources view](images/forticnapp-workload-kubernetes.png)
+We went from "how bad is it" to "how would I have prevented it", which is the same path you
+walk during a real incident.
 
-#### What did we do here?
+Hold on to the shape, because the rest of the workshop fills it in:
 
-We investigated a real security incident - compromised AWS keys - and walked through the timeline of how an attacker progressed through the environment. AI Assist triaged the alert so we didn't have to piece it together manually.
+| Question | You built it in |
+|---|---|
+| What have I got, and is it compliant | Lab 3 |
+| What is happening on my workloads | Labs 4 and 5 |
+| Could I have caught it in code | Labs 7 and 8 |
 
-We also explored the Hosts polygraph, which is FortiCNAPP's hourly map of what's running across your environment. This is how it learns what "normal" looks like, so it can flag when something changes. Same idea for Kubernetes - visibility into pod and network activity across clusters.
-
-### Step 4: Explore Risk Center Features
-
-> Where are the biggest risks in our environment, and what should we fix first?
-
-Risk Center analyzes attack paths, compliance, identities, vulnerabilities, and code security.
-
-#### Attack Path
-
-> How could an attacker move through our environment?
-
-Attack path analysis correlates vulnerabilities, network exposure, secrets, and IAM permissions to show exploitable paths to critical assets.
-
-1. Navigate to **Risk Center** > **Attack Path** > **Top Work Items** in the left navigation panel
-
-![Attack Path Top Work Items](images/forticnapp-attack-paths.png)
-
-2. In the **Top risky paths with exposed secrets** section, select an entry from the table
-3. Click **View Attack Path** in the **Action** column
-
-![Attack path investigation showing exposure polygraph](images/forticnapp-attack-path-investigation.png)
-
-4. Investigate the attack path and answer the following questions:
-   - What secret is exposed on the EC2 instance?
-   - What compliance violations are present?
-5. Review the security group configuration:
-   - Scroll down to the security group to view details
-   - Navigate to the **Configuration** tab
-   - Review the **Inbound Rules** section
-   - What inbound rules have open ports?
-6. Review the exposed identity:
-   - Scroll down to the identity section in the attack path
-   - What does the exposed identity have access to do?
-
-#### Compliance
-
-> Are we meeting security frameworks like CIS, PCI DSS, and HIPAA?
-
-Cloud compliance provides daily assessments against industry benchmarks, showing compliant and non-compliant resources.
-
-1. Navigate to **Risk Center** > **Compliance** > **Cloud** in the left navigation panel
-
-![Cloud compliance dashboard showing frameworks](images/forticnapp-cloud-compliance.png)
-
-2. Click on **CIS Amazon Web Services Foundations Benchmark v4.0.1** framework
-3. Click the filter icon under **By section**
-4. Filter by **non-compliant resources**
-
-![CIS Benchmark compliance filter showing non-compliant policies](images/forticnapp-compliance-filter.png)
-
-5. Click into the policy **Ensure that S3 is configured with 'Block Public Access' enabled**
-6. Review the policy details. How many S3 buckets are non-compliant?
-7. Click **View context** to understand the policy context
-
-![S3 Block Public Access policy showing non-compliant resources](images/forticnapp-compliance-policy-noncompliant.png)
-
-#### Identities
-
-> Which identities have excessive permissions?
-
-Identities compares granted vs. used entitlements to help enforce least privilege across cloud users, roles, and groups.
-
-1. Navigate to **Risk Center** > **Identities** in the left navigation panel
-2. Select the **Top identity risks** tab
-3. Choose an identity from the list
-4. Click **Investigate** to view identity details
-5. Review the **Granted vs. used entitlements** chart. How many granted vs used entitlements are shown?
-
-![Top identity risks with identity details](images/forticnapp-identities.png)
-
-#### Vulnerabilities
-
-> We have thousands of vulnerabilities - which ones actually matter?
-
-Vulnerabilities shows findings across hosts and containers, with active package detection to prioritize what's actually running.
-
-1. Navigate to **Risk Center** > **Vulnerabilities** > **Vulnerabilities[New]** in the left navigation panel
-2. Click **Explore: Hosts**
-3. Review the list. How many hosts are vulnerable?
-
-![Vulnerabilities Explore Hosts view](images/forticnapp-vulnerabilities.png)
-
-4. Click **Filter**
-5. Add a clause: **Package** > **Package status** = **Active**
-6. Scroll to the bottom and click **Search**
-7. Review the list again. How many hosts are vulnerable with active packages?
-
-#### Code Security
-
-> Are there misconfigurations or secrets in our code before we deploy?
-
-Code Security scans Infrastructure as Code and application source for misconfigurations, vulnerabilities, and hard-coded secrets.
-
-1. Navigate to **Risk Center** > **Code Security** > **Infrastructure (IaC)** in the left navigation panel
-2. Choose a repository from the list
-3. Review the latest assessment
-
-![IaC assessment showing repository violations by severity](images/forticnapp-iac-assessment.png)
-
-4. Navigate to **Risk Center** > **Code Security** > **Applications** in the left navigation panel
-5. Select the **Vulnerabilities: Hard-coded secrets** tab
-
-![Applications security showing hard-coded secrets](images/forticnapp-app-security.png)
-
-6. Click on **Aws Credentials**
-7. Find the code where the access key has been published
-
-#### What did we do here?
-
-We looked at risk from five different angles. Attack path showed us how an attacker could chain together an exposed secret, an open security group, and an over-permissioned identity to reach critical assets. Compliance told us which S3 buckets aren't meeting CIS benchmarks. Identities revealed which roles have far more permissions than they actually use - prime targets for least-privilege cleanup.
-
-For vulnerabilities, we filtered by active packages. This is a big deal: instead of drowning in thousands of CVEs, we focused on the ones where the vulnerable package is actually running. That's the difference between a theoretical risk and a real one.
-
-Finally, Code Security found hard-coded AWS credentials published in application source code - the kind of thing that leads to the compromised keys alert we investigated earlier.
-
-### Step 5: Explore Governance Features
-
-> What rules govern what FortiCNAPP detects?
-
-Governance manages the built-in and custom policies that drive risk detection and threat alerts. Policies define the rules FortiCNAPP uses to detect risks and threats, and can be customized or extended with custom policies.
-
-1. Navigate to **Governance** > **Policies** in the left navigation panel
-
-![Policy catalog showing compliance policies](images/forticnapp-policies.png)
-
-2. Review policies in the **Compliance** tab
-3. Review policies in the **Threats** tab
-4. Review policies in the **Vulnerabilities: Build time** tab (Build and Runtime)
-5. Review policies in the **Anomalies** tab
-
-#### What did we do here?
-
-We reviewed the policies that drive everything we've seen so far. Every policy-based activity alert and compliance violation is backed by a policy. These can be customised, enabled, disabled, or extended with custom policies - so you control exactly what gets flagged in your environment.
-
-### Step 6: Configure Settings
-
-> How can we configure user settings?
-
-#### Change Tenant
-
-1. Select the **FORTINETAPACDEMO** tenant from the bottom of the navigation drawer
-
-#### My Settings
-
-1. Select **Settings** > **My profile** in the Settings navigation panel
-2. Disable the default email notification
-
-![My profile settings page](images/forticnapp-user-settings.png)
-
-#### What did we do here?
-
-We switched to the FORTINETAPACDEMO tenant, which is where we'll do the hands-on integration work in the remaining labs. We also disabled the default email notifications so the demo environment doesn't flood your inbox.
-
+Next: [Lab 2: Get Temporary AWS Credentials](../lab-02/README.md).
