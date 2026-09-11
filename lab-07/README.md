@@ -2,26 +2,44 @@
 
 ## Objectives
 
-The best time to catch a misconfigured security group or unencrypted S3 bucket is before it gets deployed - not after it's running in production. In this lab, we'll scan Terraform code for security issues using FortiCNAPP's IaC scanner. This is shift-left security: finding misconfigurations in code so they never reach AWS.
+Labs 3 to 5 found problems in a **running** account. This lab finds them in the Terraform
+that would have created it, before anything exists.
+
+That is the whole idea behind shift left. A public S3 bucket found in production is an
+incident with a clock on it. The same bucket found in a pull request is a two-line change
+nobody outside the team hears about.
+
+The scanner reads Terraform, CloudFormation and the other IaC formats, and checks them
+against the same policies FortiCNAPP uses on live resources.
 
 ## Prerequisites
 
-- Completed [Lab 6: Install the Lacework CLI](../lab-06/README.md)
-- Lacework CLI configured with FortiCNAPP credentials
-- AWS CloudShell access
+- Completed [Lab 6](../lab-06/README.md), with the CLI working in CloudShell
 
 ## Lab Steps
 
-### Step 1: Open AWS CloudShell
+You should still be in CloudShell from Lab 6. If it timed out, reopen it and run
+`source ~/.bashrc` to put the CLI back on your PATH.
 
-1. Log into AWS Console at <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a>
-2. Change to your local region (e.g., **Asia Pacific (Singapore)**) using the region selector in the top right
-3. Click the **CloudShell** icon in the top navigation bar
-4. Wait for CloudShell to initialize
+### Step 1: Install the IaC Scanner
 
-### Step 2: Clone the Example Repository
+The CLI ships small and pulls in what it needs:
 
-Clone the repository containing Terraform code with intentional security issues:
+```bash
+lacework component install iac
+```
+
+Already installed from a previous run? Update it instead:
+
+```bash
+lacework component update iac
+```
+
+**Checkpoint:** the command finishes without an error.
+
+### Step 2: Get Some Code to Scan
+
+This repository is deliberately full of bad Terraform:
 
 ```bash
 cd ~
@@ -29,75 +47,51 @@ git clone https://github.com/andrewbearsley/lacework-iac-scan-example.git
 cd lacework-iac-scan-example/example-terraform
 ```
 
-This repository contains Terraform configurations with various security issues that FortiCNAPP can detect.
-
-### Step 3: Verify Lacework CLI Configuration
-
-Ensure your Lacework CLI is still configured:
-
-```bash
-lacework version
-```
-
-If you need to reconfigure, run:
-
-```bash
-lacework configure
-```
-
-### Step 4: Install the IaC Component
-
-Install the Lacework IaC scanning component:
-
-```bash
-lacework component install iac
-```
-
-This installs the Infrastructure as Code scanner that can analyze Terraform, CloudFormation, and other IaC formats.
-
-### Step 5: Update the IaC Component (Optional)
-
-If the component is already installed, update it to ensure you have the latest version:
-
-```bash
-lacework component update iac
-```
-
-### Step 6: Scan the Terraform Code
-
-Run the IaC scan on the current directory:
+### Step 3: Scan It
 
 ```bash
 lacework iac scan
 ```
 
-This will:
-- Analyze the Terraform files in the current directory
-- Detect security misconfigurations and vulnerabilities
-- Upload the scan results to FortiCNAPP (controlled by `--upload`, default `true`)
-- Display findings in the terminal
+It reads every Terraform file below the current directory, checks each against policy, and
+prints what failed. Uploading to the platform is on by default, controlled by `--upload`.
 
-> **Note:** The CLI uploads results to the FortiCNAPP platform, but they will not appear in **Risk Center > Code Security > Infrastructure (IaC) > Assessments** unless the repository is onboarded via **Code Security > Add integration** (GitHub/GitLab/Bitbucket connector) or the scan runs from a registered CI/CD pipeline. A CLI scan from CloudShell or a developer laptop alone won't surface in this view - this lab focuses on demonstrating the scanner locally.
+### Step 4: Read the Output
 
-### Step 7: Review Scan Results
+You will get a lot of findings. Do not try to read them all. Work through these three
+questions instead:
 
-The scan output will show:
-- Total number of findings
-- Policy IDs and severity levels (Critical, High, Medium, Low)
-- File paths and line numbers where issues are found
-- Whether each finding passed or failed
-- Upload reference for viewing results in the FortiCNAPP console
+1. **How many are Critical or High?** That is the number a customer will react to.
+2. **What kinds of problem are they?** Group them in your head: encryption off, access too
+   open, logging missing. Most estates repeat the same few mistakes.
+3. **Which file is the worst?** One module usually accounts for a large share, which is
+   where you would start.
 
-Review the findings and note:
-- How many critical and high severity issues were found
-- What types of security issues are present (encryption, access controls, networking, etc.)
-- Which files contain the most security issues
+Each finding gives you a policy ID, a severity, and a **file and line number**. That last
+part is what makes this useful: it points a developer at the exact line, in their own
+editor, in their own language.
+
+**Checkpoint:** you can name the single most common category of finding in this repo.
+
+> **Why your scan does not show up in the console.** Look under **Risk Center** >
+> **Findings** > **Code Security** > **IaC** and you will not find it. That is expected. A
+> CLI scan from CloudShell has no repository behind it.
+>
+> The **Assessments** view fills up when a repository is onboarded through
+> **Code Security** > **Add integration** (GitHub, GitLab or Bitbucket), or when the scan
+> runs inside a registered CI/CD pipeline. That is the real deployment shape, and this lab
+> is the scanner on its own so you can see what it does.
 
 ## What did we do here?
 
-We shifted security left by scanning Terraform code before it gets deployed. The IaC scanner analysed the example repository and found over 100 security issues - things like unencrypted storage, overly permissive security groups, and missing access controls.
+We ran the platform's policies against code instead of against cloud.
 
-The point is to catch these misconfigurations in code, not in production. If this were part of a CI/CD pipeline, those findings would show up as pull request comments before the code ever reaches AWS. Fix it in the code, not after the breach.
+Same checks, different moment. The scanner found well over a hundred issues in a repo that
+would have deployed perfectly happily, and it named the file and line for each one.
+
+Wired into a pipeline, these findings arrive as comments on a pull request, before the plan
+is ever applied. The fix costs a developer five minutes instead of costing you an incident
+review.
 
 ## Additional Resources
 
