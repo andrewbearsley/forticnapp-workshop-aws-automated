@@ -132,11 +132,9 @@ completes, Task 3 asks for per-integration settings.
 
 ![Agentless Workload Scanning tab with the scanning regions selector](images/forticnapp-configure-agentless-regions.png)
 
-> **Advanced options** on the Configuration tab holds a **Use an existing IAM role** toggle.
-> Use it when a customer already has a Lacework cross-account role they want to keep.
-> Automated configuration does not detect an existing role on its own.
-
-![Configuration tab advanced options showing the use an existing IAM role toggle](images/forticnapp-configure-advanced.png)
+> The same **Advanced options** panel holds a **Use an existing IAM role** toggle, shown in
+> the screenshot above. Use it when a customer already has a Lacework cross-account role
+> they want to keep. Automated configuration does not detect an existing role on its own.
 
 ### Step 5: Review and Deploy (Step 4 of 4)
 
@@ -146,7 +144,7 @@ resources it can reuse rather than duplicate.
 
 1. Review the discovery summary.
 2. Expand an integration if you want to change its settings before deploying.
-3. Click **Integrate**.
+3. Click **Deploy**.
 
 ![Review and Deploy step showing account overview, scanning regions and configuration](images/forticnapp-review-deploy.png)
 

@@ -9,7 +9,9 @@ Usage:
     annotate.py IMAGE "Cloud accounts" "Next"
     annotate.py IMAGE "Alerts@2"          # second match, top to bottom
     annotate.py IMAGE "Alerts:x<180"      # only matches left of x=180
+    annotate.py IMAGE "Simulate IAM permissions<32"   # widen left to take in the toggle
     annotate.py IMAGE --no-numbers "Next"
+    annotate.py IMAGE "#1497,719,1550,746"   # literal box, for what OCR cannot read
 
 Writes in place. Keep the source capture, this is destructive.
 """
@@ -28,6 +30,7 @@ FONTS = [
 
 
 SCALE = 3  # tesseract wants roughly 300 DPI; console captures are about 96
+MARGIN = 10  # tesseract drops text that touches the edge, such as a Next button
 
 
 def _tsv(img, tag):
@@ -46,8 +49,8 @@ def _tsv(img, tag):
         rows.append(
             {
                 "text": f[11].strip(),
-                "left": int(f[6]) // SCALE,
-                "top": int(f[7]) // SCALE,
+                "left": int(f[6]) // SCALE - MARGIN,
+                "top": int(f[7]) // SCALE - MARGIN,
                 "w": int(f[8]) // SCALE,
                 "h": int(f[9]) // SCALE,
                 "line": (tag,) + tuple(f[2:5]),
@@ -60,13 +63,16 @@ def ocr_words(path):
     """OCR upscaled, then again inverted.
 
     Upscaling fixes small console type. The inverted pass reads white text on
-    the blue Next and Deploy buttons, which the normal pass misses.
+    the blue Next and Deploy buttons, which the normal pass misses. The margin
+    keeps a button sitting on the bottom edge from being dropped.
     """
     from PIL import ImageOps
 
     im = Image.open(path).convert("RGB")
     big = im.resize((im.width * SCALE, im.height * SCALE), Image.LANCZOS)
-    return _tsv(big, "n") + _tsv(ImageOps.invert(big), "i")
+    normal = ImageOps.expand(big, MARGIN * SCALE, fill="white")
+    inverted = ImageOps.expand(ImageOps.invert(big), MARGIN * SCALE, fill="black")
+    return _tsv(normal, "n") + _tsv(inverted, "i")
 
 
 OPS = {
@@ -114,6 +120,19 @@ def find(words, phrase, constraint, occurrence):
     return hits[occurrence - 1] if occurrence <= len(hits) else None
 
 
+def badge(draw, rect, n, font, scale):
+    """Number the box, diagonally off its top-left corner.
+
+    Off the corner rather than on it, so the badge never covers the label it
+    points at or the row that label sits in.
+    """
+    r = int(13 * scale)
+    cx = max(r + 1, rect[0] - r)
+    cy = max(r + 1, rect[1] - r)
+    draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=PINK)
+    draw.text((cx, cy), str(n), fill="white", font=font, anchor="mm")
+
+
 def load_font(size):
     for p in FONTS:
         try:
@@ -139,10 +158,24 @@ def main():
     missing = []
 
     for n, spec in enumerate(targets, 1):
+        if spec.startswith("#"):
+            # Literal box. Some console buttons, notably white text on the blue
+            # Next, defeat tesseract at every psm and threshold we tried.
+            rect = tuple(int(v) for v in spec[1:].split(","))
+            draw.rounded_rectangle(rect, radius=5, outline=PINK, width=WIDTH)
+            if numbers and len(targets) > 1:
+                badge(draw, rect, n, font, scale)
+            continue
+
         constraint = None
         occurrence = 1
+        grow = 0
         if ":" in spec:
             spec, constraint = spec.split(":", 1)
+        if m := re.search(r"<(\d+)$", spec):
+            # Widen left to enclose the row's own radio, checkbox or toggle, so
+            # the box covers the whole click target and the badge clears it.
+            grow, spec = int(m.group(1)), spec[: m.start()]
         if m := re.search(r"@(\d+)$", spec):
             occurrence, spec = int(m.group(1)), spec[: m.start()]
 
@@ -152,17 +185,11 @@ def main():
             continue
 
         x0, y0, x1, y1 = box
-        rect = (x0 - PAD, y0 - PAD, x1 + PAD, y1 + PAD)
+        rect = (x0 - PAD - grow, y0 - PAD, x1 + PAD, y1 + PAD)
         draw.rounded_rectangle(rect, radius=5, outline=PINK, width=WIDTH)
 
         if numbers and len(targets) > 1:
-            r = int(13 * scale)
-            # Diagonally off the top-left corner, so the badge never sits over
-            # the boxed label or the row it belongs to.
-            cx = max(r + 1, rect[0] - r)
-            cy = max(r + 1, rect[1] - r)
-            draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=PINK)
-            draw.text((cx, cy), str(n), fill="white", font=font, anchor="mm")
+            badge(draw, rect, n, font, scale)
 
     im.save(path)
     print(f"{path}: {len(targets) - len(missing)}/{len(targets)} boxed")
