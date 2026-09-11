@@ -51,10 +51,11 @@ An existing service user **AWS Lab** has been pre-configured with the necessary 
 
 1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
 2. Ensure tenant is set to **FORTINETAPACDEMO**
-3. Navigate to **Settings** > **Configuration** > **API keys**
-4. Click on the **Service user API keys** tab
-5. Find the API key for the **AWS Lab** service user
-6. Click on the ellipsis (three dots) next to the API key and select **Download** to download the key as JSON
+3. Navigate to **Settings** > **API keys**
+4. Click the **Service user API keys** tab. The **User API keys** tab next to it is a
+   different thing, and its keys will not work here.
+5. Type `AWS Lab` in the search box
+6. Click the ellipsis (three dots) on that row, then **Download**. The key arrives as JSON.
 
 ![API keys page showing Service user API keys with Download option](images/forticnapp-download-api-key.png)
 

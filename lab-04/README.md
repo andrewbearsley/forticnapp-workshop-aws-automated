@@ -47,15 +47,20 @@ Agentless scanning (Lab 3) gives you periodic snapshots, but for deeper monitori
 
 1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
 2. Ensure tenant is set to **FORTINETAPACDEMO**
-3. Navigate to **Settings** > **Configuration** > **Agent tokens**
-4. Find the **AWS Lab - Linux** agent token in the list
-5. Click the **Actions** ellipsis (three dots) for the token
-6. Select **Install**
-7. In the installation panel, expand **Lacework Script (recommended)**
-8. Click **Copy URL** to copy the installation script URL
-9. Keep this URL ready - you'll use it in the next step
+3. Navigate to **Settings** > **Agent tokens**
+4. Type `AWS Lab - Linux` in the search box. There are dozens of tokens on this tenant, so
+   searching beats scrolling.
+5. Click the **Actions** ellipsis (three dots) on that row, then **Install**
 
-![Agent tokens page showing Install panel with Copy URL button](images/forticnapp-agent-install-url.png)
+![Agent tokens filtered to AWS Lab - Linux, with the Actions menu open on Install](images/forticnapp-agent-token-actions.png)
+
+6. **Lacework Script** is already expanded. Click **Copy URL**.
+
+   Copy the URL, not the script. The install command in the next step fetches it.
+
+![Install panel with the Lacework Script section expanded and Copy URL highlighted](images/forticnapp-agent-install-url.png)
+
+**Checkpoint:** you have a URL on your clipboard that starts with `https://`.
 
 ### Step 4: Connect to Linux EC2 Instance
 

@@ -86,18 +86,22 @@ Most enterprise environments run a mix of Linux and Windows. In this lab, we'll 
 
 1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
 2. Ensure tenant is set to **FORTINETAPACDEMO**
-3. Navigate to **Settings** > **Configuration** > **Agent tokens**
-4. Find the **AWS Lab - Windows** agent token in the list
-5. Click the **Actions** ellipsis (three dots) for the token
-6. Select **Install**
+3. Navigate to **Settings** > **Agent tokens**
+4. Type `AWS Lab - Windows` in the search box. Take care to pick the Windows token, not the
+   Linux one from Lab 4.
+5. Click the **Actions** ellipsis (three dots) on that row, then **Install**
 
-![Agent tokens page showing Install panel with Copy URL button](images/forticnapp-agent-install-url.png)
+![Agent tokens filtered to AWS Lab - Windows, with the Actions menu open on Install](images/forticnapp-agent-token-actions.png)
 
-7. In the installation panel:
-   - Expand **Lacework PowerShell Script (recommended)** section
-   - Click **Copy URL** to copy the PowerShell script ZIP URL (for downloading the script)
-   - Expand **MSI Package** section
-   - Click **Copy URL** to copy the MSI package URL (you'll need this for the MSIURL parameter)
+6. The Windows panel offers different packages to the Linux one. You need two URLs from it:
+
+![Install panel showing Lacework Powershell Script, MSI Package, ARM Template and Packer for AWS](images/forticnapp-agent-install-url.png)
+
+   - **Lacework Powershell Script** is already expanded. Click **Copy URL** and keep it.
+   - Expand **MSI Package** and click its **Copy URL**. This one becomes the `MSIURL`
+     parameter later.
+
+**Checkpoint:** you have two URLs, and you know which is which.
    - **Important**: Also copy the **Access Token** value shown in the installation panel (you'll need this for the AccessToken parameter)
 8. Keep the PowerShell script URL, MSI URL, and Access Token ready - you'll use them in the next step
 

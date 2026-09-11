@@ -28,7 +28,11 @@ FortiCNAPP estimates **5 to 10 minutes** for the deployment.
 1. Log into the FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
 2. Confirm the tenant selector at the bottom left shows **FORTINETAPACDEMO**.
 3. Navigate to **Settings** > **Integrations** > **Cloud accounts**.
-4. Click **Add New**.
+4. Click **Add New**, top right.
+
+![Cloud accounts page with the Add New button highlighted](images/forticnapp-cloud-accounts-add-new.png)
+
+**Checkpoint:** the Integrate cloud account wizard opens on Step 1 of 4.
 
 ### Step 2: Select the Method (Step 1 of 4)
 
