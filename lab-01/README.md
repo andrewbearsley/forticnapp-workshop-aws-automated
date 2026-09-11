@@ -5,8 +5,8 @@
 Before you connect anything, look at an environment that is already connected and full of
 real findings.
 
-By the end you will know what the later labs are building towards, and roughly where
-things live in the console.
+By the end you will know what the later labs build towards. And roughly where things live
+in the console.
 
 ## Prerequisites
 
@@ -102,8 +102,7 @@ separately.
 
 ## Step 5: What have I got?
 
-What exists is one question. What it actually does is another, and they have separate
-views.
+What exists is one question. What it actually does is another. Separate views for each.
 
 ### What exists
 
@@ -158,8 +157,7 @@ looking at when they appear.
 2. Set the date range to the **last 6 months**. A month is not long enough to catch one.
 3. Look for **Potentially Compromised AWS Keys**.
 
-**Checkpoint:** you have a composite alert open, and you can say what combination of
-behaviour triggered it.
+**Checkpoint:** a composite alert is open, with the behaviours that triggered it visible.
 
 A key used from somewhere new is odd. A key used from somewhere new, at an unusual hour, to
 list resources it has never touched, is the shape of a stolen credential. Nothing in that
@@ -236,8 +234,7 @@ Click the top identity and read the **Risks** panel on the right.
 **Checkpoint:** find an identity that allows full admin, and check its **Last used time**.
 
 A role that can do everything and has never been used is the cheapest fix in cloud
-security. Nothing breaks when you remove it, and it is one less thing for an attacker to
-find. Identity is usually the shortest path from a foothold to real damage.
+security. Nothing breaks when you remove it. One less thing for an attacker to find. Identity is usually the shortest path from a foothold to real damage.
 
 ## Step 10: What do I fix first: vulnerabilities
 
@@ -255,7 +252,7 @@ The widgets answer different questions:
 **Checkpoint:** find a package where one **Fix version** clears several CVEs at once.
 
 The second widget is the one to work from. Patching by CVE is endless. Patching by package
-is finite, and the **Fix version** column tells you exactly where to get to.
+is finite. The **Fix version** column tells you exactly where to get to.
 
 ## Step 11: Could I have caught it earlier?
 

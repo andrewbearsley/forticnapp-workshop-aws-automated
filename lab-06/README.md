@@ -59,7 +59,7 @@ An existing service user **AWS Lab** has been pre-configured with the necessary 
 2. Ensure tenant is set to **FORTINETAPACDEMO**
 3. Navigate to **Settings** > **Configuration** > **API keys**
 4. Click the **Service user API keys** tab. The **User API keys** tab next to it is a
-   different thing, and its keys will not work here.
+   different thing. Its keys will not work here.
 5. Type `AWS Lab` in the search box
 6. Click the ellipsis (three dots) on that row, then **Download**. The key arrives as JSON.
 
@@ -142,8 +142,8 @@ lacework compliance aws scan
 > In a room this size that means one scan happens and everyone benefits. Forty of you
 > typing it changes nothing.
 
-So treat this as something you have now **seen**, and will use on a customer tenant where
-you are the only one driving. Do not expect fresh compliance data to land before the
+So treat this as something you have now **seen**. You will use it on a customer tenant,
+where you are the only one driving. Do not expect fresh compliance data to land before the
 session ends.
 
 **Checkpoint:** you understand why this is the one command in the workshop you should not
@@ -159,4 +159,4 @@ onboarding into a pipeline, and answer questions that have no console page. Labs
 take that straight into source code.
 
 The scan command is also a fair warning about shared tenants. Some operations are
-tenant-wide and serialised, and they do not tell you when they are ignoring you.
+tenant-wide and serialised. They do not tell you when they are ignoring you.

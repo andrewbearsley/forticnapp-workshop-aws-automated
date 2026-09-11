@@ -95,7 +95,7 @@ under "a tag search will still return a few resources" at the end of this lab.
 
 ## Route B: Terraform destroy
 
-Better, and the only route that removes both sides at once. The bundle FortiCNAPP gives you
+Better. The only route that removes both sides at once. The bundle FortiCNAPP gives you
 contains **full Terraform state**, including the FortiCNAPP integration itself, so
 `terraform destroy` deregisters the integration and deletes the AWS resources in one pass.
 
@@ -134,8 +134,8 @@ terraform destroy \
 ```
 
 Read the plan before you apply it. It should list the AWS resources **and** a
-`lacework_integration_*` resource. That last one is the integration record, and it is why
-this route cannot leave an orphan.
+`lacework_integration_*` resource. That last one is the integration record. It is why this
+route cannot leave an orphan.
 
 **Checkpoint:** `terraform destroy` ends with `Destroy complete!` and a resource count.
 
@@ -285,9 +285,9 @@ aws events list-rules --region <region> \
 We removed both sides of the workshop: the integration records in FortiCNAPP and the
 resources in AWS.
 
-Route A teaches you where the seams are. FortiCNAPP creates the integration record, and
-Terraform creates the AWS resources, and the console only deletes the first of those. That
-is the gap orphaned resources fall through.
+Route A teaches you where the seams are. FortiCNAPP creates the integration record.
+Terraform creates the AWS resources. Delete from the console and only the first of those
+goes, which is the gap orphaned resources fall through.
 
 Route B closes the gap, because the state file spans both. Worth knowing for a customer:
 the Terraform bundle on the deployment record is a complete workspace, state included, so

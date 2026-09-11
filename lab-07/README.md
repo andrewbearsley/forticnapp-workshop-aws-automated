@@ -79,15 +79,15 @@ editor, in their own language.
 >
 > The **Assessments** view fills up when a repository is onboarded through
 > **Code Security** > **Add integration** (GitHub, GitLab or Bitbucket), or when the scan
-> runs inside a registered CI/CD pipeline. That is the real deployment shape, and this lab
-> is the scanner on its own so you can see what it does.
+> runs inside a registered CI/CD pipeline. That is the real deployment shape. This lab is
+> the scanner on its own, so you can see what it does.
 
 ## What did we do here?
 
 We ran the platform's policies against code instead of against cloud.
 
 Same checks, different moment. The scanner found well over a hundred issues in a repo that
-would have deployed perfectly happily, and it named the file and line for each one.
+would have deployed perfectly happily. It named the file and the line for every one.
 
 Wired into a pipeline, these findings arrive as comments on a pull request, before the plan
 is ever applied. The fix costs a developer five minutes instead of costing you an incident

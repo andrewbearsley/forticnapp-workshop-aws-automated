@@ -3,7 +3,7 @@
 ## Objectives
 
 Lab 7 scanned the code that builds your infrastructure. This lab scans the application that
-runs on it, and it asks a different question: **what did you inherit?**
+runs on it. Different question: **what did you inherit?**
 
 Modern applications are mostly other people's code. A team writes a few thousand lines and
 imports a few hundred thousand. Software Composition Analysis reads what you pulled in and

@@ -328,8 +328,8 @@ Worth knowing when a partner or customer asks.
 
 FortiCNAPP analyses data **inside** your cloud account. File contents and resource
 contents never leave your network. Only assessment results are sent to the FortiCNAPP
-platform, and those results are stored as JSON files in a single storage bucket in your
-own account. You can read them and see exactly what you are sending.
+platform. Those results are stored as JSON files in a single storage bucket in your own
+account. You can read them and see exactly what you are sending.
 
 Source: the Authorization Guide panel in the wizard, "Data privacy and security".
 

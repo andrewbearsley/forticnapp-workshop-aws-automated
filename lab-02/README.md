@@ -108,7 +108,7 @@ To copy from CloudShell, select the text and use **Actions** > **Copy**.
 > and take care if your screen is being shared. They are live credentials for an hour.
 
 > **Do not raise `--duration-seconds` above 3600.** CloudShell may already be running as a
-> role session, and AWS caps role chaining at one hour.
+> role session. AWS caps role chaining at one hour.
 
 ---
 
@@ -147,6 +147,6 @@ We issued a short-lived credential and nothing else.
 This is the step that makes automated configuration safe to use on a customer account. The
 CloudFormation path never asks for a credential, because you launch each stack yourself,
 and it costs you two console walk-throughs. Here you trade one bounded hour of access for
-a wizard that does the work, and you get a preflight permission check in return.
+a wizard that does the work, plus a preflight permission check you would not otherwise get.
 
 Next: [Lab 3: Onboard AWS with Automated Configuration](../lab-03/README.md).

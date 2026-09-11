@@ -185,8 +185,8 @@ Look for your instance hostname. Nothing there yet means the first check-in has 
 
 > **The two checks answer different questions.** `datacollector -status` on the host says
 > the agent is running. `lacework agent list` says FortiCNAPP has heard from it. You can
-> have the first without the second, and that gap is almost always a security group or a
-> route, not the agent.
+> have the first without the second. That gap is almost always a security group or a route,
+> not the agent.
 
 ## What did we do here?
 

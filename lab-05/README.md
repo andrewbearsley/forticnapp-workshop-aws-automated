@@ -32,7 +32,7 @@ Same wizard as Lab 4. What differs: the image, and the key pair.
 2. **Name**: `FortiCNAPP-Windows-Agent`
 
 3. **Application and OS Images**: click the **Windows** tile. The AMI becomes
-   **Microsoft Windows Server 2025 Base**, and storage jumps to 30 GiB on its own.
+   **Microsoft Windows Server 2025 Base**. Storage jumps to 30 GiB on its own.
 
 ![Launch an instance page with the Windows tile selected](images/aws-ec2-launch-details.png)
 
@@ -81,8 +81,8 @@ Same wizard as Lab 4. What differs: the image, and the key pair.
    - **Mac**: right-click and open with **Windows App**
 
    > **If it does not connect, turn off FortiSASE and try again.** FortiSASE blocks RDP by
-   > default, and so do most corporate VPN and secure-access agents. This is the single
-   > most common reason this step fails, and it is nothing to do with AWS or the instance.
+   > default. So do most corporate VPN and secure-access agents. This is the commonest
+   > reason this step fails, and it has nothing to do with AWS or the instance.
 
 8. Username is `Administrator`, capital A. Paste the password.
 9. A certificate warning is normal on an EC2 instance. Continue past it.
@@ -127,10 +127,10 @@ Do this in your **own** browser, not inside the RDP session.
 | MSI URL | Expand **MSI Package**, then its **Copy URL** | `-MSIURL` |
 | Access token | Shown in the same panel | `-AccessToken` |
 
-Paste all three somewhere you can get at them from inside the RDP session. A text file on
-the Windows desktop is easiest, and RDP copy and paste is unreliable.
+Paste all three somewhere you can get at them from inside the RDP session. RDP copy and
+paste is unreliable, so a text file on the Windows desktop is easiest.
 
-**Checkpoint:** three values, and you know which is which.
+**Checkpoint:** three values, each one labelled so you know which is which.
 
 ### Step 4: Install the Agent
 
