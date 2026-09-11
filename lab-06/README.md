@@ -57,7 +57,7 @@ An existing service user **AWS Lab** has been pre-configured with the necessary 
 
 1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
 2. Ensure tenant is set to **FORTINETAPACDEMO**
-3. Navigate to **Settings** > **API keys**
+3. Navigate to **Settings** > **Configuration** > **API keys**
 4. Click the **Service user API keys** tab. The **User API keys** tab next to it is a
    different thing, and its keys will not work here.
 5. Type `AWS Lab` in the search box

@@ -158,9 +158,13 @@ CloudShell keeps your home directory for 120 days, so the key outlives the works
 In CloudShell:
 
 ```bash
-rm -f ~/.lacework.toml ~/*.json
+rm -f ~/.lacework.toml
+rm -f ~/*-api-key.json          # the file you downloaded in Lab 6
 rm -rf ~/bin/lacework ~/.config/lacework
 ```
+
+Check the second line matches before you run it. `rm ~/*.json` would take anything else you
+had in there.
 
 Then in FortiCNAPP, revoke the key so it cannot be used even if a copy escaped:
 
@@ -194,7 +198,7 @@ own.
 ## Verify
 
 1. In FortiCNAPP, confirm your AWS account no longer appears under **Cloud accounts**.
-2. In FortiCNAPP, confirm the Lab 6 API key is gone from **Settings** > **API keys**.
+2. In FortiCNAPP, confirm the Lab 6 API key is gone from **Settings** > **Configuration** > **API keys**.
 3. Confirm both EC2 instances show **terminated**.
 4. In AWS, check that nothing is still running:
 
@@ -228,6 +232,23 @@ aws ecs describe-clusters --clusters <name> --query 'clusters[0].status' --outpu
 
 None of these are running or scanning. The one to watch is the KMS key, which carries a
 small monthly charge until its deletion date passes.
+
+## What did we do here?
+
+We took it all down, and that turned out to be the harder half.
+
+Worth carrying out of the room: **deleting an integration in the console does not delete
+anything in AWS.** It removes the record, and the roles, buckets, queues and scheduled
+triggers carry on. We found an agentless deployment in a Fortinet account still firing
+every hour eighteen months after its integration was deleted. Its CloudTrail bucket held
+over 800,000 objects.
+
+That is why Route B matters beyond this lab. The Terraform bundle owns both sides, so one
+`destroy` removes the AWS resources and the integration record together and cannot leave
+the orphan behind.
+
+When you onboard a customer, agree the teardown at the same time. It is a much easier
+conversation before anything is deployed.
 
 ## Why this lab matters more than it looks
 

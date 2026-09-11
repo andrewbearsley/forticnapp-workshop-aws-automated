@@ -109,7 +109,7 @@ Work down this list. The first two are far more common than anything else.
 Do this in your **own** browser, not inside the RDP session.
 
 1. In the FortiCNAPP console, confirm the tenant reads **FORTINETAPACDEMO**.
-2. Go to **Settings** > **Agent tokens**.
+2. Go to **Settings** > **Configuration** > **Agent tokens**.
 3. Search `AWS Lab - Windows`. Take care to pick the Windows token, not the Linux one from
    Lab 4.
 4. Click the **Actions** ellipsis on that row, then **Install**.
