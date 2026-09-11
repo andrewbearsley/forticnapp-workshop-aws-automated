@@ -97,7 +97,7 @@ then the host. That red line **is** the exposure, drawn as the actual chain of A
 resources that permits it. Hanging underneath are the host's vulnerabilities, compliance
 violations and alerts.
 
-The whole story on one screen, including why those findings matter together rather than
+Everything on one screen, including why those findings matter together rather than
 separately.
 
 ## Step 5: What have I got?
@@ -160,7 +160,7 @@ looking at when they appear.
 **Checkpoint:** a composite alert is open, with the behaviours that triggered it visible.
 
 A key used from somewhere new is odd. A key used from somewhere new, at an unusual hour, to
-list resources it has never touched, is the shape of a stolen credential. Nothing in that
+list resources it has never touched, is how a stolen credential behaves. Nothing in that
 list is an alert on its own.
 
 > This is the same machinery as the polygraph from Step 5, pointed at identities instead of
@@ -277,7 +277,7 @@ code, before they exist in AWS. You do both in Labs 7 and 8.
 We went from "how bad is it" to "how would I have prevented it", which is the same path you
 walk during a real incident.
 
-Hold on to the shape, because the rest of the workshop fills it in:
+Hold on to those questions, because the rest of the workshop answers them:
 
 | Question | You built it in |
 |---|---|

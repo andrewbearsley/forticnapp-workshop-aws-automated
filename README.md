@@ -18,8 +18,8 @@ workload it becomes:
 | **Code security** | Would this have been a problem before it ever deployed? |
 
 FortiCNAPP correlates across all four rather than alerting on each in isolation. That is
-what lets it surface zero-day activity and compromised credentials from behaviour, rather
-than from a signature, and raise far fewer alerts doing it.
+what lets it catch zero-day activity and compromised credentials from behaviour rather
+than from a signature, while raising far fewer alerts.
 
 The practical effect is fewer people chasing noise: cloud architects see what to fix and
 in what order, risk teams get compliance evidence without asking for it, and threat teams

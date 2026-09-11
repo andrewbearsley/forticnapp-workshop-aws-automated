@@ -79,8 +79,8 @@ editor, in their own language.
 >
 > The **Assessments** view fills up when a repository is onboarded through
 > **Code Security** > **Add integration** (GitHub, GitLab or Bitbucket), or when the scan
-> runs inside a registered CI/CD pipeline. That is the real deployment shape. This lab is
-> the scanner on its own, so you can see what it does.
+> runs inside a registered CI/CD pipeline. That is how it runs for real. This lab is the
+> scanner on its own, so you can see what it does.
 
 ## What did we do here?
 

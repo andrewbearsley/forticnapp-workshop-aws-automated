@@ -103,8 +103,8 @@ directly imports. That gap is the point of the exercise.
 
 We inventoried what the application actually contains, rather than what its authors wrote.
 
-The vulnerability count matters less than the shape of it: most of the risk arrives through
-dependencies nobody chose deliberately. That is why an SBOM is worth generating before you
+The vulnerability count matters less than where it comes from: most of the risk arrives
+through dependencies nobody chose deliberately. That is why an SBOM is worth generating before you
 need it. The day a Log4j-scale CVE is announced, the teams that can answer "are we affected"
 in minutes are the ones that already had the parts list.
 
