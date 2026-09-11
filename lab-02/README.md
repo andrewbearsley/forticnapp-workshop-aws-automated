@@ -21,22 +21,44 @@ find it.
 
 Not a preference. It depends on how you signed in to AWS.
 
-Run this in **AWS CloudShell** (the `>_` icon in the AWS console toolbar):
+Ask AWS who you are. You do that in **CloudShell**, a Linux terminal built into the console
+with your credentials already loaded.
+
+### Opening CloudShell
+
+1. Check the **region selector** reads **Asia Pacific (Singapore)**.
+2. Click the **`>_`** icon in the top bar. **CloudShell** at the bottom left does the same
+   thing.
+
+![AWS Console Home, with the region selector and both CloudShell buttons highlighted](images/aws-console-cloudshell.png)
+
+CloudShell opens as a panel across the bottom. First launch takes a minute.
+
+![CloudShell panel open at a prompt, with the region tab showing ap-southeast-1](images/aws-cloudshell-open.png)
+
+### Who are you?
 
 ```bash
 aws sts get-caller-identity --query Arn --output text
 ```
 
-| Your ARN looks like | You are | Go to |
+![CloudShell showing the ARN returned by get-caller-identity](images/aws-cloudshell-whoami.png)
+
+Read the ARN it prints:
+
+| If it says | You are | Go to |
 |---|---|---|
-| `arn:aws:sts::<id>:assumed-role/AWSReservedSSO_...` | Signed in through Identity Center | **Method A** |
 | `arn:aws:iam::<id>:user/<name>` | A plain IAM user, which is the lab setup | **Method B** |
+| `arn:aws:sts::<id>:assumed-role/AWSReservedSSO_...` | Signed in through Identity Center | **Method A** |
 
 **Checkpoint:** you know which of the two methods you are following.
 
 ---
 
 ## Method A: AWS IAM Identity Center
+
+This is the Fortinet staff path. You will not be in CloudShell for it, the values come
+straight out of the access portal.
 
 1. Open your AWS access portal.
 2. Go to the **Accounts** tab and select the account you want to integrate.
@@ -100,9 +122,15 @@ read -r AK SK ST < <(aws sts assume-role \
 printf '\n=== Access key ID ===\n%s\n\n=== Secret access key ===\n%s\n\n=== Session token ===\n%s\n\n' "$AK" "$SK" "$ST"
 ```
 
+The `printf` exists only to label the output. Without it AWS returns three values separated
+by tabs, and the session token is long enough that you cannot tell where it starts.
+
+![CloudShell showing three labelled credential blocks, values blacked out](images/aws-cloudshell-credentials.png)
+
 **Checkpoint:** three labelled blocks print, and the access key ID starts with `ASIA`.
 
-To copy from CloudShell, select the text and use **Actions** > **Copy**.
+To copy a value, select it with the mouse and press **Cmd+C**, or **Ctrl+Shift+C** on
+Windows and Linux. Select from the start of the value to the end of the line, not the label.
 
 > **Paste these into the Lab 3 wizard only.** Not into chat, not into a shared document,
 > and take care if your screen is being shared. They are live credentials for an hour.

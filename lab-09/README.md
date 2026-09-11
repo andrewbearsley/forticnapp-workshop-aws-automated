@@ -115,6 +115,9 @@ integration; **the bundle is per integration**, so three integrations means thre
 
 1. Open CloudShell.
 2. Choose **Actions** > **Upload file**.
+
+![CloudShell Actions menu open, with Upload file highlighted](images/aws-cloudshell-actions.png)
+
 3. Select the `tf-files.tar.gz` you just downloaded.
 
 ### Step 3: Destroy
