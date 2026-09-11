@@ -38,13 +38,15 @@ FortiCNAPP estimates **5 to 10 minutes** for the deployment.
 
 ![FortiCNAPP Integrate cloud account wizard, Step 1 of 4 Select method, with Automated Configuration selected](images/forticnapp-select-method.png)
 
-Note two things on this screen.
+You just picked one of three ways to do the same job. The end state is identical.
 
-**Automated Configuration is marked Recommended, and it is selected by default.** This is
-now the path Fortinet steers you to. **AWS CloudFormation** is the second option, and it
-is what the other workshop uses. One radio button is the whole difference in approach.
+| Method | What you do | Pick it when |
+|---|---|---|
+| **Automated Configuration** | Hand over short-lived credentials, FortiCNAPP builds everything | Default. Least typing, and the console marks it Recommended. |
+| AWS CloudFormation | Launch a stack per integration, set the parameters yourself | You want to read the template before anything is created |
+| Other Methods | Take the Terraform and run it yourself | The customer wants onboarding in a pipeline, reviewed in a pull request |
 
-**Oracle Cloud Infrastructure** now appears alongside AWS, GCP and Azure.
+Labs 10 and 11 do the Terraform route, so you can compare the two directly.
 
 ### Step 3: Authorize (Step 2 of 4)
 

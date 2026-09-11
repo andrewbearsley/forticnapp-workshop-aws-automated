@@ -5,54 +5,17 @@ and AWS CloudShell. Nothing is installed on your laptop.
 
 Allow about three hours for Labs 1 to 9.
 
-## What FortiCNAPP actually does
-
-It watches three things, and most of the workshop is about connecting each one.
-
-**The account.** What exists in AWS, how it is configured, and what changed. FortiCNAPP
-asks AWS directly, so it sees every resource whether or not anyone told you about it. This
-is where compliance findings come from, and where CloudTrail gives you the audit trail of
-who did what.
-
-**The workloads.** What is actually running on your instances. Two ways to see it: agentless
-scanning takes a snapshot of the disk and reads it, no software installed; the agent runs on
-the box and reports processes, connections and file changes continuously.
-
-**The code.** The Terraform that builds your infrastructure, and the libraries your
-applications pull in. Catching a wide-open security group in a pull request is cheaper than
-finding it in production.
-
-If most of your background is on-premises, the useful shift is this: there is no box you
-own any more. You cannot walk to the rack. So instead of monitoring hardware, you monitor
-the **account**, by asking the cloud provider what exists and what changed. Everything else
-follows from that.
-
 ## What you are building
 
 ```mermaid
 flowchart LR
-    A[AWS account] -->|read-only role| B[FortiCNAPP]
-    A -.->|Lab 3<br/>config + CloudTrail + agentless| B
-    C[EC2 instances] -.->|Labs 4 and 5<br/>agent| B
-    D[Source code] -.->|Labs 7 and 8<br/>IaC and SCA scans| B
+    A[AWS account] -.->|Lab 3| B[FortiCNAPP]
+    C[EC2 instances] -.->|Labs 4 and 5| B
+    D[Source code] -.->|Labs 7 and 8| B
     B --> E[Findings, compliance, alerts]
 ```
 
-Three sources feed one platform. Labs 1 to 5 cover the cloud and the workloads. Labs 6 to 8
-cover the code. Lab 9 takes it all away again.
-
-## Three ways to connect an AWS account
-
-FortiCNAPP gives you a choice. This workshop uses the first one.
-
-| Method | How it works | Use it when |
-|---|---|---|
-| **Automated configuration** | You give FortiCNAPP short-lived credentials. It builds everything for you. | Default. Fastest, and what the console recommends. |
-| CloudFormation | You launch a stack per integration and set the parameters yourself. | You want to read the template before anything is created. |
-| Terraform | You take the code and run it yourself. | The customer wants onboarding in a pipeline, reviewed in a pull request. |
-
-Same end state in all three. Automated configuration is the least typing, so the workshop
-uses it and Labs 10 and 11 show the Terraform route for comparison.
+Three sources, one platform. Each lab explains its piece when you get there.
 
 > Coming from the <a href="https://github.com/andrewbearsley/forticnapp-workshop-aws-integration" target="_blank">CloudFormation version of this workshop</a>?
 > Labs 2 and 3 there become a single wizard here.
