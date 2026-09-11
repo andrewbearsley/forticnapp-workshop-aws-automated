@@ -17,9 +17,9 @@ flowchart LR
     D --> E[FortiCNAPP builds<br/>roles, buckets, queues, trail]
 ```
 
-Four screens, then a five to ten minute wait while it builds.
+Work through the screens, then wait five to ten minutes while it builds.
 
-**Two things it is worth knowing before you start**, because both surprise people:
+**Worth knowing before you start**, because both of these catch people out:
 
 | | |
 |---|---|
@@ -216,7 +216,7 @@ You can return to this record at any time. Go to **Settings** > **Integrations**
 
 ![Deployment record showing all three integrations SUCCEEDED with Terraform files links](images/forticnapp-deployment-succeeded.png)
 
-The record holds four things worth knowing about:
+The record repays reading properly:
 
 - **Caller identity**: the exact AWS principal used to deploy. Useful when a customer asks
   who created these resources.
@@ -266,7 +266,7 @@ lacework-cloudtrail-7689faee   False   lacework-ct-bucket-7d009af2
 
 ## Troubleshooting
 
-Three situations you may hit, all seen while building this lab.
+All of these came up while building the lab.
 
 ### Discovery fails on an AWS Organization trail
 

@@ -131,7 +131,7 @@ lacework compliance aws scan
 
 > **Your instructor runs this one, once. Do not all run it.**
 >
-> Three things make this command behave unlike the rest of the lab:
+> This command behaves unlike anything else in the lab:
 >
 > - it is **tenant-wide**. There is no per-account form of it, so one person's scan covers
 >   every account integrated into this tenant, yours included

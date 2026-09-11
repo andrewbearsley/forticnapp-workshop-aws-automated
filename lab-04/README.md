@@ -190,8 +190,7 @@ Look for your instance hostname. Nothing there yet means the first check-in has 
 
 ## What did we do here?
 
-One script, and the host now reports what it is doing rather than only what is installed
-on it.
+The host now reports what it is doing, not just what is installed on it.
 
 That is the whole difference. Agentless found the vulnerable package. The agent is what
 notices the package being exploited: a process that has never run before, a connection to

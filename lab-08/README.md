@@ -63,8 +63,7 @@ lacework sca scan .
 
 ### Step 4: Read the Output
 
-Four kinds of finding come back. They are worth telling apart, because different people fix
-them:
+The findings come back in kinds worth telling apart, because different people fix them:
 
 | Finding | What it means | Who fixes it |
 |---|---|---|

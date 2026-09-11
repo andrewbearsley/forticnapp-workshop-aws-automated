@@ -51,8 +51,8 @@ tenant.
 
 Go to **Dashboard**.
 
-Three numbers tell you where you stand. Everything else in the console is a way of drilling
-into one of them.
+The widgets across the top are where you start. Everything else in the console drills into
+one of them.
 
 ![Dashboard showing threat alerts, non-compliant resources and exposed fixable hosts](images/forticnapp-dashboard.png)
 
@@ -97,11 +97,13 @@ then the host. That red line **is** the exposure, drawn as the actual chain of A
 resources that permits it. Hanging underneath are the host's vulnerabilities, compliance
 violations and alerts.
 
-One picture, four kinds of finding, and the reason they matter together.
+The whole story on one screen, including why those findings matter together rather than
+separately.
 
 ## Step 5: What have I got?
 
-Two views, because "what have I got" has two answers: what exists, and what it does.
+What exists is one question. What it actually does is another, and they have separate
+views.
 
 ### What exists
 
@@ -138,8 +140,7 @@ Go to **Threat Center** > **Alerts**.
 
 ![Threat Alerts for the last month, showing Potentially Compromised Host entries](images/forticnapp-threat-alerts.png)
 
-The view defaults to **Critical and High, last month**. Widen the date range at the top
-right if you want more.
+The view opens on **Critical and High, last month**.
 
 1. Open an alert titled **Potentially Compromised Host**.
 2. Read the description and the affected resource.
@@ -147,10 +148,25 @@ right if you want more.
 
 **Checkpoint:** you have opened one alert and can say which host it refers to.
 
-> **Look for a composite alert if one is present**, such as a potentially compromised AWS
-> identity. Composite alerts are the ones built from several signals at once rather than a
-> single rule, and they are rare by design. If there is not one in the window, widen the
-> date range.
+### Now find a composite alert
+
+Most alerts fire on a single rule. A **composite** alert is assembled from several signals
+that only mean something together, which is why they are rare and why they are worth
+looking at when they appear.
+
+1. Click the filter bar at the top and set **Alert category** to **Composite** only.
+2. Set the date range to the **last 6 months**. A month is not long enough to catch one.
+3. Look for **Potentially Compromised AWS Keys**.
+
+**Checkpoint:** you have a composite alert open, and you can say what combination of
+behaviour triggered it.
+
+A key used from somewhere new is odd. A key used from somewhere new, at an unusual hour, to
+list resources it has never touched, is the shape of a stolen credential. Nothing in that
+list is an alert on its own.
+
+> This is the same machinery as the polygraph from Step 5, pointed at identities instead of
+> hosts, and it is why Lab 3 onboards CloudTrail.
 
 There is a second inbox at **Risk Center** > **Alerts**. Threat alerts say something is
 happening. Risk alerts say something is dangerous. Worth knowing both exist.
@@ -229,7 +245,7 @@ Go to **Risk Center** > **Findings** > **Vulnerabilities**, then the **Top items
 
 ![Top vulnerabilities by impacted hosts, and top fixable packages with their fix versions](images/forticnapp-vulnerabilities.png)
 
-Two widgets, two different questions:
+The widgets answer different questions:
 
 | Widget | Answers |
 |---|---|

@@ -24,7 +24,7 @@ runs both, so it is worth doing Windows once rather than assuming it follows.
 
 ### Step 1: Create Windows EC2 Instance
 
-Same wizard as Lab 4, with two differences that matter: the image, and the key pair.
+Same wizard as Lab 4. What differs: the image, and the key pair.
 
 1. Open **EC2** and click **Launch instance**. Check the region still reads
    **Asia Pacific (Singapore)**.
@@ -156,7 +156,7 @@ Then run it, substituting the access token and MSI URL from Step 3:
 The script pulls the MSI, installs it, and registers the agent against your token. Nothing
 to configure afterwards.
 
-> **Two URLs, easily swapped.** The script URL ends in `.zip`, the MSI URL in `.msi`. Give
+> **These URLs are easily swapped.** The script URL ends in `.zip`, the MSI URL in `.msi`. Give
 > the installer them the wrong way round and it fails on a download error rather than
 > telling you they are reversed.
 

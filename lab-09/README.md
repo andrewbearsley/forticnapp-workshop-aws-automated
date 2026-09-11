@@ -54,7 +54,8 @@ Keep this page open. It is your checklist either way.
 
 ## Route A: Console and tag search
 
-No tooling required. Two jobs, because deleting the integration does not touch AWS.
+No tooling required. Deleting the integration does not touch AWS, so you clean up both
+sides by hand.
 
 ### Step 1: Delete the Integrations in FortiCNAPP
 
