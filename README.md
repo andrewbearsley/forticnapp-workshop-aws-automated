@@ -26,12 +26,20 @@ to happen. Finding the second needs all four.
 
 ```mermaid
 flowchart LR
-    CT["CloudTrail<br/>who did what"] -->|Lab 3| F
-    CFG["Config<br/>what exists, and how"] -->|Lab 3| F
-    AL["Agentless scans<br/>vulnerabilities, secrets"] -->|Lab 3| F
+    CT["AWS CloudTrail<br/>who did what"] -->|Lab 3| F
+    CFG["AWS Config<br/>what resources exist,<br/>and how they are set up"] -->|Lab 3| F
+    AL["AWS agentless scans<br/>vulnerabilities, secrets"] -->|Lab 3| F
     AG["Agent telemetry<br/>processes, connections, files"] -->|Labs 4 and 5| F
     SC["Code scans<br/>Terraform, dependencies"] -->|Labs 7 and 8| F
     F["FortiCNAPP"] --> OUT["Findings, compliance,<br/>attack paths, alerts"]
+
+    classDef source fill:#E8F1FB,stroke:#2E6DB4,stroke-width:1px,color:#10243B
+    classDef platform fill:#DA291C,stroke:#9E1B12,stroke-width:2px,color:#FFFFFF
+    classDef output fill:#E9F6EC,stroke:#2E8B57,stroke-width:1px,color:#123320
+
+    class CT,CFG,AL,AG,SC source
+    class F platform
+    class OUT output
 ```
 
 Five sources, one platform. Each lab explains its piece when you get there.
