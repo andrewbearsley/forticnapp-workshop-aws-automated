@@ -257,6 +257,8 @@ lacework-cloudtrail-7689faee   False   lacework-ct-bucket-7d009af2
 ```
 
 1. Go to **CloudTrail** > **Trails**. Confirm a trail exists and is logging.
+
+![CloudTrail Trails list showing the trail FortiCNAPP created](images/aws-cloudtrail-created.png)
 2. Go to **IAM** > **Roles**. Find the cross-account role FortiCNAPP created.
 3. Open the role and select the **Trust relationships** tab. The trusted principal is the
    FortiCNAPP AWS account, protected by an external ID.

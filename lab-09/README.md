@@ -83,6 +83,9 @@ Agentless scanning also tags its networking `LWTAG_LACEWORK_AGENTLESS`, which th
 `lacework_tag` search does **not** return. Run a second search on that key to catch the
 VPC, subnet, route table, internet gateway and security group in every scanned region.
 
+**Checkpoint:** both tag searches come back empty, or return only the resources listed
+under "a tag search will still return a few resources" at the end of this lab.
+
 > **Order matters.** Empty an S3 bucket before deleting it. Delete resources that depend on
 > an IAM role before the role. A KMS key can only be scheduled for deletion, minimum seven
 > days.
@@ -132,6 +135,8 @@ terraform destroy \
 Read the plan before you apply it. It should list the AWS resources **and** a
 `lacework_integration_*` resource. That last one is the integration record, and it is why
 this route cannot leave an orphan.
+
+**Checkpoint:** `terraform destroy` ends with `Destroy complete!` and a resource count.
 
 Repeat for each bundle. A full three-integration teardown took about four minutes in
 testing, most of it the agentless VPC and ECS cluster. Terraform prints `Still
