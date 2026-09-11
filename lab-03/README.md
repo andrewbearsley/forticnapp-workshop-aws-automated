@@ -2,18 +2,29 @@
 
 ## Objectives
 
-This is the lab that replaces two.
+This is the lab everything else depends on. You connect your AWS account to FortiCNAPP, so
+that the findings you toured in Lab 1 start appearing for **your** account.
 
-In the CloudFormation workshop, you deploy the Configuration and CloudTrail integration in
-one lab, then the Agentless Workload Scanning integration in another. Two console
-walk-throughs, two stacks, two sets of parameters to get right.
+You hand over the hour-long credential from Lab 2. FortiCNAPP then does the work: it checks
+your permissions, writes a Terraform plan for your account, applies it, and registers the
+result. You watch, you do not write any of it.
 
-Automated configuration does all of it in one four-step wizard. FortiCNAPP validates your
-permissions, generates a Terraform plan for your account, applies it, and registers the
-integrations. In this lab we'll onboard the AWS account, then look at what FortiCNAPP
-created and how it is tagged.
+```mermaid
+flowchart LR
+    A[1 Select method] --> B[2 Authorize]
+    B --> C[3 Configure]
+    C --> D[4 Review and Deploy]
+    D --> E[FortiCNAPP builds<br/>roles, buckets, queues, trail]
+```
 
-FortiCNAPP estimates **5 to 10 minutes** for the deployment.
+Four screens, then a five to ten minute wait while it builds.
+
+**Two things it is worth knowing before you start**, because both surprise people:
+
+| | |
+|---|---|
+| It creates real AWS resources | IAM roles, an S3 bucket, an SNS topic, an SQS queue, a CloudTrail trail. Lab 9 removes them. |
+| The credential expires | One hour from when you made it. If the wizard sits idle, it will fail partway. |
 
 ## Prerequisites
 
@@ -27,8 +38,19 @@ FortiCNAPP estimates **5 to 10 minutes** for the deployment.
 
 1. Log into the FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
 2. Confirm the tenant selector at the bottom left shows **FORTINETAPACDEMO**.
-3. Navigate to **Settings** > **Integrations** > **Cloud accounts**.
-4. Click **Add New**, top right.
+> **This is a different tenant to Lab 1.** Lab 1 ran in `FORTIDEMO-2026-04`. From here on
+> you work in `FORTINETAPACDEMO`, because that is where you onboard your own account. If
+> your screen looks unexpectedly empty, check the tenant name first.
+
+3. **Turn off email notifications for this tenant too.** Go to **Settings** >
+   **My profile**, then turn **off** **Default email notification** and **Receive monthly
+   updates from FortiCNAPP**.
+
+   The setting is per tenant, so switching tenants does not carry it across. Skip this and
+   your own onboarding will email you about itself for the rest of the day.
+
+4. Navigate to **Settings** > **Integrations** > **Cloud accounts**.
+5. Click **Add New**, top right.
 
 ![Cloud accounts page with the Add New button highlighted](images/forticnapp-cloud-accounts-add-new.png)
 
@@ -80,11 +102,15 @@ This screen takes the credentials from Lab 2.
 4. In **Default region**, select the region where FortiCNAPP will deploy its resources,
    for example **ap-southeast-1** for Asia Pacific (Singapore).
 
-   > **Region matters.** Set it to the region where your workloads run, or agentless
-   > scanning looks in the wrong place. This is the equivalent of the region selector step
-   > in the CloudFormation labs.
+   > **Region matters.** Set it to the region where your workloads run. Get it wrong and
+   > agentless scanning looks in an empty region, finds nothing, and reports nothing. It
+   > does not warn you.
 
 5. Click **Next**.
+
+**Checkpoint:** the wizard moves to Step 3 of 4. If it refuses, your credential is the
+problem, not the form. See the failure table at the end of
+[Lab 2](../lab-02/README.md#if-it-goes-wrong-in-lab-3).
 
 > Need the credential instructions again? Click **Open Guide** in the blue banner. The
 > Authorization Guide panel covers all three credential methods and offers the
@@ -112,8 +138,8 @@ Select **Configuration**, **CloudTrail** and **Agentless Workload Scanning**.
 
 ![Configure step showing the four integration types, each labelled with its CNAPP capability](images/forticnapp-configure-selected.png)
 
-> This one selection covers what Labs 2 and 3 of the CloudFormation workshop deploy as two
-> separate stacks.
+> **Three tick boxes, three of the four CNAPP capabilities.** Posture, threat detection and
+> vulnerability scanning, from one screen.
 
 #### Set the agentless scanning regions
 
@@ -152,9 +178,9 @@ resources it can reuse rather than duplicate.
 
 ![Review and Deploy step showing account overview, scanning regions and configuration](images/forticnapp-review-deploy.png)
 
-> **This is the step the CloudFormation path does not have.** A CloudFormation stack finds
-> out about a missing permission when it fails halfway through. Automated configuration
-> tells you before it creates anything.
+> **Nothing has been created yet.** Everything up to this point was a dry run against your
+> account. If a permission is missing, you find out here, with an empty account, rather
+> than halfway through a deployment with half the resources built.
 
 ### Step 6: Watch the Deployment
 
@@ -163,9 +189,13 @@ creates IAM roles and policies, storage, encryption keys and messaging services.
 needs logic that infrastructure provisioning cannot express, such as registering the
 integration itself, it deploys short-lived Lambda helpers and then removes them.
 
-Wait for all selected integration types to complete. Allow 5 to 10 minutes.
+Wait for all selected integration types to complete. Allow 5 to 10 minutes. This is a good
+moment to stretch.
 
 ![Live Terraform output during the deployment](images/forticnapp-deploy-progress.png)
+
+**Checkpoint:** every integration type you selected reads **SUCCEEDED**. If any reads
+**FAILED**, read the next box before you retry anything.
 
 > **Read the status per integration type.** Rollback applies to the integration type that
 > failed, not to the others. In our test run Agentless completed and stayed deployed while
