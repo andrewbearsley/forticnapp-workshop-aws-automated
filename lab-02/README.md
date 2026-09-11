@@ -2,191 +2,151 @@
 
 ## Objectives
 
-Automated configuration builds your integration for you. To do that, FortiCNAPP needs AWS
-credentials with enough permission to create IAM roles, buckets, keys and queues.
+In Lab 3, FortiCNAPP builds your integration for you: IAM roles, buckets, keys, queues, a
+CloudTrail trail. To do that it needs permission to create things in your AWS account.
 
-You do not hand over a long-lived access key. You hand over a short-lived one. In this
-lab, we'll generate temporary AWS STS credentials. FortiCNAPP uses them once to build the
-integration, then discards them and runs on the cross-account role it created.
+You are not handing over a permanent key. You are issuing a **visitor pass that expires in
+an hour**. FortiCNAPP uses it once to build the integration, then throws it away and runs
+on the read-only role it created. That role is what stays.
+
+This lab gets you that pass, so the wizard in Lab 3 does not sit waiting while you go and
+find it.
 
 ## Prerequisites
 
-- AWS account with administrator access
-- Either AWS IAM Identity Center access, or an IAM user with permission to create a role
+- An AWS account with administrator access
+- Either AWS IAM Identity Center access, or an IAM user that can create a role
 
-## The guide is built into the console
+## Which method do you need?
 
-FortiCNAPP ships these instructions in the product. On the **Authorize** step of the
-wizard, click **Open Guide** to open the Authorization Guide panel.
+Not a preference. It depends on how you signed in to AWS.
 
-![FortiCNAPP Authorization Guide panel open on the Authorize step](images/forticnapp-authorization-guide.png)
-
-Use this lab to prepare your credentials before you start Lab 3, so the wizard does not
-sit waiting while you go and find them.
-
-## Lab Steps
-
-**Pick your method from how you signed in to AWS.** This is not a preference, it is a
-constraint.
-
-| How you signed in | Use | Why |
-|---|---|---|
-| AWS IAM Identity Center (SSO) | **Method A** | The access portal issues a role session, which can complete discovery. |
-| An IAM user with admin rights, which is the lab setup | **Method B** | Create a role and assume it. A role session can complete discovery. |
-
-> **Use a role session, not plain `aws sts get-session-token`.**
->
-> Discovery calls IAM APIs. AWS blocks IAM API calls from `GetSessionToken` credentials
-> unless MFA information was included in the request, so those credentials stop at Task 2
-> with:
->
-> ```
-> operation error IAM: ListAttachedUserPolicies, StatusCode: 403
-> InvalidClientTokenId: The security token included in the request is invalid
-> ```
->
-> Turning off *Simulate IAM permissions* does not change this, because discovery calls IAM
-> either way.
->
-> `get-session-token` with MFA (`--serial-number` and `--token-code`) returns credentials
-> that can call IAM, and those work.
-
-#### Not sure which one you are?
-
-Run this in AWS CloudShell:
+Run this in **AWS CloudShell** (the `>_` icon in the AWS console toolbar):
 
 ```bash
 aws sts get-caller-identity --query Arn --output text
 ```
 
-| The ARN looks like | You are | Use |
+| Your ARN looks like | You are | Go to |
 |---|---|---|
-| `arn:aws:sts::<id>:assumed-role/AWSReservedSSO_...` | Federated through Identity Center | Method A |
-| `arn:aws:iam::<id>:user/<name>` | A plain IAM user | Method B |
+| `arn:aws:sts::<id>:assumed-role/AWSReservedSSO_...` | Signed in through Identity Center | **Method A** |
+| `arn:aws:iam::<id>:user/<name>` | A plain IAM user, which is the lab setup | **Method B** |
 
-### Method A: AWS IAM Identity Center
+**Checkpoint:** you know which of the two methods you are following.
 
-1. Go to your AWS access portal.
-2. Select the account you want to integrate.
+---
+
+## Method A: AWS IAM Identity Center
+
+1. Open your AWS access portal.
+2. Go to the **Accounts** tab and select the account you want to integrate.
 3. Click **Access keys** next to the role you will use.
-4. Select **Option 3: Use individual values in your AWS service client**.
-5. Copy these three values:
+4. Choose **Option 3: Use individual values in your AWS service client**.
+5. Copy all three values somewhere you can paste from:
    - **AccessKeyId**
    - **SecretAccessKey**
    - **SessionToken**
 
-Go to Lab 3.
+**Checkpoint:** you have three values, and the first starts with `ASIA`.
 
-### Opening CloudShell
+Skip to [Lab 3](../lab-03/README.md).
 
-Method B needs it. Method A does not.
+---
 
-CloudShell has the AWS CLI preinstalled and already signed in as your console identity, so
-you install nothing and configure nothing.
-
-1. Log into the AWS Console.
-2. Change to your local region using the region selector at the top right, for example
-   **Asia Pacific (Singapore)**.
-3. Click the **CloudShell** icon in the toolbar at the top right, or search for
-   **CloudShell** in the console search bar.
-4. Wait for the shell prompt.
-
-### Method B: Create an onboarding role, then assume it
+## Method B: Create a role, then assume it
 
 You are an administrator in your own lab account, so you can create the role yourself.
-Nobody needs to provision it for you. Run all of this in CloudShell.
+Nobody needs to provision it for you.
 
-1. Create the role, trusting your own user:
+Run all of this in CloudShell.
 
-   ```bash
-   ACCT=$(aws sts get-caller-identity --query Account --output text)
-   USER=$(aws sts get-caller-identity --query Arn --output text | cut -d/ -f2)
+### 1. Create the role
 
-   cat > trust.json <<EOF
-   {"Version":"2012-10-17","Statement":[{
-     "Effect":"Allow",
-     "Principal":{"AWS":"arn:aws:iam::${ACCT}:user/${USER}"},
-     "Action":"sts:AssumeRole"}]}
-   EOF
+```bash
+ACCT=$(aws sts get-caller-identity --query Account --output text)
+USER=$(aws sts get-caller-identity --query Arn --output text | awk -F/ '{print $NF}')
 
-   aws iam create-role --role-name forticnapp-onboarding \
-     --assume-role-policy-document file://trust.json
-   ```
+cat > trust.json <<JSON
+{"Version":"2012-10-17","Statement":[{
+  "Effect":"Allow",
+  "Principal":{"AWS":"arn:aws:iam::${ACCT}:user/${USER}"},
+  "Action":"sts:AssumeRole"}]}
+JSON
 
-2. Give it the permissions the integration needs:
+aws iam create-role --role-name forticnapp-onboarding \
+  --assume-role-policy-document file://trust.json
+```
 
-   ```bash
-   aws iam attach-role-policy --role-name forticnapp-onboarding \
-     --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
-   ```
+The trust policy says one thing: *this role may be assumed by me, and nobody else.*
 
-3. Wait about ten seconds for the role to propagate, then assume it. This prints the three
-   values with labels, so you know which goes in which field:
+### 2. Give it permissions
 
-   ```bash
-   sleep 10
-   read -r AK SK ST < <(aws sts assume-role \
-     --role-arn "arn:aws:iam::${ACCT}:role/forticnapp-onboarding" \
-     --role-session-name lacework-onboarding --duration-seconds 3600 \
-     --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text)
+```bash
+aws iam attach-role-policy --role-name forticnapp-onboarding \
+  --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+```
 
-   printf '\n=== Access key ID ===\n%s\n\n=== Secret access key ===\n%s\n\n=== Session token ===\n%s\n\n' "$AK" "$SK" "$ST"
-   ```
+### 3. Assume it
 
-4. Copy each of the three values into the matching field in Lab 3.
+Wait about ten seconds for the role to propagate, then:
 
-   To copy from CloudShell, select the text and use **Actions** > **Copy**.
+```bash
+sleep 10
+read -r AK SK ST < <(aws sts assume-role \
+  --role-arn "arn:aws:iam::${ACCT}:role/forticnapp-onboarding" \
+  --role-session-name lacework-onboarding --duration-seconds 3600 \
+  --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text)
+
+printf '\n=== Access key ID ===\n%s\n\n=== Secret access key ===\n%s\n\n=== Session token ===\n%s\n\n' "$AK" "$SK" "$ST"
+```
+
+**Checkpoint:** three labelled blocks print, and the access key ID starts with `ASIA`.
+
+To copy from CloudShell, select the text and use **Actions** > **Copy**.
+
+> **Paste these into the Lab 3 wizard only.** Not into chat, not into a shared document,
+> and take care if your screen is being shared. They are live credentials for an hour.
 
 > **Do not raise `--duration-seconds` above 3600.** CloudShell may already be running as a
-> role session, and AWS caps role chaining at one hour. A larger value fails with
-> *"The requested DurationSeconds exceeds the 1 hour session limit for roles assumed by
-> role chaining."* An hour is ample; the deployment takes 5 to 10 minutes.
+> role session, and AWS caps role chaining at one hour.
 
-> **Least privilege.** `AdministratorAccess` keeps the lab moving. For a customer, attach
-> the four downloadable policies from the Authorization Guide instead. See **Permissions**
-> below.
+---
 
 ## Permissions
 
-Fortinet recommends **full administrator access for your first deployment**. AWS
-permissions here are complex, and a partial policy fails during discovery.
+`AdministratorAccess` keeps the lab moving. For a customer, use least privilege instead.
 
-Once you know the flow, use least privilege instead. The Authorization Guide panel offers
-four ready-made policy documents to download:
+The **Authorization Guide** panel in the Lab 3 wizard (click **Open Guide** on the
+Authorize step) offers four ready-made policy documents:
 
 | File | Covers |
 |---|---|
-| `aws_config_policy.json` | Configuration integration |
-| `aws_cloudtrail_policy.json` | CloudTrail integration |
+| `aws_config_policy.json` | Configuration |
+| `aws_cloudtrail_policy.json` | CloudTrail |
 | `aws_agentless_policy.json` | Agentless Workload Scanning |
-| `aws_eks_auditlog_policy.json` | EKS audit log integration |
+| `aws_eks_auditlog_policy.json` | EKS audit log |
 
-> **Gotcha**: if you plan to use the optional **Simulate IAM permissions** check in Lab 3,
-> your credentials additionally need `iam:SimulatePrincipalPolicy`, plus `iam:GetRole` for
-> assumed roles.
->
-> Note this is a *permissions* requirement on top of the *credential type* requirement
-> above. A role session with the wrong policy fails the simulation; a `GetSessionToken`
-> session fails it no matter what policy is attached.
+![FortiCNAPP Authorization Guide panel, open on the Authorize step](images/forticnapp-authorization-guide.png)
 
-## Important
+If you plan to use **Simulate IAM permissions** in Lab 3, the credentials also need
+`iam:SimulatePrincipalPolicy`, plus `iam:GetRole` for assumed roles.
 
-- Set the duration to suit your session. `21600` seconds gives you six hours.
-- Treat the three values as secrets. Do not paste them into chat, email or a shared doc.
-- FortiCNAPP uses these credentials only to build the integration. It then runs on the
-  cross-account role it created, which holds scoped read permissions.
+## If it goes wrong in Lab 3
+
+| Symptom | Cause |
+|---|---|
+| `InvalidClientTokenId` at Configure, Task 2 | You used plain `aws sts get-session-token`. AWS blocks IAM API calls from those credentials unless MFA was included, and discovery calls IAM. Use a role session. |
+| `Session token is required` | You pasted a long-lived `AKIA` key. The wizard needs a session token; static keys are rejected. |
+| `Cannot call GetSessionToken with session credentials` | You are federated. Use Method A. |
+| Credentials expired mid-wizard | They last an hour. Run Method A or B again. |
 
 ## What did we do here?
 
-We created a short-lived AWS credential set for the integration to run under.
+We issued a short-lived credential and nothing else.
 
-This is the step that makes automated configuration safe. The CloudFormation path never
-asks for a credential, because you run each stack yourself. That costs you two console
-walk-throughs. Automated configuration trades those for one bounded credential, and gives
-you preflight validation and automatic rollback in return.
+This is the step that makes automated configuration safe to use on a customer account. The
+CloudFormation path never asks for a credential, because you launch each stack yourself,
+and it costs you two console walk-throughs. Here you trade one bounded hour of access for
+a wizard that does the work, and you get a preflight permission check in return.
 
-## Additional Resources
-
-- <a href="https://docs.fortinet.com/document/forticnapp/latest/administration-guide/331296/obtaining-temporary-cloud-account-credentials" target="_blank">FortiCNAPP Administration Guide: Obtaining temporary cloud account credentials</a>
-- <a href="https://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html" target="_blank">AWS STS GetSessionToken</a>
-- <a href="https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html" target="_blank">AWS STS AssumeRole</a>
+Next: [Lab 3: Onboard AWS with Automated Configuration](../lab-03/README.md).
