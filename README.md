@@ -5,22 +5,27 @@ and AWS CloudShell. Nothing is installed on your laptop.
 
 Allow about three hours for Labs 1 to 9.
 
-## If you come from networking, start here
+## What FortiCNAPP actually does
 
-You already run the on-premises version of most of this. The names change, the job does not.
+It watches three things, and most of the workshop is about connecting each one.
 
-| You already do this | In the cloud it is called | Lab |
-|---|---|---|
-| Audit firewall rules and device configs against a standard | **Configuration assessment**, or CSPM | 3 |
-| Collect syslog and NetFlow, alert on odd behaviour | **CloudTrail ingestion**, threat detection | 3 |
-| Scan hosts for missing patches without touching them | **Agentless scanning**, snapshot based | 3 |
-| Run an endpoint agent for live process and network visibility | **The FortiCNAPP agent** | 4, 5 |
-| Review a config change before it goes to production | **IaC scanning** | 7 |
-| Check firmware and library versions against CVE lists | **SCA**, software composition analysis | 8 |
+**The account.** What exists in AWS, how it is configured, and what changed. FortiCNAPP
+asks AWS directly, so it sees every resource whether or not anyone told you about it. This
+is where compliance findings come from, and where CloudTrail gives you the audit trail of
+who did what.
 
-One idea worth holding onto: in a data centre you control the hardware, so you monitor the
-box. In the cloud there is no box you own. You monitor the **account** instead, by asking
-the cloud provider what exists and what changed.
+**The workloads.** What is actually running on your instances. Two ways to see it: agentless
+scanning takes a snapshot of the disk and reads it, no software installed; the agent runs on
+the box and reports processes, connections and file changes continuously.
+
+**The code.** The Terraform that builds your infrastructure, and the libraries your
+applications pull in. Catching a wide-open security group in a pull request is cheaper than
+finding it in production.
+
+If most of your background is on-premises, the useful shift is this: there is no box you
+own any more. You cannot walk to the rack. So instead of monitoring hardware, you monitor
+the **account**, by asking the cloud provider what exists and what changed. Everything else
+follows from that.
 
 ## What you are building
 
