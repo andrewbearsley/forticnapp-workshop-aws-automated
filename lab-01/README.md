@@ -3,8 +3,7 @@
 ## Objectives
 
 Before you connect anything, look at an environment that is already connected and full of
-real findings. Five questions, in the order you would actually ask them on your first day
-owning a cloud estate.
+real findings.
 
 By the end you will know what the later labs are building towards, and roughly where
 things live in the console.
@@ -13,8 +12,8 @@ things live in the console.
 
 - Your email address added to the FortiCNAPP demo environment
 
-> **This lab uses a different tenant to the rest of the workshop.** Lab 1 runs in
-> **FORTIDEMO-2026-04**, which is full of demo data. From Lab 3 onward you work in
+> Lab 1 takes you through a **read-only demo tenant**, populated with vulnerable
+> applications with signs of compromise. From Lab 3 onward you work in
 > **FORTINETAPACDEMO**, where you onboard your own AWS account. Watch the tenant name at
 > the bottom of the left navigation.
 
@@ -59,8 +58,8 @@ into one of them.
 
 | Widget | What it counts | Which lab creates it |
 |---|---|---|
-| **Threat alert overview** | Something is happening that looks like an attack | Lab 3, CloudTrail and agentless |
-| **Non-compliant resources** | Configuration that fails a benchmark | Lab 3, configuration |
+| **Threat alert overview** | Something is happening that looks like an attack | Lab 3, AWS CloudTrail and agentless |
+| **Non-compliant resources** | Configuration that fails a benchmark | Lab 3, AWS configuration |
 | **Exposed Fixable Hosts** | Internet-reachable hosts with a patchable vulnerability | Labs 3 to 5 |
 
 **Checkpoint:** you can read a number off each of the three widgets.
@@ -69,46 +68,94 @@ into one of them.
 > every host. Exposed, and fixable. That is the list you would actually work through on a
 > Monday morning.
 
-## Step 4: What have I got?
+## Step 4: Show me the exposed hosts
+
+**Explorer** answers questions about how things connect, rather than listing them.
+
+1. Go to **Explorer**.
+2. Click **Or use the Query Builder**.
+3. Leave **SHOW** set to **Hosts**.
+4. Click **Add clause**, choose **Internet Exposed**, leave it **True**, and click
+   **Add clause**.
+5. Click **Search Results**.
+
+![Explorer query results, showing internet exposed hosts with alert, attack path and compliance counts](images/forticnapp-explorer-query.png)
+
+Every one of these hosts can be reached from the internet. The columns beside them say how
+much trouble each one is in.
+
+6. Pick a row with a non-zero number under **Alerts** or **Attack Paths**, and click
+   **Graph**.
+7. Zoom in with the **+** control.
+
+![Explorer graph showing the path from internet gateway to an EC2 instance, with vulnerabilities, compliance violations and alerts attached](images/forticnapp-explorer-graph.png)
+
+**Checkpoint:** you can trace the red line from the internet gateway to the host.
+
+Read it left to right: internet gateway, load balancer, network interface, security group,
+then the host. That red line **is** the exposure, drawn as the actual chain of AWS
+resources that permits it. Hanging underneath are the host's vulnerabilities, compliance
+violations and alerts.
+
+One picture, four kinds of finding, and the reason they matter together.
+
+## Step 5: What have I got?
+
+Two views, because "what have I got" has two answers: what exists, and what it does.
+
+### What exists
 
 Go to **Inventory** > **Resource Inventory**.
 
 ![Resource Inventory listing cloud resources with alerts, compliance violations and attack paths](images/forticnapp-resource-inventory.png)
 
-1. Look at the total resource count at the top.
-2. Scroll the table. Note the **Alerts**, **Compliance violations** and **Attack Paths**
-   columns beside each resource.
-3. Use **Show more** to filter, for example by resource type.
+Nobody typed this in. FortiCNAPP asked AWS what exists. In a data centre you know what is
+in the rack because you put it there. In a cloud account, anyone with credentials can
+create something at three in the morning, so asking the provider is the only way to know.
 
-**Checkpoint:** you can see a resource with a non-zero number in at least one of those
-three columns.
+### What it does
 
-Nobody typed this inventory in. FortiCNAPP asked AWS what exists. In a data centre you know
-what is in the rack because you put it there; in a cloud account, anyone with credentials
-can create something at three in the morning. Asking the provider is the only way to know.
+Go to **Inventory** > **Hosts**, then the **Machines** tab. Give it a moment to load.
 
-## Step 5: What is happening right now?
+![Hosts Machines view showing unique machines, users, bytes and connections over time, with alerts alongside](images/forticnapp-hosts-machines.png)
+
+Look at the tabs: **Applications**, **Files**, **Machines**, **Networks**, **Processes**,
+**Users**. Every one is a record of behaviour over time, not a snapshot.
+
+**Checkpoint:** you can read **MAX** and **AVG/HR** off the Unique machines widget.
+
+> **This is the polygraph.** FortiCNAPP watches what normally runs, who normally logs in,
+> and what normally talks to what, then builds a baseline per host. It does not need a
+> signature for an attack it has never seen. It needs to know that this machine has never
+> done this before.
+>
+> That is why the agent in Labs 4 and 5 matters. A scan tells you what is installed. Only
+> something watching continuously can tell you that behaviour changed.
+
+## Step 6: What is happening right now?
 
 Go to **Threat Center** > **Alerts**.
 
-![Threat Alerts filtered to high severity, showing compromised hosts and privileged containers](images/forticnapp-threat-alerts.png)
+![Threat Alerts for the last month, showing Potentially Compromised Host entries](images/forticnapp-threat-alerts.png)
 
-1. Open one alert titled **Potentially Compromised Host**.
+The view defaults to **Critical and High, last month**. Widen the date range at the top
+right if you want more.
+
+1. Open an alert titled **Potentially Compromised Host**.
 2. Read the description and the affected resource.
-3. Go back and look at **Threat Center** > **Cloud Activity**, which is the CloudTrail
-   record of who did what in the account.
+3. Look at **Threat Center** > **Cloud Activity**, the CloudTrail record of who did what.
 
 **Checkpoint:** you have opened one alert and can say which host it refers to.
 
-Alerts come from behaviour, not configuration. A host reaching out to somewhere it never
-has before is a behavioural signal, and it needs the agent or CloudTrail to spot it. That is
-why Labs 3, 4 and 5 exist.
+> **Look for a composite alert if one is present**, such as a potentially compromised AWS
+> identity. Composite alerts are the ones built from several signals at once rather than a
+> single rule, and they are rare by design. If there is not one in the window, widen the
+> date range.
 
-## Step 6: What do I fix first?
+There is a second inbox at **Risk Center** > **Alerts**. Threat alerts say something is
+happening. Risk alerts say something is dangerous. Worth knowing both exist.
 
-You have thousands of findings and a finite Tuesday. Two views help you choose.
-
-### Attack Path
+## Step 7: What do I fix first: the toxic combinations
 
 Go to **Risk Center** > **Findings** > **Attack Path**.
 
@@ -121,25 +168,80 @@ vulnerable host that is internet-facing **and** holds credentials to something v
 private key sitting on a reachable host.
 
 One vulnerability on an isolated box is a ticket. The same vulnerability on an
-internet-facing box with a key to the database is an incident. Attack Path is how you tell
-the two apart.
+internet-facing box with a key to the database is an incident.
 
-### Compliance
+## Step 8: What do I fix first: compliance
 
 Go to **Risk Center** > **Findings** > **Compliance** > **Cloud**.
 
 ![Cloud Compliance dashboard showing frameworks including CIS, ISO 27001, NIST CSF and SOC 2](images/forticnapp-cloud-compliance.png)
 
-1. Look at the framework list: CIS, ISO/IEC 27001, NIST CSF, SOC 2 and others.
-2. Pick a framework and open it to see which policies fail and on which resources.
+The **Frameworks** tab scores the same findings against CIS, ISO/IEC 27001, NIST CSF, SOC 2
+and the rest. You do not re-scan for each one.
 
-**Checkpoint:** you can name one framework and the number of non-compliant resources
-against it.
+Now find a specific failure.
 
-The same underlying findings, scored against whichever standard your auditor cares about.
-You do not re-scan for each one.
+1. Click the **Policies** tab. It opens already filtered to
+   **Status = Has non-compliant resources**, which is the only filter that matters when you
+   are deciding what to do today.
+2. Search for `permission to everyone`.
 
-## Step 7: Could I have caught it earlier?
+![Compliance policies filtered to those with non-compliant resources, showing a Critical S3 policy](images/forticnapp-compliance-policies.png)
+
+3. Open **Ensure the attached S3 bucket policy does not grant 'Allow' permission to
+   everyone**. It is **Critical**.
+
+![Policy detail showing one non-compliant S3 bucket out of fifteen](images/forticnapp-compliance-policy.png)
+
+**Checkpoint:** 15 resources assessed, exactly **1** non-compliant, and you can see which
+bucket it is.
+
+One bucket in fifteen, with a policy granting access to everyone. Note the bucket's name
+while you are here. Confidence is not a control.
+
+4. Click **View context**, top left.
+
+![Fortinet documentation for the policy, showing Description and Remediation](images/forticnapp-policy-context.png)
+
+**Checkpoint:** you are reading the **Description** and a numbered **Remediation** for that
+exact policy.
+
+This is the part people miss. Every policy links straight to what it means and the steps to
+fix it, so a finding is never just a red number. Hand this page to whoever owns the bucket.
+
+## Step 9: What do I fix first: identities
+
+Go to **Risk Center** > **Findings** > **Identities**, then the **Top Identity Risks** tab.
+
+![Top at risk identities, with the risks attached to a critical AWS role](images/forticnapp-identities.png)
+
+Click the top identity and read the **Risks** panel on the right.
+
+**Checkpoint:** find an identity that allows full admin, and check its **Last used time**.
+
+A role that can do everything and has never been used is the cheapest fix in cloud
+security. Nothing breaks when you remove it, and it is one less thing for an attacker to
+find. Identity is usually the shortest path from a foothold to real damage.
+
+## Step 10: What do I fix first: vulnerabilities
+
+Go to **Risk Center** > **Findings** > **Vulnerabilities**, then the **Top items** tab.
+
+![Top vulnerabilities by impacted hosts, and top fixable packages with their fix versions](images/forticnapp-vulnerabilities.png)
+
+Two widgets, two different questions:
+
+| Widget | Answers |
+|---|---|
+| **Top vulnerabilities by impacted hosts** | Which CVE is on the most machines |
+| **Top fixable packages** | Which single upgrade closes the most CVEs |
+
+**Checkpoint:** find a package where one **Fix version** clears several CVEs at once.
+
+The second widget is the one to work from. Patching by CVE is endless. Patching by package
+is finite, and the **Fix version** column tells you exactly where to get to.
+
+## Step 11: Could I have caught it earlier?
 
 Go to **Risk Center** > **Findings** > **Code Security**.
 
@@ -156,13 +258,6 @@ infrastructure.
 
 Everything up to this point finds problems that are already running. This finds them in the
 code, before they exist in AWS. You do both in Labs 7 and 8.
-
-## Optional: ask your own question
-
-**Explorer** builds a visual query across resources and their relationships.
-**Search** runs a text query across everything FortiCNAPP holds.
-
-Both are worth five minutes if you have them. Neither is needed for the later labs.
 
 ## What did we do here?
 

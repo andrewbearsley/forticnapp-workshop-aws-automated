@@ -74,7 +74,7 @@ editor, in their own language.
 **Checkpoint:** you can name the single most common category of finding in this repo.
 
 > **Why your scan does not show up in the console.** Look under **Risk Center** >
-> **Findings** > **Code Security** > **IaC** and you will not find it. That is expected. A
+> **Findings** > **Code Security** > **Infrastructure (IaC)** and you will not find it. That is expected. A
 > CLI scan from CloudShell has no repository behind it.
 >
 > The **Assessments** view fills up when a repository is onboarded through
