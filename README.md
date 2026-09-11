@@ -6,17 +6,35 @@ uses an RDP client, which most machines already have.
 
 Allow about three hours for Labs 1 to 9.
 
+## What FortiCNAPP is
+
+Fortinet's cloud-native application protection platform, formerly Lacework. One platform
+covering what used to be four separate tools:
+
+| | Answers |
+|---|---|
+| **Posture** | Is anything misconfigured, exposed, or failing a compliance framework? |
+| **Workloads** | What is running on my hosts and containers, and is it behaving normally? |
+| **Identities** | Who can do what in this account, and who actually does? |
+| **Code security** | Would this have been a problem before it ever deployed? |
+
+The value is in the join. A vulnerable package is a ticket. A vulnerable package, on a host
+reachable from the internet, holding a credential with admin rights, is an incident waiting
+to happen. Finding the second needs all four.
+
 ## What you are building
 
 ```mermaid
 flowchart LR
-    A[AWS account] -.->|Lab 3| B[FortiCNAPP]
-    C[EC2 instances] -.->|Labs 4 and 5| B
-    D[Source code] -.->|Labs 7 and 8| B
-    B --> E[Findings, compliance, alerts]
+    CT["CloudTrail<br/>who did what"] -->|Lab 3| F
+    CFG["Config<br/>what exists, and how"] -->|Lab 3| F
+    AL["Agentless scans<br/>vulnerabilities, secrets"] -->|Lab 3| F
+    AG["Agent telemetry<br/>processes, connections, files"] -->|Labs 4 and 5| F
+    SC["Code scans<br/>Terraform, dependencies"] -->|Labs 7 and 8| F
+    F["FortiCNAPP"] --> OUT["Findings, compliance,<br/>attack paths, alerts"]
 ```
 
-Three sources, one platform. Each lab explains its piece when you get there.
+Five sources, one platform. Each lab explains its piece when you get there.
 
 > Coming from the <a href="https://github.com/andrewbearsley/forticnapp-workshop-aws-integration" target="_blank">CloudFormation version of this workshop</a>?
 > Labs 2 and 3 there become a single wizard here.
