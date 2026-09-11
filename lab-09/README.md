@@ -193,6 +193,23 @@ Then in FortiCNAPP, revoke the key so it cannot be used even if a copy escaped:
 Both routes need this. The agents in Labs 4 and 5 run on instances the integrations do not
 own.
 
+> [!WARNING]
+> **Check every region you have opened today, not just the workshop one.** The console
+> opens in whatever region you last used, and past runs of this workshop have left
+> instances running in Ireland and the US because nobody changed the selector before
+> launching. Those keep billing.
+>
+> The quickest way to be sure, from CloudShell:
+>
+> ```bash
+> for r in $(aws ec2 describe-regions --query 'Regions[].RegionName' --output text); do
+>   ids=$(aws ec2 describe-instances --region "$r" \
+>     --filters Name=instance-state-name,Values=running,stopped \
+>     --query 'Reservations[].Instances[].InstanceId' --output text)
+>   [ -n "$ids" ] && echo "$r: $ids"
+> done
+> ```
+
 1. Go to the **EC2** service.
 2. Find the instance from Lab 4, for example `FortiCNAPP-Linux-Agent`.
 3. Tick its checkbox, then **Instance state** > **Terminate (delete) instance**.

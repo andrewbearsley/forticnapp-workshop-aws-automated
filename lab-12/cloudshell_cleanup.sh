@@ -15,6 +15,25 @@
 # every FortiCNAPP integration pointing at this AWS account. Do not run it in an
 # account that hosts anything you want to keep.
 
+# ---------------------------------------------------------------------------
+# DO NOT ADD IAM ROLE OR POLICY DELETION TO THIS SCRIPT.
+#
+# The student accounts carry roles owned by whoever runs the account pool:
+# LabsinfraProvisioningRole, WorkshopSetupRole, OrganizationAccountAccessRole,
+# stacksets-exec-*, and the AWS service-linked roles. Several drive cost
+# management and automated cleanup. Deleting them breaks the account for
+# everyone who uses it afterwards.
+#
+# The workshop's own cross-account role is created by a CloudFormation stack
+# and goes when the stack is deleted, which is already handled below. Nothing
+# here needs to call iam delete-role.
+#
+# The EC2 sweep below is deliberately account-wide and all-region. That is not
+# an oversight. Students routinely forget to change the region selector and
+# leave instances running in Ireland or the US, and a sweep scoped to the
+# workshop's own names would miss exactly the boxes that cost money.
+# ---------------------------------------------------------------------------
+
 # Best-effort sweep: continue past individual failures rather than aborting.
 # Do not use `set -e` here, one failed delete should not strand the rest.
 set +e

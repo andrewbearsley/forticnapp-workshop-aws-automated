@@ -45,8 +45,14 @@ Same wizard as Lab 4. What differs: the image, and the key pair.
    > you cannot log in at all, and there is no way to recover it later.
 
    - Click **Create new key pair**
-   - Name it `forticnapp-windows-key`, type **RSA**, format **.pem**
+   - Name it `forticnapp-windows-key-<your initials>`, type **RSA**, format **.pem**
    - Click **Create key pair**. The `.pem` file downloads. Keep it, you need it in Step 3.
+
+   > [!IMPORTANT]
+   > **Put your initials in the name.** Key pair names are unique per region, so if anyone
+   > has run this workshop in this account before, a plain `forticnapp-windows-key` fails
+   > with `InvalidKeyPair.Duplicate`. You cannot reuse the old one either, because its
+   > private key was only ever downloadable once.
 
 ![Key pair section, explaining that the key decrypts the administrator password](images/aws-ec2-launch-details-2.png)
 
@@ -169,7 +175,7 @@ The agent runs as a Windows service, so ask Windows:
 Get-Service -Name LWDataCollector
 ```
 
-`Status` should read `Running`. To see where it lives and what it is writing:
+`Status` should read `Running`.
 
 ```powershell
 ls C:\ProgramData\Lacework\
@@ -177,6 +183,39 @@ ls C:\ProgramData\Lacework\Logs\
 ```
 
 **Checkpoint:** `LWDataCollector` is `Running`.
+
+### Look at what it is logging
+
+```powershell
+Get-Content C:\ProgramData\Lacework\Logs\LWDataCollector_0.log -Tail 40 -Wait
+```
+
+`Ctrl+C` stops it.
+
+![The Windows agent log, a few minutes after install](images/aws-agent-log.png)
+
+**This is worth more of your time than the Linux one.** The Windows agent writes what it is
+observing, not just that it is connected:
+
+| Line | What it is watching |
+|---|---|
+| `Process statistics: eventsQueued 118, procStatsSent 34` | Processes starting and stopping |
+| `Connections statistics: eventsQueued 205, sentNetDetails 98` | Network connections |
+| `UserLogon Refresh. UserLogons = 1 FailedLogons = 0` | Who logged in, and who failed |
+| `DNS Refresh. Cache size: 26` | Name lookups the host made |
+| `Begin PowerShell::Refresh` / `Sending script blocks` | PowerShell being run |
+| `ReportEvents: Success in http post. bytes sent: 6985` | All of it going to FortiCNAPP |
+
+Read that list again. Processes, connections, logons, DNS and PowerShell, from one host,
+continuously. **That is the polygraph from [Lab 1](../lab-01/README.md), on a machine you
+built twenty minutes ago.** It is also why a composite alert can exist: no single line
+there is suspicious, and the combination can be.
+
+Plenty of lines say `level=error` and are routine:
+
+- `No process found for the pidhash: 0` and `Failed to find process for pid 0`
+- `could not open process handle for further details ... ErrorCode = 5`, which is Windows
+  refusing access to protected system processes
 
 ### Step 6: Verify in FortiCNAPP
 

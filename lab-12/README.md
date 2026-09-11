@@ -5,6 +5,12 @@ This lab provides a cleanup script that removes every workshop resource, on both
 > [!CAUTION]
 > This script assumes a disposable workshop AWS account. It sweeps every enabled region and removes all EC2 instances, key pairs and non-default security groups in the account, not only the ones the workshop created, along with every FortiCNAPP integration pointing at that AWS account. Do not run it in an account that hosts anything you want to keep.
 
+> [!NOTE]
+> **It does not touch IAM.** The roles in these accounts belong to whoever runs the account
+> pool, and some of them drive cost management and automated cleanup. The workshop's own
+> cross-account role is owned by a CloudFormation stack and goes when the stack does.
+
+
 ## Why both sides need cleaning
 
 Labs 2 and 3 create the integration record in the FortiCNAPP console **first**, then launch CloudFormation to build the AWS side. CloudFormation never owns that record.
