@@ -1,8 +1,8 @@
 # FortiCNAPP Workshop: AWS Integration
 
-Connect FortiCNAPP to an AWS account, then see what it finds. Almost everything runs in a
-browser and AWS CloudShell, so there is nothing to install and nothing to clean up
-afterwards. Lab 5 is the one exception: Windows needs an RDP client.
+Connect FortiCNAPP to an AWS account, then see what it finds. It runs in a browser and AWS
+CloudShell, so there is nothing to install and nothing to clean up afterwards. Lab 5 also
+uses an RDP client, which most machines already have.
 
 Allow about three hours for Labs 1 to 9.
 
@@ -50,16 +50,13 @@ Take these when a customer wants onboarding through a pipeline rather than a wiz
 | 90 minutes | Labs 1 to 3, then 9 |
 | Half a day | Labs 1 to 9 |
 | A developer audience | Labs 1 to 3, then 6 to 8. Labs 7 and 8 are the draw. |
-| A room that cannot use RDP | Labs 1 to 4, then 6 to 9. Skip Lab 5. |
 
 ## Prerequisites
 
 - An AWS account you can afford to break, with administrator access
 - FortiCNAPP console access, tenant **FORTINETAPACDEMO**
 - A browser
-- For Lab 5 only, an RDP client: Remote Desktop Connection on Windows, **Windows App** on a
-  Mac. It also needs outbound TCP 3389, which corporate VPNs often block. See the top of
-  [Lab 5](lab-05/README.md).
+- An RDP client for Lab 5: Remote Desktop Connection on Windows, **Windows App** on a Mac
 
 ## Resources
 

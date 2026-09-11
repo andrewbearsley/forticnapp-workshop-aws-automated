@@ -13,10 +13,6 @@ runs both, so it is worth doing Windows once rather than assuming it follows.
 | You need | A URL | Two URLs and an access token |
 | Runs as | `datacollector` | The `LWDataCollector` service |
 
-> **This is the lab most likely to stall**, and rarely for a FortiCNAPP reason. RDP needs
-> outbound TCP 3389, which corporate VPNs and conference WiFi routinely block. Read Step 2
-> before you start so you know the symptom when you see it.
-
 ## Prerequisites
 
 - Completed [Lab 4](../lab-04/README.md)
@@ -83,6 +79,11 @@ Same wizard as Lab 4, with two differences that matter: the image, and the key p
 7. Open that file:
    - **Windows**: double-click it
    - **Mac**: right-click and open with **Windows App**
+
+   > **If it does not connect, turn off FortiSASE and try again.** FortiSASE blocks RDP by
+   > default, and so do most corporate VPN and secure-access agents. This is the single
+   > most common reason this step fails, and it is nothing to do with AWS or the instance.
+
 8. Username is `Administrator`, capital A. Paste the password.
 9. A certificate warning is normal on an EC2 instance. Continue past it.
 
@@ -94,8 +95,7 @@ Work down this list. The first two are far more common than anything else.
 
 | Symptom | Cause and fix |
 |---|---|
-| RDP times out, or "couldn't connect to the remote PC" | Outbound TCP 3389 is blocked. Test it: `Test-NetConnection -ComputerName <public-ip> -Port 3389`. `TcpTestSucceeded : False` confirms it. |
-| The above, and you are on FortiSASE or a corporate VPN | **FortiSASE blocks RDP by default**, as do most secure-access agents. Disconnect it and retry. Conference WiFi, hotel WiFi and some ISPs do the same. Tethering to a phone is the quickest way around it. |
+| Times out, or "couldn't connect to the remote PC" | Turn off FortiSASE or your VPN first, as above. If that was not it, outbound TCP 3389 is blocked somewhere else. Confirm with `Test-NetConnection -ComputerName <public-ip> -Port 3389`: `TcpTestSucceeded : False` is your answer. Conference WiFi, hotel WiFi and some ISPs block it too, and tethering to a phone is the quickest way round. |
 | Password rejected | Windows may still be initialising. Wait and click **Get password** again. Check you used `Administrator`, capital A, and that the paste did not pick up a trailing space. |
 | No password offered yet | The instance has not finished its first boot. Give it four minutes from **Running**. |
 
