@@ -113,4 +113,6 @@ in minutes are the ones that already had the parts list.
 - <a href="https://docs.fortinet.com/document/lacework-forticnapp/latest/administration-guide/433465/software-composition-analysis-sca" target="_blank">Lacework SCA Scanning Documentation</a>
 - <a href="https://github.com/andrewbearsley/lacework-sca-scan-example" target="_blank">Example Repository</a>
 
+---
 
+Next: [Lab 9: Clean Up Workshop Resources](../lab-09/README.md).

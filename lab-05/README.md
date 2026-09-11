@@ -203,3 +203,7 @@ nothing.
 
 From here FortiCNAPP treats both hosts identically. The next labs move off hosts entirely
 and look at the code that builds them.
+
+---
+
+Next: [Lab 6: Install the Lacework CLI](../lab-06/README.md).

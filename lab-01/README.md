@@ -299,4 +299,6 @@ Hold on to those questions, because the rest of the workshop answers them:
 | What is happening on my workloads | Labs 4 and 5 |
 | Could I have caught it in code | Labs 7 and 8 |
 
+---
+
 Next: [Lab 2: Get Temporary AWS Credentials](../lab-02/README.md).

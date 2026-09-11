@@ -128,5 +128,8 @@ source ~/.bashrc
 
 We set up the tooling needed for infrastructure as code. The Lacework CLI connects to FortiCNAPP's API, and Terraform lets us define and deploy cloud resources from code instead of clicking through consoles.
 
-In the next lab, we'll use these two tools together - the CLI generates Terraform configuration, and Terraform deploys it. This is the production-ready approach to FortiCNAPP integration: repeatable, version-controlled, and auditable.
+In the next lab you use both together: the CLI generates Terraform configuration, and Terraform deploys it. This is the production-ready approach to FortiCNAPP integration: repeatable, version-controlled, and auditable.
 
+---
+
+Next: [Lab 11: Install Integrations via Terraform](../lab-11/README.md).

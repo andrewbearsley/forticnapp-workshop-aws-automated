@@ -296,3 +296,10 @@ goes, which is the gap orphaned resources fall through.
 
 Route B closes the gap, because the state file spans both. The Terraform bundle on the deployment record is a complete workspace, state included, so
 `terraform destroy` does the whole job in one command.
+
+---
+
+That is the core path finished.
+
+Still curious? The optional track onboards the same account as code instead of through the
+wizard: [Lab 10: Install Terraform](../lab-10/README.md).

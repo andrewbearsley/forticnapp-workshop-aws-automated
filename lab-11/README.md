@@ -243,4 +243,6 @@ This is how you'd do it in production. The Terraform configuration can be checke
 
 - <a href="https://docs.fortinet.com/document/forticnapp/latest/administration-guide/283460/aws-integration-terraform-from-aws-cloudshell" target="_blank">FortiCNAPP Documentation: AWS Integration Terraform from AWS CloudShell</a>
 
+---
 
+Next: [Lab 12: Scripted Cleanup of All Workshop Resources](../lab-12/README.md).

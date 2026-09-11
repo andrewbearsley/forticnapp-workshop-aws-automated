@@ -68,3 +68,7 @@ It is still attached to an instance that has not finished terminating. Wait a mi
 
 **Other failures.**
 Check AWS permissions for the CloudShell user, and verify the resources exist before cleanup. Some resources need manual deletion if dependencies prevent automated removal.
+
+---
+
+That is everything. Back to the [workshop overview](../README.md).

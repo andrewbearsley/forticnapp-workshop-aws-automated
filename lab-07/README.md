@@ -98,5 +98,6 @@ review.
 - <a href="https://docs.fortinet.com/document/lacework-forticnapp/latest/administration-guide/651014/getting-started-with-opal" target="_blank">Lacework IaC Scanning Documentation</a>
 - <a href="https://github.com/andrewbearsley/lacework-iac-scan-example" target="_blank">Example Repository</a>
 
+---
 
-
+Next: [Lab 8: Code Security for Applications (SCA)](../lab-08/README.md).

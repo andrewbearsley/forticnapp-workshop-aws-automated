@@ -180,4 +180,6 @@ CloudFormation path never asks for a credential, because you launch each stack y
 and it costs you two console walk-throughs. Here you trade one bounded hour of access for
 a wizard that does the work, plus a preflight permission check you would not otherwise get.
 
+---
+
 Next: [Lab 3: Onboard AWS with Automated Configuration](../lab-03/README.md).

@@ -357,3 +357,7 @@ contained.
 ## Additional Resources
 
 - <a href="https://docs.fortinet.com/document/forticnapp/latest/administration-guide/123850/automated-configuration" target="_blank">FortiCNAPP Administration Guide: Automated configuration</a>
+
+---
+
+Next: [Lab 4: Install Linux Agent](../lab-04/README.md).

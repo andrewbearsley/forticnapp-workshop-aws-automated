@@ -198,4 +198,8 @@ notices the package being exploited: a process that has never run before, a conn
 somewhere this host has never talked to, a login at the wrong hour. You cannot alert on
 behaviour you are not watching.
 
-Lab 5 does the same for Windows, where the install differs enough to be worth doing once.
+The Windows install differs enough to be worth doing once.
+
+---
+
+Next: [Lab 5: Install Windows Agent](../lab-05/README.md).

@@ -162,3 +162,7 @@ take that straight into source code.
 
 The scan command is also a fair warning about shared tenants. Some operations are
 tenant-wide and serialised. They do not tell you when they are ignoring you.
+
+---
+
+Next: [Lab 7: Code Security for Infrastructure as Code (IaC)](../lab-07/README.md).
