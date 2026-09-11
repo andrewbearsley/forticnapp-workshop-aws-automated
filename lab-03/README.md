@@ -71,7 +71,7 @@ You just picked one of three ways to do the same job. The end state is identical
 |---|---|---|
 | **Automated Configuration** | Hand over short-lived credentials, FortiCNAPP builds everything | Default. Least typing, and the console marks it Recommended. |
 | AWS CloudFormation | Launch a stack per integration, set the parameters yourself | You want to read the template before anything is created |
-| Other Methods | Take the Terraform and run it yourself | The customer wants onboarding in a pipeline, reviewed in a pull request |
+| Other Methods | Take the Terraform and run it yourself | You want onboarding in a pipeline, reviewed in a pull request |
 
 Labs 10 and 11 do the Terraform route, so you can compare the two directly.
 
@@ -84,7 +84,7 @@ This screen takes the credentials from Lab 2.
 1. Leave **Enable organization level integration** off.
 
    Turning it on onboards every account in your AWS organization in one pass, using
-   CloudFormation StackSets. That is the right choice for a customer with an AWS
+   CloudFormation StackSets. That is the right choice for an account inside an AWS
    Organization. For this workshop, leave it off and integrate a single account.
 
 2. Turn **Simulate IAM permissions** on.
@@ -156,7 +156,7 @@ completes, Task 3 asks for per-integration settings.
    Off is the default, and off is what you want. FortiCNAPP then creates its own trail,
    S3 bucket, SNS topic and SQS queue. Nothing has to exist in the account beforehand.
 
-   Turn it on only for a customer who already has a trail they want FortiCNAPP to read.
+   Turn it on only when the account already has a trail you want FortiCNAPP to read.
 
 3. On the **Configuration** tab, leave **Advanced options** alone.
 
@@ -165,8 +165,8 @@ completes, Task 3 asks for per-integration settings.
 ![Agentless Workload Scanning tab with the scanning regions selector](images/forticnapp-configure-agentless-regions.png)
 
 > The same **Advanced options** panel holds a **Use an existing IAM role** toggle, shown in
-> the screenshot above. Use it when a customer already has a Lacework cross-account role
-> they want to keep. Automated configuration does not detect an existing role on its own.
+> the screenshot above. Use it when the account already has a Lacework cross-account role
+> you want to keep. Automated configuration does not detect an existing role on its own.
 
 ### Step 5: Review and Deploy (Step 4 of 4)
 
@@ -220,15 +220,15 @@ You can return to this record at any time. Go to **Settings** > **Integrations**
 
 The record repays reading properly:
 
-- **Caller identity**: the exact AWS principal used to deploy. Useful when a customer asks
-  who created these resources.
+- **Caller identity**: the exact AWS principal used to deploy. This is what answers "who
+  created these resources" six months later.
 - **Per-integration status**: SUCCEEDED or FAILED, integration by integration.
 - **Resources**: every resource created, by ARN, name and type.
 - **Terraform files**: download what FortiCNAPP generated for each integration.
 
 That last one matters. **Automated configuration is not a black box.** It writes Terraform,
-and you can take that Terraform away. A partner can onboard a customer with the wizard,
-download the generated files, and hand them over for the customer's own repository.
+and you can take that Terraform away. Onboard with the wizard, download the generated
+files, and commit them to your own repository.
 
 Every resource is tagged. The exact values appear on the deployment record, for example
 `lacework_tag: self-deployment` and `lacework_integration: aws_config`.
@@ -326,8 +326,6 @@ To avoid waiting for the inventory scan, Lab 7 triggers one on demand with the L
 
 ## Where the data goes
 
-Worth knowing when a partner or customer asks.
-
 FortiCNAPP analyses data **inside** your cloud account. File contents and resource
 contents never leave your network. Only assessment results are sent to the FortiCNAPP
 platform. Those results are stored as JSON files in a single storage bucket in your own
@@ -353,8 +351,8 @@ Compare the work:
 
 The trade is credentials. The CloudFormation path never asks for an AWS credential,
 because you launch each stack yourself. Automated configuration needs one bounded
-credential. For a partner onboarding a customer, that trade is usually worth making, and
-temporary STS credentials keep it contained.
+credential. Usually worth it, because temporary STS credentials keep the exposure
+contained.
 
 ## Additional Resources
 

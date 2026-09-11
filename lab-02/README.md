@@ -58,8 +58,8 @@ Read the ARN it prints:
 
 ## Method A: AWS IAM Identity Center
 
-This is the Fortinet staff path. You will not be in CloudShell for it, the values come
-straight out of the access portal.
+You will not be in CloudShell for this one. The values come straight out of the access
+portal.
 
 1. Open your AWS access portal.
 2. Go to the **Accounts** tab and select the account you want to integrate.
@@ -145,7 +145,7 @@ Windows and Linux. Select from the start of the value to the end of the line, no
 
 ## Permissions
 
-`AdministratorAccess` keeps the lab moving. For a customer, use least privilege instead.
+`AdministratorAccess` keeps the lab moving. In production, use least privilege instead.
 
 The **Authorization Guide** panel in the Lab 3 wizard (click **Open Guide** on the
 Authorize step) offers four ready-made policy documents:
@@ -175,7 +175,7 @@ If you plan to use **Simulate IAM permissions** in Lab 3, the credentials also n
 
 We issued a short-lived credential and nothing else.
 
-This is the step that makes automated configuration safe to use on a customer account. The
+This is the step that makes automated configuration safe to use on a production account. The
 CloudFormation path never asks for a credential, because you launch each stack yourself,
 and it costs you two console walk-throughs. Here you trade one bounded hour of access for
 a wizard that does the work, plus a preflight permission check you would not otherwise get.

@@ -144,7 +144,7 @@ lacework compliance aws scan
 > In a room this size that means one scan happens and everyone benefits. Forty of you
 > typing it changes nothing.
 
-So treat this as something you have now **seen**. You will use it on a customer tenant,
+So treat this as something you have now **seen**. You will use it on a tenant of your own,
 where you are the only one driving. Do not expect fresh compliance data to land before the
 session ends.
 

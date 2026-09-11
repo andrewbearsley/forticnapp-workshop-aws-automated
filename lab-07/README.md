@@ -61,7 +61,7 @@ prints what failed. Uploading to the platform is on by default, controlled by `-
 You will get a lot of findings. Do not try to read them all. Work through these three
 questions instead:
 
-1. **How many are Critical or High?** That is the number a customer will react to.
+1. **How many are Critical or High?** That is the number anyone reacts to first.
 2. **What kinds of problem are they?** Group them in your head: encryption off, access too
    open, logging missing. Most estates repeat the same few mistakes.
 3. **Which file is the worst?** One module usually accounts for a large share, which is

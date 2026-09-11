@@ -88,7 +88,7 @@ dependency.
 lacework sca scan ./ -f cdx-json -o sbom.json
 ```
 
-That writes CycloneDX JSON, one of the two formats regulators and customers ask for. Have a
+That writes CycloneDX JSON, one of the two formats regulators and auditors ask for. Have a
 look at how much is in there:
 
 ```bash

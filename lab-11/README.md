@@ -2,7 +2,7 @@
 
 ## Objectives
 
-In Lab 3, FortiCNAPP deployed the integrations for you from the console wizard. That is the fastest path, and it is what most partners should use. But some customers want the Terraform in their own repository, reviewed in a pull request and applied by a pipeline. In this lab, we'll use the Lacework CLI to generate Terraform code, then deploy the same CloudTrail and Configuration integrations as code. This is the production-ready approach: repeatable, version-controlled, and pipeline-friendly.
+In Lab 3, FortiCNAPP deployed the integrations for you from the console wizard. That is the fastest path and it suits most situations. But some teams want the Terraform in their own repository, reviewed in a pull request and applied by a pipeline. In this lab, we'll use the Lacework CLI to generate Terraform code, then deploy the same CloudTrail and Configuration integrations as code. This is the production-ready approach: repeatable, version-controlled, and pipeline-friendly.
 
 ## Prerequisites
 

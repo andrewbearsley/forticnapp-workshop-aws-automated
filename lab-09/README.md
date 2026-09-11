@@ -258,7 +258,7 @@ That is why Route B matters beyond this lab. The Terraform bundle owns both side
 `destroy` removes the AWS resources and the integration record together and cannot leave
 the orphan behind.
 
-When you onboard a customer, agree the teardown at the same time. It is a much easier
+When you onboard an account, agree the teardown at the same time. It is a much easier
 conversation before anything is deployed.
 
 ## Why this lab matters more than it looks
@@ -294,6 +294,5 @@ Route A teaches you where the seams are. FortiCNAPP creates the integration reco
 Terraform creates the AWS resources. Delete from the console and only the first of those
 goes, which is the gap orphaned resources fall through.
 
-Route B closes the gap, because the state file spans both. Worth knowing for a customer:
-the Terraform bundle on the deployment record is a complete workspace, state included, so
+Route B closes the gap, because the state file spans both. The Terraform bundle on the deployment record is a complete workspace, state included, so
 `terraform destroy` does the whole job in one command.
