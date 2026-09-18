@@ -36,11 +36,12 @@ in the console.
 Do this now, before you go any further. This tenant is noisy, and by default it will email
 you about it.
 
-1. Go to **Settings** > **My profile**.
-2. Turn **off** **Default email notification**.
-3. Turn **off** **Receive monthly updates from FortiCNAPP**.
+Go to **Settings** > **My profile**, then under **My preferences**:
 
-![My profile preferences with Default email notification and monthly updates turned off](images/forticnapp-email-notifications.png)
+1. Turn **off** **Default email notification**.
+2. Turn **off** **Receive monthly updates from FortiCNAPP**.
+
+![My profile preferences with Default email notification and monthly updates boxed and turned off](images/forticnapp-email-notifications.png)
 
 These are **your** preferences only. You are not changing anything for anyone else in the
 tenant.
