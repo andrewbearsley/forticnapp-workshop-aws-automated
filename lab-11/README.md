@@ -2,7 +2,11 @@
 
 ## Objectives
 
-In Lab 3, FortiCNAPP deployed the integrations for you from the console wizard. That is the fastest path and it suits most situations. But some teams want the Terraform in their own repository, reviewed in a pull request and applied by a pipeline. In this lab, we'll use the Lacework CLI to generate Terraform code, then deploy the same CloudTrail and Configuration integrations as code. This is the production-ready approach: repeatable, version-controlled, and pipeline-friendly.
+In Lab 3, FortiCNAPP deployed Configuration and Agentless for you from the console wizard. That is the fastest path and it suits most situations. CloudTrail was left out, because the wizard's discovery step cannot resolve the organization trail your account inherits.
+
+In this lab we finish the job. We'll use the Lacework CLI to generate Terraform code, then deploy the **CloudTrail** integration as code. Terraform talks to the FortiCNAPP API directly and never runs the wizard's discovery step, so the organization trail does not affect it.
+
+This is also the production-ready approach in its own right: repeatable, version-controlled, pipeline-friendly, and the Terraform can live in your own repository, be reviewed in a pull request and applied by CI. The split you are doing here, wizard for the quick wins and as-code for the rest, is a common production pattern.
 
 ## Prerequisites
 
@@ -39,16 +43,25 @@ lacework version
 
 ### Step 3: Generate Terraform Configuration for AWS Integration
 
-Use the Lacework CLI to generate Terraform code for AWS integration. This will create Terraform files for CloudTrail and Configuration assessment:
+Use the Lacework CLI to generate Terraform code for the CloudTrail integration:
 
 ```bash
 lacework generate cloud-account aws \
-  --config --cloudtrail --noninteractive \
+  --cloudtrail --noninteractive \
   --aws_region ap-southeast-1
 ```
 
+> [!IMPORTANT]
+> **Do not add `--config` here.** Lab 3 already created the Configuration integration for
+> this AWS account. Asking for it again builds around 18 AWS resources, has the
+> registration call rejected with *"The provided aws account is already used in this
+> Lacework Application"*, and then destroys them all again. Nothing is left behind, but
+> you wait through the whole cycle to be told something that was knowable up front.
+>
+> One integration type per AWS account per tenant. Generate only what you do not already
+> have.
+
 **Parameters explained:**
-- `--config`: Enable AWS Configuration integration
 - `--cloudtrail`: Enable AWS CloudTrail integration
 - `--noninteractive`: Run without prompts (uses defaults)
 - `--aws_region ap-southeast-1`: Specify the AWS region (Asia Pacific - Singapore)
@@ -110,16 +123,7 @@ This shows you:
 
 The plan output will display in your terminal. Review it carefully to understand what will be deployed.
 
-**What will be created (40+ resources total):**
-
-**AWS Configuration Integration:**
-- 1 IAM Role (`lacework_iam_role`) - Cross-account role for Lacework to access AWS Config
-- 7 IAM Policies - Audit policies for reading AWS Config data (base policy + 6 versioned policies for 2025)
-- 7 IAM Role Policy Attachments - Attaching the audit policies to the IAM role
-- 1 Lacework Integration (`lacework_integration_aws_cfg`) - Configuration assessment integration
-- 1 Lacework External ID - Security identifier for the IAM role
-- 2 Random IDs - Unique identifiers for resource naming
-- 1 Time Sleep - Wait period for resource propagation
+**What will be created (around 25 resources):**
 
 **AWS CloudTrail Integration:**
 - 1 CloudTrail - AWS CloudTrail for API activity logging
@@ -140,8 +144,18 @@ The plan output will display in your terminal. Review it carefully to understand
 - 1 IAM Policy - Cross-account policy for CloudTrail access
 - 1 IAM Role Policy Attachment - Attaching policy to IAM role
 - 1 Lacework Integration (`lacework_integration_aws_ct`) - CloudTrail integration
+- 1 IAM Role - Cross-account role for FortiCNAPP to read the trail
+- 1 Lacework External ID - Security identifier for the IAM role
 - 1 Random ID - Unique identifier for resource naming
 - 1 Time Sleep - Wait period for resource propagation
+
+> [!NOTE]
+> No Configuration resources appear in this plan. Lab 3 created that integration through
+> the wizard, and it is still in place. Check **Settings** > **Integrations** >
+> **Cloud accounts** if you want to confirm before applying.
+>
+> After this applies, the account carries all three: Configuration and Agentless from the
+> wizard, CloudTrail from Terraform.
 
 **Optional: Save the plan to a file:**
 

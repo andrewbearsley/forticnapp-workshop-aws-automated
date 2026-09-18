@@ -23,7 +23,7 @@ Work through the screens, then wait five to ten minutes while it builds.
 
 | | |
 |---|---|
-| It creates real AWS resources | IAM roles, an S3 bucket, an SNS topic, an SQS queue, a CloudTrail trail. Lab 9 removes them. |
+| It creates real AWS resources | IAM roles, and the ECS cluster and networking the agentless scanner needs. Lab 9 removes them. Lab 11 adds the CloudTrail trail, bucket, SNS topic and SQS queue. |
 | The credential expires | One hour from when you made it. If the wizard sits idle, it will fail partway. |
 
 ## Prerequisites
@@ -119,29 +119,44 @@ problem, not the form. See the failure table at the end of
 
 ### Step 4: Configure (Step 3 of 4)
 
-Select the integration types to deploy.
+Task 1 of 3 is **Select Integration**. Each integration type is a **toggle**, and all four
+start off. The console lists them in this order, each tagged with the CNAPP capability it
+provides:
 
-| Integration type | What it gives you |
-|---|---|
-| **Configuration** | Resource inventory, compliance assessment, risk analysis |
-| **CloudTrail** | AWS CloudTrail ingestion for threat detection. Creates its own trail by default. |
-| **Agentless Workload Scanning** | Vulnerability and secret scanning with no agent on the instance |
-| **Kubernetes audit log** | EKS audit log ingestion. Skip it unless this account runs EKS. |
+| Toggle | Tagged as | What it gives you |
+|---|---|---|
+| **Agentless Workload Scanning** | Cloud Vulnerability Management | Vulnerability and secret scanning with no agent on the instance |
+| **Configuration** | Cloud Security Posture Management | Resource inventory, compliance assessment, risk analysis |
+| **CloudTrail** | Cloud Threat Detection | AWS CloudTrail ingestion. Creates its own trail by default. |
+| **EKS Audit Log** | Kubernetes Security Posture Management | EKS audit log ingestion. Leave it off unless this account runs EKS. |
 
-Select **Configuration**, **CloudTrail** and **Agentless Workload Scanning**.
+Turn on two toggles, and only two:
+
+1. **Agentless Workload Scanning**
+2. **Configuration**
+
+**Leave the CloudTrail and EKS Audit Log toggles off.**
 
 > [!WARNING]
-> **Skip CloudTrail if your AWS account is a member of an AWS Organization that has an
-> organization trail**, which most corporate accounts are. Discovery fails on it. See the
-> troubleshooting section below.
+> **Do not turn on CloudTrail in this lab.** Your student account is a member of an AWS
+> Organization that has an organization trail, and discovery aborts on it with
+> `TrailNotFoundException`. Most corporate accounts are in the same position, so this is
+> the normal case rather than a lab quirk.
 >
-> Student and standalone accounts are not affected. Select CloudTrail and you get threat
-> detection working in the same pass.
+> You are not losing the capability. **Lab 11 adds CloudTrail using Terraform**, which
+> does not run the discovery step and is unaffected. You finish the workshop with all
+> three integration types either way.
+>
+> Only an account with no organization trail can turn CloudTrail on here. If you are
+> running these labs on a standalone account, you may turn it on and skip the CloudTrail
+> step in Lab 11.
 
-![Configure step showing the four integration types, each labelled with its CNAPP capability](images/forticnapp-configure-selected.png)
+![Configure step with the Agentless Workload Scanning and Configuration toggles boxed and numbered 1 and 2, CloudTrail and EKS Audit Log left off](images/forticnapp-configure-selected.png)
 
-> **Three tick boxes, three of the four CNAPP capabilities.** Posture, threat detection and
-> vulnerability scanning, from one screen.
+> **Two toggles here, the third capability arrives in Lab 11.** Posture and vulnerability
+> scanning from the wizard, threat detection as code. That split is not a workaround: it is
+> a common production pattern, with the fast path for what the wizard does well and
+> Terraform for what belongs in a repository.
 
 #### Set the agentless scanning regions
 
@@ -150,15 +165,18 @@ completes, Task 3 asks for per-integration settings.
 
 1. On the **Agentless Workload Scanning** tab, set **Scanning regions** to the region where
    your workloads run, for example **ap-southeast-1**.
-2. On the **CloudTrail** tab, expand **Advanced options** and leave **Use an existing
-   CloudTrail** off.
 
-   Off is the default, and off is what you want. FortiCNAPP then creates its own trail,
-   S3 bucket, SNS topic and SQS queue. Nothing has to exist in the account beforehand.
+   > [!IMPORTANT]
+   > **Scanning regions is required and starts empty.** The wizard will not let you leave
+   > this step until you set it, and the error only appears once you try to advance.
 
-   Turn it on only when the account already has a trail you want FortiCNAPP to read.
+2. On the **Configuration** tab, leave **Advanced options** alone.
 
-3. On the **Configuration** tab, leave **Advanced options** alone.
+There is no CloudTrail tab, because you did not select CloudTrail. If you are on a
+standalone account and did turn it on, expand **Advanced options** on the CloudTrail tab and
+leave **Use an existing CloudTrail** off. Off is the default and off is what you want:
+FortiCNAPP then creates its own trail, S3 bucket, SNS topic and SQS queue, and nothing has
+to exist in the account beforehand.
 
 ![CloudTrail Advanced options showing Use an existing CloudTrail off by default](images/forticnapp-cloudtrail-advanced.png)
 
@@ -239,29 +257,31 @@ Remember these tags. Lab 6 uses them for cleanup.
 
 1. Return to **Settings** > **Integrations** > **Cloud accounts**.
 2. Confirm your AWS account ID appears in the list.
-3. Confirm the **Integrations** column shows Configuration, CloudTrail and Agentless.
+3. Confirm the **Integrations** column shows **Configuration** and **Agentless**.
+   CloudTrail is not there yet. Lab 11 adds it.
 
 ### Step 9: Confirm the AWS Side
 
-Switch to the AWS Console and confirm the resources exist. You can also check from
-CloudShell:
+Switch to the AWS Console and confirm the resources exist.
+
+First, see the trail that caused you to skip CloudTrail in Step 4. From CloudShell:
 
 ```bash
 aws cloudtrail describe-trails --region ap-southeast-1 \
-  --query "trailList[].[Name,IsOrganizationTrail,S3BucketName]" --output text
+  --query "trailList[].[Name,IsOrganizationTrail]" --output text
 ```
 
-A successful run returns a trail FortiCNAPP created, with `IsOrganizationTrail` **False**
-and its own bucket, for example:
+Any row with `IsOrganizationTrail` **True** is an organization trail your account can see
+but cannot manage. That is the one discovery cannot resolve:
 
 ```
-lacework-cloudtrail-7689faee   False   lacework-ct-bucket-7d009af2
+aws-controltower-BaselineCloudTrail   True
 ```
 
-1. Go to **CloudTrail** > **Trails**. Confirm a trail exists and is logging.
+You will run this command again at the end of Lab 11, where a trail with **False** in that
+column appears alongside it. That one is yours.
 
-![CloudTrail Trails list showing the trail FortiCNAPP created](images/aws-cloudtrail-created.png)
-2. Go to **IAM** > **Roles**. Find the cross-account role FortiCNAPP created.
+1. Go to **IAM** > **Roles**. Find the cross-account role FortiCNAPP created.
 3. Open the role and select the **Trust relationships** tab. The trusted principal is the
    FortiCNAPP AWS account, protected by an external ID.
 4. Go to **Amazon ECS** > **Clusters**. Confirm the agentless scanner cluster exists.
@@ -281,9 +301,12 @@ for the user: <your account id>
 CloudTrail, often created by Control Tower. A member account sees that trail as a shadow
 trail, and AWS requires the full trail ARN to look one up rather than the name.
 
-**What to do**: deselect **CloudTrail** and deploy the other integration types. For
-CloudTrail coverage across an organization, run an **organization level** integration from
-the management account.
+**What to do**: this is why Step 4 has you leave the CloudTrail toggle off, and why Lab 11
+deploys it with Terraform instead. Terraform does not run the wizard's discovery step, so
+the organization trail does not affect it.
+
+For CloudTrail coverage across a whole organization, run an **organization level**
+integration from the management account.
 
 ![Discovery failure caused by an organization CloudTrail](images/forticnapp-discovery-controltower-error.png)
 
@@ -318,7 +341,7 @@ Data does not appear instantly.
 
 | Data | First appears |
 |---|---|
-| CloudTrail events | Within 15 minutes of the trail being created |
+| CloudTrail events | Within 15 minutes of the trail being created in Lab 11 |
 | Resource inventory and compliance | Up to 24 hours on the scheduled cycle |
 | Agentless scan results | After the first scan, on a 24 hour cycle by default |
 
@@ -335,8 +358,9 @@ Source: the Authorization Guide panel in the wizard, "Data privacy and security"
 
 ## What did we do here?
 
-We onboarded an entire AWS account into FortiCNAPP in one wizard: configuration
-assessment, CloudTrail threat detection, and agentless vulnerability scanning.
+We onboarded an AWS account into FortiCNAPP from one wizard: configuration assessment and
+agentless vulnerability scanning. Lab 11 adds CloudTrail threat detection as code, which is
+how it often runs in production anyway.
 
 Compare the work:
 
