@@ -1,262 +1,135 @@
-# Lab 11: Install Integrations via Terraform
+# Lab 11: Install Terraform
 
 ## Objectives
 
-In Lab 3, FortiCNAPP deployed Configuration and Agentless for you from the console wizard. That is the fastest path and it suits most situations. CloudTrail was left out, because the wizard's discovery step cannot resolve the organization trail your account inherits.
-
-In this lab we finish the job. We'll use the Lacework CLI to generate Terraform code, then deploy the **CloudTrail** integration as code. Terraform talks to the FortiCNAPP API directly and never runs the wizard's discovery step, so the organization trail does not affect it.
-
-This is also the production-ready approach in its own right: repeatable, version-controlled, pipeline-friendly, and the Terraform can live in your own repository, be reviewed in a pull request and applied by CI. The split you are doing here, wizard for the quick wins and as-code for the rest, is a common production pattern.
+In Lab 4 you used CloudFormation to deploy an integration, which is one infrastructure as code approach. But many enterprises prefer Terraform since it's not AWS-specific and works across multiple cloud providers. In this lab, we'll install the two tools needed for the Terraform approach: the Lacework CLI (to generate Terraform configuration) and Terraform (to deploy it). This sets up everything for the next lab.
 
 ## Prerequisites
 
-- Completed [Lab 10: Install Terraform](../lab-10/README.md)
+- AWS account access
+- FortiCNAPP account credentials
 
-> [!TIP]
-> **Shortcut worth knowing.** If you already onboarded with automated configuration in
-> Lab 3, you can download the Terraform FortiCNAPP generated instead of generating your
-> own. Go to **Settings** > **Integrations** > **Cloud accounts** > **Deployment History**,
-> open your deployment, and click **Terraform files** on any integration. This lab
-> generates the code from scratch so you can see how the Lacework CLI does it.
-- AWS account with appropriate permissions
-- FortiCNAPP account access with API key configured
+**Note:** You installed and configured the Lacework CLI in [Lab 7](../lab-07/README.md), so skip Steps 1-6 and go straight to Step 7 (Install Terraform).
 
 ## Lab Steps
 
-### Step 1: Open AWS CloudShell
+### Step 1: Log into AWS Console and Open CloudShell
 
 1. Navigate to <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a>
 2. Click **Sign into console**
 3. After logging in, change to your local region (e.g., **Asia Pacific (Singapore)**) using the region selector in the top right of the AWS Console
 4. Click the **CloudShell** icon in the top navigation bar (cloud icon with `>_` symbol)
-5. Wait for CloudShell to initialize
+5. Wait for CloudShell to initialize (this may take a minute the first time)
+6. Once CloudShell opens, you'll have a Linux-based terminal environment ready to use
 
-### Step 2: Verify Lacework CLI Configuration
+### Step 2: Set Up Installation Directory
 
-Verify that the Lacework CLI is configured and working:
+Create a bin directory in your home folder and add it to your PATH:
+
+```bash
+mkdir -p "$HOME/bin"
+echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+```
+
+This directory will be used for both Lacework CLI and Terraform installations.
+
+### Step 3: Install Lacework CLI
+
+In the CloudShell terminal, run:
+
+```bash
+curl https://raw.githubusercontent.com/lacework/go-sdk/main/cli/install.sh | bash -s -- -d "$HOME/bin"
+```
+
+This will download and install the Lacework CLI tool to your home bin directory.
+
+![CloudShell showing Lacework CLI successfully installed](../lab-07/images/cloudshell-lacework-cli-installed.png)
+
+**Note**: For Windows installation (if needed outside CloudShell), download from the <a href="https://github.com/lacework/go-sdk/releases" target="_blank">Lacework CLI releases page</a>.
+
+### Step 4: Download API Key from FortiCNAPP
+
+An existing service user **AWS Lab** has been pre-configured with the necessary permissions. Download the API key for this user:
+
+1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
+2. Ensure tenant is set to **FORTINETAPACDEMO**
+3. Navigate to **Settings** > **Configuration** > **API keys**
+4. Click on the **Service user API keys** tab
+5. Find the API key for the **AWS Lab** service user
+6. Click on the ellipsis (three dots) next to the API key and select **Download** to download the key as JSON
+
+![API keys page showing Service user API keys with Download option](../lab-07/images/forticnapp-download-api-key.png)
+
+7. Open the downloaded JSON file and note the values. Keep these credentials ready for the next step
+
+### Step 5: Configure CLI
+
+In CloudShell, run:
+
+```bash
+lacework configure
+```
+
+Enter your FortiCNAPP account credentials when prompted. These values are taken from the JSON file downloaded in the previous step:
+
+```json
+{
+  "keyId": "FORTINET_5DFDAF3B...",
+  "secret": "_f1b528...",
+  "account": "partner-demo.lacework.net",
+  "subAccount": "fortinetapacdemo"
+}
+```
+
+- **Account**: `partner-demo.lacework.net` (the `account` value from the JSON file)
+- **API Key**: The `keyId` value from the JSON file
+- **API Secret**: The `secret` value from the JSON file
+- **Sub-Account** (if prompted): The `subAccount` value from the JSON file
+
+### Step 6: Verify CLI Installation
 
 ```bash
 lacework version
 ```
 
-![CloudShell with lacework version output](images/aws-cloudshell-lacework-version.png)
+This should return the installed version, confirming the CLI is ready to use.
 
-### Step 3: Generate Terraform Configuration for AWS Integration
+**Note:** If you completed [Lab 10](../lab-10/README.md), the AWS integrations from Lab 3 have been cleaned up. We'll redeploy them using Terraform in the next lab.
 
-Use the Lacework CLI to generate Terraform code for the CloudTrail integration:
+### Step 7: Install Terraform
 
-```bash
-lacework generate cloud-account aws \
-  --cloudtrail --noninteractive \
-  --aws_region ap-southeast-1
-```
+Install Terraform in AWS CloudShell:
 
-> [!IMPORTANT]
-> **Do not add `--config` here.** Lab 3 already created the Configuration integration for
-> this AWS account. Asking for it again builds around 18 AWS resources, has the
-> registration call rejected with *"The provided aws account is already used in this
-> Lacework Application"*, and then destroys them all again. Nothing is left behind, but
-> you wait through the whole cycle to be told something that was knowable up front.
->
-> One integration type per AWS account per tenant. Generate only what you do not already
-> have.
+1. Download Terraform (Linux amd64) and unzip it to your bin folder:
 
-**Parameters explained:**
-- `--cloudtrail`: Enable AWS CloudTrail integration
-- `--noninteractive`: Run without prompts (uses defaults)
-- `--aws_region ap-southeast-1`: Specify the AWS region (Asia Pacific - Singapore)
-
-This command generates Terraform files in the `~/lacework/aws` directory.
-
-### Step 4: Review Generated Terraform Files
-
-Navigate to the generated Terraform directory and review the files:
+First, get the latest Terraform version:
 
 ```bash
-cd ~/lacework/aws
-ls -la
+TERRAFORM_VERSION=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
 ```
 
-The CLI generates a single `main.tf` file that uses pre-built Terraform modules from the Lacework registry. All the complexity (IAM policies, S3 buckets, CloudTrail setup) is handled by the modules with sensible defaults.
-
-Review the generated configuration:
+Then download and install that version:
 
 ```bash
-cat main.tf
+wget -O terraform.zip "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+unzip terraform.zip
+mv terraform "$HOME/bin/"
+rm terraform.zip
+# Configure Terraform to use the temporary directory for cache to prevent running out of cloudshell storage space
+echo 'export TF_PLUGIN_CACHE_DIR="/tmp"' >> ~/.bashrc
+source ~/.bashrc
 ```
 
-### Step 5: Initialize Terraform
+**Alternative**: If you prefer to check manually, visit <a href="https://releases.hashicorp.com/terraform/" target="_blank">HashiCorp's Terraform releases page</a> and replace `${TERRAFORM_VERSION}` in the URL with the latest version number (e.g., `1.9.5`).
 
-CloudShell home is capped at 1 GB and the AWS provider alone is ~700 MB, so with the Lacework CLI (~50 MB) and Terraform binary (~150 MB) already in `~/bin`, there's barely enough room. CloudShell's split mount layout (`/home` on disk, `/tmp` on tmpfs) also trips up git when Terraform downloads modules. Set three env vars to work around both before running `init`:
-
-```bash
-mkdir -p /tmp/tfcache $HOME/tmp
-export TF_PLUGIN_CACHE_DIR=/tmp/tfcache
-export TMPDIR=$HOME/tmp
-export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
-terraform init
-```
-
-What each one does:
-- `TF_PLUGIN_CACHE_DIR=/tmp/tfcache` puts the provider cache on tmpfs (several GB) instead of home (1 GB).
-- `TMPDIR=$HOME/tmp` keeps git's temp working dir on the same filesystem as `.terraform/modules/`, so module clones don't fail crossing the `/home` mount boundary.
-- `GIT_DISCOVERY_ACROSS_FILESYSTEM=1` silences git's mount-crossing complaint if it does happen.
-
-> **Troubleshooting**
->
-> - `Error while installing ... it is still not detected in /tmp; this is a bug in Terraform`: CloudShell home is full (the "/tmp" message is misleading). Run `df -h $HOME` to confirm, then `rm -rf ~/lacework/aws/.terraform ~/lacework/aws/.terraform.lock.hcl /tmp/tfcache` and retry.
-> - `Error while installing ...: text file busy`: a stale terraform process is holding the provider binary open. Run `pkill -f terraform`, then `rm -rf /tmp/tfcache` and retry.
-> - `Could not download module ...: not a git repository (or any parent up to mount point /home)`: the env vars above (`TMPDIR` and `GIT_DISCOVERY_ACROSS_FILESYSTEM`) fix this. Make sure both are exported in the same shell as `terraform init`.
-
-### Step 6: Review Terraform Plan
-
-Review what Terraform will create before applying:
-
-```bash
-terraform plan
-```
-
-This shows you:
-- Resources that will be created (IAM roles, CloudTrail, S3 buckets, etc.)
-- Any changes that will be made
-- Output values that will be generated
-
-The plan output will display in your terminal. Review it carefully to understand what will be deployed.
-
-**What will be created (around 25 resources):**
-
-**AWS CloudTrail Integration:**
-- 1 CloudTrail - AWS CloudTrail for API activity logging
-- 2 S3 Buckets - One for CloudTrail logs, one for CloudTrail log delivery
-- 2 S3 Bucket Policies - Access policies for the buckets
-- 2 S3 Bucket Versioning - Enable versioning on both buckets
-- 2 S3 Bucket Encryption - Server-side encryption configuration
-- 2 S3 Bucket Public Access Block - Block public access to buckets
-- 2 S3 Bucket Ownership Controls - Bucket ownership settings
-- 1 S3 Bucket Logging - Access logging configuration
-- 1 S3 Bucket ACL - Access control list for log bucket
-- 1 KMS Key - Encryption key for CloudTrail logs
-- 1 SNS Topic - Topic for CloudTrail notifications
-- 1 SNS Topic Policy - Access policy for SNS topic
-- 1 SNS Topic Subscription - Subscription to forward notifications
-- 1 SQS Queue - Queue to receive CloudTrail notifications
-- 1 SQS Queue Policy - Access policy for SQS queue
-- 1 IAM Policy - Cross-account policy for CloudTrail access
-- 1 IAM Role Policy Attachment - Attaching policy to IAM role
-- 1 Lacework Integration (`lacework_integration_aws_ct`) - CloudTrail integration
-- 1 IAM Role - Cross-account role for FortiCNAPP to read the trail
-- 1 Lacework External ID - Security identifier for the IAM role
-- 1 Random ID - Unique identifier for resource naming
-- 1 Time Sleep - Wait period for resource propagation
-
-> [!NOTE]
-> No Configuration resources appear in this plan. Lab 3 created that integration through
-> the wizard, and it is still in place. Check **Settings** > **Integrations** >
-> **Cloud accounts** if you want to confirm before applying.
->
-> After this applies, the account carries all three: Configuration and Agentless from the
-> wizard, CloudTrail from Terraform.
-
-**Optional: Save the plan to a file:**
-
-If you want to save the plan output for later review or documentation:
-
-```bash
-terraform plan > plan-output.txt
-```
-
-Then view it with:
-
-```bash
-cat plan-output.txt
-```
-
-### Step 7: Apply Terraform Configuration
-
-If the plan looks correct, apply the Terraform configuration to deploy the integration:
-
-```bash
-terraform apply
-```
-
-When prompted, type `yes` to confirm the deployment.
-
-**Note**: This process may take several minutes as it creates 46 resources including:
-- IAM roles and policies (for both Config and CloudTrail integrations)
-- CloudTrail with encryption and logging
-- S3 buckets for CloudTrail logs (with versioning, encryption, and access controls)
-- KMS key for encryption
-- SNS topic and SQS queue for CloudTrail notifications
-- Lacework integrations (Configuration and CloudTrail)
-- Supporting resources (random IDs, time delays for propagation)
-
-### Step 8: Verify Integration Deployment
-
-After the Terraform apply completes successfully, verify the integration:
-
-1. **Using Lacework CLI:**
-```bash
-lacework cloud-account list
-```
-
-You should see entries for:
-- `AwsCfg` (Configuration integration)
-- `AwsCtSqs` (CloudTrail integration)
-
-2. **In FortiCNAPP Console:**
-   - Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
-   - Ensure tenant is set to **FORTINETAPACDEMO**
-   - Navigate to **Settings** > **Integrations** > **Cloud accounts**
-   - Verify that your AWS account appears with both Configuration and CloudTrail integrations active
-
-### Step 9: Clean Up Resources
-
-After completing the lab, clean up the resources created by Terraform:
-
-1. **Review what will be destroyed:**
-```bash
-terraform plan -destroy
-```
-
-This shows you what resources will be removed.
-
-2. **Destroy the resources:**
-```bash
-terraform destroy
-```
-
-When prompted, type `yes` to confirm the destruction.
-
-**Note**: This will:
-- Remove the FortiCNAPP integrations from your AWS account
-- Delete IAM roles and policies created by Terraform
-- Remove S3 buckets created for CloudTrail (if created by Terraform)
-- Remove SNS topics created for notifications (if created by Terraform)
-- **Note**: If you're using an existing CloudTrail, it will not be deleted, only the integration will be removed
-
-3. **Verify cleanup:**
-```bash
-lacework cloud-account list
-```
-
-The AWS integrations should no longer appear in the list.
-
-4. **Clean up Terraform files:**
-```bash
-rm -rf ~/lacework/aws
-```
 
 ## What did we do here?
 
-We deployed the same CloudTrail and Configuration integrations from Lab 3, but this time with Terraform we own instead of the console wizard. The Lacework CLI generated the Terraform code, and `terraform apply` created 46 resources - IAM roles, S3 buckets, KMS encryption, SNS/SQS notifications, and the FortiCNAPP integrations themselves.
+We set up the tooling needed for infrastructure as code. The Lacework CLI connects to FortiCNAPP's API, and Terraform lets us define and deploy cloud resources from code instead of clicking through consoles.
 
-This is how you'd do it in production. The Terraform configuration can be checked into version control, reviewed in pull requests, and deployed through CI/CD pipelines. Need to integrate 50 AWS accounts? Fortinet provides organization-level Terraform modules that deploy across all accounts in your AWS Organization in one go. And when you're done, `terraform destroy` cleanly removes everything.
-
-
-## Additional Resources
-
-- <a href="https://docs.fortinet.com/document/forticnapp/latest/administration-guide/283460/aws-integration-terraform-from-aws-cloudshell" target="_blank">FortiCNAPP Documentation: AWS Integration Terraform from AWS CloudShell</a>
+In the next lab you use both together: the CLI generates Terraform configuration, and Terraform deploys it. This is the production-ready approach to FortiCNAPP integration: repeatable, version-controlled, and auditable.
 
 ---
 
-Next: [Lab 12: Scripted Cleanup of All Workshop Resources](../lab-12/README.md).
+Next: [Lab 12: Install Integrations via Terraform](../lab-12/README.md).

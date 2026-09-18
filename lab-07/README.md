@@ -1,103 +1,168 @@
-# Lab 7: Code Security for Infrastructure as Code (IaC)
+# Lab 7: Install the Lacework CLI
 
 ## Objectives
 
-Labs 3 to 5 found problems in a **running** account. This lab finds them in the Terraform
-that would have created it, before anything exists.
+Everything so far has been the console. The CLI is the same platform through a different
+door, and it is the door you use when you want to script something, check twenty accounts
+at once, or answer a question the console has no page for.
 
-That is the whole idea behind shift left. A public S3 bucket found in production is an
-incident with a clock on it. The same bucket found in a pull request is a two-line change
-nobody outside the team hears about.
+You will install it in **AWS CloudShell**, so there is nothing to install on your own
+machine and nothing to uninstall afterwards.
 
-The scanner reads Terraform, CloudFormation and the other IaC formats, and checks them
-against the same policies FortiCNAPP uses on live resources.
+Labs 8 and 9 need this CLI, so this lab is not optional if you are continuing.
 
 ## Prerequisites
 
-- Completed [Lab 6](../lab-06/README.md), with the CLI working in CloudShell
+- Completed [Lab 3](../lab-03/README.md), so there are integrations to list
+- FortiCNAPP console access, tenant **FORTINETAPACDEMO**
 
 ## Lab Steps
 
-You should still be in CloudShell from Lab 6. If it timed out, reopen it and run
-`source ~/.bashrc` to put the CLI back on your PATH.
+### Step 1: Open CloudShell
 
-### Step 1: Install the IaC Scanner
+1. In the AWS console, check the region reads **Asia Pacific (Singapore)**.
+2. Click the **CloudShell** icon in the top bar, the cloud with `>_` in it. It also sits at
+   the bottom left of the console.
+3. Wait for the prompt. First launch takes a minute.
 
-The CLI ships small and pulls in what it needs:
+> **CloudShell is a free Linux shell with your console credentials already loaded.** Nothing
+> to install, nothing to authenticate. It is wiped after long inactivity, apart from your
+> home directory, which is why the next step installs into `$HOME/bin`.
 
-```bash
-lacework component install iac
-```
+### Step 2: Install the CLI
 
-Already installed from a previous run? Update it instead:
-
-```bash
-lacework component update iac
-```
-
-**Checkpoint:** the command finishes without an error.
-
-### Step 2: Get Some Code to Scan
-
-This repository is deliberately full of bad Terraform:
+Make a `bin` directory in your home folder and put it on your PATH, so the CLI survives a
+CloudShell restart:
 
 ```bash
-cd ~
-git clone https://github.com/andrewbearsley/lacework-iac-scan-example.git
-cd lacework-iac-scan-example/example-terraform
+mkdir -p "$HOME/bin"
+echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
 ```
 
-### Step 3: Scan It
+Then install:
 
 ```bash
-lacework iac scan
+curl https://raw.githubusercontent.com/lacework/go-sdk/main/cli/install.sh | bash -s -- -d "$HOME/bin"
+lacework version
 ```
 
-It reads every Terraform file below the current directory, checks each against policy, and
-prints what failed. Uploading to the platform is on by default, controlled by `--upload`.
+![CloudShell showing Lacework CLI successfully installed](images/cloudshell-lacework-cli-installed.png)
 
-### Step 4: Read the Output
+**Checkpoint:** `lacework version` prints a version instead of `command not found`.
 
-You will get a lot of findings. Do not try to read them all. Work through these three
-questions instead:
+### Step 3: Download the API Key
 
-1. **How many are Critical or High?** That is the number anyone reacts to first.
-2. **What kinds of problem are they?** Group them in your head: encryption off, access too
-   open, logging missing. Most estates repeat the same few mistakes.
-3. **Which file is the worst?** One module usually accounts for a large share, which is
-   where you would start.
+An existing service user **AWS Lab** has been pre-configured with the necessary permissions. Download the API key for this user:
 
-Each finding gives you a policy ID, a severity, and a **file and line number**. That last
-part is what makes this useful: it points a developer at the exact line, in their own
-editor, in their own language.
+1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
+2. Ensure tenant is set to **FORTINETAPACDEMO**
+3. Navigate to **Settings** > **Configuration** > **API keys**
+4. Click the **Service user API keys** tab. The **User API keys** tab next to it is a
+   different thing. Its keys will not work here.
+5. Type `AWS Lab` in the search box
+6. Click the ellipsis (three dots) on that row, then **Download**. The key arrives as JSON.
 
-**Checkpoint:** you can name the single most common category of finding in this repo.
+![API keys page showing Service user API keys with Download option](images/forticnapp-download-api-key.png)
 
-> **Why your scan does not show up in the console.** Look under **Risk Center** >
-> **Findings** > **Code Security** > **Infrastructure (IaC)** and you will not find it. That is expected. A
-> CLI scan from CloudShell has no repository behind it.
+7. Open the JSON file. You need four values from it.
+
+> [!CAUTION]
+> **This file is a live credential.** It can read your tenant. Do not paste it into chat,
+> a shared document, or a ticket, and delete it when the workshop ends. Lab 10 revokes the
+> key itself.
+
+### Step 4: Point the CLI at FortiCNAPP
+
+```bash
+lacework configure
+```
+
+It asks four questions. The answers all come from that JSON file, which looks like this:
+
+```json
+{
+  "keyId": "FORTINET_XXXXXXXXXXXXXXXX",
+  "secret": "_xxxxxxxxxxxxxxxxxxxxxxx",
+  "account": "partner-demo.lacework.net",
+  "subAccount": "fortinetapacdemo"
+}
+```
+
+| It asks for | Use the JSON field |
+|---|---|
+| Account | `account` |
+| API Key | `keyId` |
+| API Secret | `secret` |
+| Sub-Account | `subAccount` |
+
+The **sub-account** is the one people miss. It is the tenant, `fortinetapacdemo`. Leave it
+blank and the CLI talks to the wrong place and shows you nothing.
+
+### Step 5: List Your Integrations
+
+```bash
+lacework version
+lacework cloud-account list
+```
+
+The integration types have internal names, which is the first thing the CLI shows you that
+the console hides:
+
+| CLI name | What you selected in Lab 3 |
+|---|---|
+| `AwsCfg` | Configuration |
+| `AwsCtSqs` | CloudTrail |
+| `AwsSidekick` | Agentless Workload Scanning |
+
+`AwsCtSqs` appears only if CloudTrail deployed. Accounts inside an AWS Organization that
+already has an organization trail cannot deploy it. See the troubleshooting section in
+[Lab 3](../lab-03/README.md).
+
+**Checkpoint:** your AWS account number appears, with at least `AwsCfg` and `AwsSidekick`.
+
+### Step 6: Trigger an Inventory Scan
+
+FortiCNAPP collects resource inventory on its own cycle, up to 24 hours. The CLI can ask
+for one now:
+
+```bash
+lacework compliance aws scan
+```
+
+> [!WARNING]
+> **Your instructor runs this one, once. Do not all run it.**
 >
-> The **Assessments** view fills up when a repository is onboarded through
-> **Code Security** > **Add integration** (GitHub, GitLab or Bitbucket), or when the scan
-> runs inside a registered CI/CD pipeline. That is how it runs for real. This lab is the
-> scanner on its own, so you can see what it does.
+> This command behaves unlike anything else in the lab:
+>
+> - it is **tenant-wide**. There is no per-account form of it, so one person's scan covers
+>   every account integrated into this tenant, yours included
+> - **only one scan runs at a time.** While one is going, every other request is silently
+>   ignored. No error, no queue position, nothing
+> - it takes **one to two hours**
+>
+> In a room this size that means one scan happens and everyone benefits. Forty of you
+> typing it changes nothing.
+
+So treat this as something you have now **seen**. You will use it on a tenant of your own,
+where you are the only one driving. Do not expect fresh compliance data to land before the
+session ends.
+
+**Checkpoint:** you understand why this is the one command in the workshop you should not
+all run at once.
 
 ## What did we do here?
 
-We ran the platform's policies against code instead of against cloud.
+We swapped the console for a terminal, against the same platform and the same data.
 
-Same checks, different moment. The scanner found well over a hundred issues in a repo that
-would have deployed perfectly happily. It named the file and the line for every one.
+That matters more than it sounds. Everything you have done by clicking is an API call, and
+once you can make those calls yourself you can check twenty accounts as easily as one, put
+onboarding into a pipeline, and answer questions that have no console page. Labs 8 and 9
+take that straight into source code.
 
-Wired into a pipeline, these findings arrive as comments on a pull request, before the plan
-is ever applied. The fix costs a developer five minutes instead of costing you an incident
-review.
-
-## Additional Resources
-
-- <a href="https://docs.fortinet.com/document/lacework-forticnapp/latest/administration-guide/651014/getting-started-with-opal" target="_blank">Lacework IaC Scanning Documentation</a>
-- <a href="https://github.com/andrewbearsley/lacework-iac-scan-example" target="_blank">Example Repository</a>
+The scan command is also a fair warning about shared tenants. Some operations are
+tenant-wide and serialised. They do not tell you when they are ignoring you.
 
 ---
 
-Next: [Lab 8: Code Security for Applications (SCA)](../lab-08/README.md).
+Next: [Lab 8: Code Security for Infrastructure as Code (IaC)](../lab-08/README.md).

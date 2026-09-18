@@ -1,118 +1,103 @@
-# Lab 8: Code Security for Applications (SCA)
+# Lab 8: Code Security for Infrastructure as Code (IaC)
 
 ## Objectives
 
-Lab 7 scanned the code that builds your infrastructure. This lab scans the application that
-runs on it. Different question: **what did you inherit?**
+Labs 3 to 6 found problems in a **running** account. This lab finds them in the Terraform
+that would have created it, before anything exists.
 
-Modern applications are mostly other people's code. A team writes a few thousand lines and
-imports a few hundred thousand. Software Composition Analysis reads what you pulled in and
-tells you which of it is vulnerable, which of it carries a licence you cannot live with,
-and whether anyone has committed a credential by accident.
+That is the whole idea behind shift left. A public S3 bucket found in production is an
+incident with a clock on it. The same bucket found in a pull request is a two-line change
+nobody outside the team hears about.
 
-You will also produce an **SBOM**, a parts list for your application. When the next
-Log4j-scale vulnerability lands, the only question anyone asks is "are we affected?" An
-SBOM turns that from a week of archaeology into a search.
+The scanner reads Terraform, CloudFormation and the other IaC formats, and checks them
+against the same policies FortiCNAPP uses on live resources.
 
 ## Prerequisites
 
-- Completed [Lab 6](../lab-06/README.md), with the CLI working in CloudShell
+- Completed [Lab 7](../lab-07/README.md), with the CLI working in CloudShell
 
 ## Lab Steps
 
-Still in CloudShell from Lab 7. If it timed out, reopen it and run `source ~/.bashrc`.
+You should still be in CloudShell from Lab 7. If it timed out, reopen it and run
+`source ~/.bashrc` to put the CLI back on your PATH.
 
-### Step 1: Install the SCA Scanner
+### Step 1: Install the IaC Scanner
+
+The CLI ships small and pulls in what it needs:
 
 ```bash
-lacework component install sca
+lacework component install iac
 ```
 
-Already installed? `lacework component update sca` instead.
+Already installed from a previous run? Update it instead:
 
-![CloudShell with lacework version output](../lab-11/images/aws-cloudshell-lacework-version.png)
+```bash
+lacework component update iac
+```
+
+**Checkpoint:** the command finishes without an error.
 
 ### Step 2: Get Some Code to Scan
 
-A JavaScript and TypeScript application, deliberately full of problems:
+This repository is deliberately full of bad Terraform:
 
 ```bash
 cd ~
-git clone https://github.com/andrewbearsley/lacework-sca-scan-example.git
-cd lacework-sca-scan-example
+git clone https://github.com/andrewbearsley/lacework-iac-scan-example.git
+cd lacework-iac-scan-example/example-terraform
 ```
 
 ### Step 3: Scan It
 
 ```bash
-lacework sca scan .
+lacework iac scan
 ```
 
-> **SCA does not upload by default. IaC does.** If you want the results sent to the
-> platform, ask for it:
->
-> ```bash
-> lacework sca scan . --save-results=true
-> ```
->
-> That needs git metadata, which the cloned repo has.
->
-> As in Lab 7, results still will not appear under **Risk Center** > **Findings** >
-> **Code Security** > **Applications** until the repository is onboarded through
-> **Code Security** > **Add integration**, or the scan runs in a registered CI/CD pipeline.
+It reads every Terraform file below the current directory, checks each against policy, and
+prints what failed. Uploading to the platform is on by default, controlled by `--upload`.
 
 ### Step 4: Read the Output
 
-The findings come back in kinds worth telling apart, because different people fix them:
+You will get a lot of findings. Do not try to read them all. Work through these three
+questions instead:
 
-| Finding | What it means | Who fixes it |
-|---|---|---|
-| **Vulnerabilities** | CVEs in packages you imported, direct or pulled in by something else | Usually a version bump |
-| **Weaknesses** | CWEs in code that was written here: SQL injection, hard-coded credentials, weak auth | A developer, properly |
-| **Secrets** | A credential committed to the repo | Rotate it first, then remove it |
-| **Licences** | A dependency whose terms may not suit a commercial product | Legal, not engineering |
+1. **How many are Critical or High?** That is the number anyone reacts to first.
+2. **What kinds of problem are they?** Group them in your head: encryption off, access too
+   open, logging missing. Most estates repeat the same few mistakes.
+3. **Which file is the worst?** One module usually accounts for a large share, which is
+   where you would start.
 
-Work through the same three questions as Lab 7:
+Each finding gives you a policy ID, a severity, and a **file and line number**. That last
+part is what makes this useful: it points a developer at the exact line, in their own
+editor, in their own language.
 
-1. How many Critical and High vulnerabilities?
-2. Are they in packages you chose, or in packages **those** packages chose? Transitive
-   dependencies are the ones teams are surprised by.
-3. Were any secrets found? That is the finding to act on today.
+**Checkpoint:** you can name the single most common category of finding in this repo.
 
-**Checkpoint:** you can say whether the worst vulnerability is in a direct or a transitive
-dependency.
-
-### Step 5: Generate an SBOM
-
-```bash
-lacework sca scan ./ -f cdx-json -o sbom.json
-```
-
-That writes CycloneDX JSON, one of the two formats regulators and auditors ask for. Have a
-look at how much is in there:
-
-```bash
-head -40 sbom.json
-grep -c '"name"' sbom.json
-```
-
-**Checkpoint:** the count is far larger than the number of packages the application
-directly imports. That gap is the point of the exercise.
+> **Why your scan does not show up in the console.** Look under **Risk Center** >
+> **Findings** > **Code Security** > **Infrastructure (IaC)** and you will not find it. That is expected. A
+> CLI scan from CloudShell has no repository behind it.
+>
+> The **Assessments** view fills up when a repository is onboarded through
+> **Code Security** > **Add integration** (GitHub, GitLab or Bitbucket), or when the scan
+> runs inside a registered CI/CD pipeline. That is how it runs for real. This lab is the
+> scanner on its own, so you can see what it does.
 
 ## What did we do here?
 
-We inventoried what the application actually contains, rather than what its authors wrote.
+We ran the platform's policies against code instead of against cloud.
 
-The vulnerability count matters less than where it comes from: most of the risk arrives
-through dependencies nobody chose deliberately. That is why an SBOM is worth generating before you
-need it. The day a Log4j-scale CVE is announced, the teams that can answer "are we affected"
-in minutes are the ones that already had the parts list.
+Same checks, different moment. The scanner found well over a hundred issues in a repo that
+would have deployed perfectly happily. It named the file and the line for every one.
+
+Wired into a pipeline, these findings arrive as comments on a pull request, before the plan
+is ever applied. The fix costs a developer five minutes instead of costing you an incident
+review.
 
 ## Additional Resources
 
-- <a href="https://docs.fortinet.com/document/lacework-forticnapp/latest/administration-guide/433465/software-composition-analysis-sca" target="_blank">Lacework SCA Scanning Documentation</a>
-- <a href="https://github.com/andrewbearsley/lacework-sca-scan-example" target="_blank">Example Repository</a>
+- <a href="https://docs.fortinet.com/document/lacework-forticnapp/latest/administration-guide/651014/getting-started-with-opal" target="_blank">Lacework IaC Scanning Documentation</a>
+- <a href="https://github.com/andrewbearsley/lacework-iac-scan-example" target="_blank">Example Repository</a>
 
 ---
 
-Next: [Lab 9: Clean Up Workshop Resources](../lab-09/README.md).
+Next: [Lab 9: Code Security for Applications (SCA)](../lab-09/README.md).

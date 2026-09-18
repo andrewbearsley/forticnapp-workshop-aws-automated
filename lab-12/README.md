@@ -1,80 +1,265 @@
-# Lab 12: Scripted Cleanup of All Workshop Resources
+# Lab 12: Install Integrations via Terraform
 
-This lab provides a cleanup script that removes every workshop resource, on both the FortiCNAPP side and the AWS side.
+## Objectives
 
-> [!CAUTION]
-> This script assumes a disposable workshop AWS account. It sweeps every enabled region and removes all EC2 instances, key pairs and non-default security groups in the account, not only the ones the workshop created, along with every FortiCNAPP integration pointing at that AWS account. Do not run it in an account that hosts anything you want to keep.
+You have now onboarded this account twice, by two different methods. Lab 3 used the console wizard. Lab 4 used a CloudFormation template. [Lab 10](../lab-10/README.md) then removed both.
+
+This lab does it a third way, and it is the one most teams end up standardising on: **Terraform**. We'll use the Lacework CLI to generate the code, read it, then apply it.
+
+The difference is not the result, it is what you are left holding. A wizard leaves you with a working integration. Terraform leaves you with a working integration **and a file you can review in a pull request, commit, and apply again next quarter to a different account**. That is why the same integration is worth building a third time.
+
+Like CloudFormation in Lab 4, Terraform talks to the FortiCNAPP API directly, so the organization trail on your account is not a factor here either.
+
+## Prerequisites
+
+- Completed [Lab 11: Install Terraform](../lab-11/README.md)
+
+> [!TIP]
+> **Shortcut worth knowing.** If you already onboarded with automated configuration in
+> Lab 3, you can download the Terraform FortiCNAPP generated instead of generating your
+> own. Go to **Settings** > **Integrations** > **Cloud accounts** > **Deployment History**,
+> open your deployment, and click **Terraform files** on any integration. This lab
+> generates the code from scratch so you can see how the Lacework CLI does it.
+- AWS account with appropriate permissions
+- FortiCNAPP account access with API key configured
+
+## Lab Steps
+
+### Step 1: Open AWS CloudShell
+
+1. Navigate to <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a>
+2. Click **Sign into console**
+3. After logging in, change to your local region (e.g., **Asia Pacific (Singapore)**) using the region selector in the top right of the AWS Console
+4. Click the **CloudShell** icon in the top navigation bar (cloud icon with `>_` symbol)
+5. Wait for CloudShell to initialize
+
+### Step 2: Verify Lacework CLI Configuration
+
+Verify that the Lacework CLI is configured and working:
+
+```bash
+lacework version
+```
+
+![CloudShell with lacework version output](images/aws-cloudshell-lacework-version.png)
+
+### Step 3: Generate Terraform Configuration for AWS Integration
+
+Use the Lacework CLI to generate Terraform code for the CloudTrail integration:
+
+```bash
+lacework generate cloud-account aws \
+  --cloudtrail --noninteractive \
+  --aws_region ap-southeast-1
+```
+
+> [!IMPORTANT]
+> **Do not add `--config` here**, and only run this after [Lab 10](../lab-10/README.md)
+> has cleaned up.
+>
+> One AWS account can carry one integration of each type per tenant. If Lab 3's
+> Configuration or Lab 4's CloudTrail is still in place, Terraform builds around 18 AWS
+> resources, has the registration call rejected with *"The provided aws account is already
+> used in this Lacework Application"*, and then destroys them all again. Nothing is left
+> behind, but you wait through the whole cycle to learn something that was knowable up
+> front.
+
+**Parameters explained:**
+- `--cloudtrail`: Enable AWS CloudTrail integration
+- `--noninteractive`: Run without prompts (uses defaults)
+- `--aws_region ap-southeast-1`: Specify the AWS region (Asia Pacific - Singapore)
+
+This command generates Terraform files in the `~/lacework/aws` directory.
+
+### Step 4: Review Generated Terraform Files
+
+Navigate to the generated Terraform directory and review the files:
+
+```bash
+cd ~/lacework/aws
+ls -la
+```
+
+The CLI generates a single `main.tf` file that uses pre-built Terraform modules from the Lacework registry. All the complexity (IAM policies, S3 buckets, CloudTrail setup) is handled by the modules with sensible defaults.
+
+Review the generated configuration:
+
+```bash
+cat main.tf
+```
+
+### Step 5: Initialize Terraform
+
+CloudShell home is capped at 1 GB and the AWS provider alone is ~700 MB, so with the Lacework CLI (~50 MB) and Terraform binary (~150 MB) already in `~/bin`, there's barely enough room. CloudShell's split mount layout (`/home` on disk, `/tmp` on tmpfs) also trips up git when Terraform downloads modules. Set three env vars to work around both before running `init`:
+
+```bash
+mkdir -p /tmp/tfcache $HOME/tmp
+export TF_PLUGIN_CACHE_DIR=/tmp/tfcache
+export TMPDIR=$HOME/tmp
+export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
+terraform init
+```
+
+What each one does:
+- `TF_PLUGIN_CACHE_DIR=/tmp/tfcache` puts the provider cache on tmpfs (several GB) instead of home (1 GB).
+- `TMPDIR=$HOME/tmp` keeps git's temp working dir on the same filesystem as `.terraform/modules/`, so module clones don't fail crossing the `/home` mount boundary.
+- `GIT_DISCOVERY_ACROSS_FILESYSTEM=1` silences git's mount-crossing complaint if it does happen.
+
+> **Troubleshooting**
+>
+> - `Error while installing ... it is still not detected in /tmp; this is a bug in Terraform`: CloudShell home is full (the "/tmp" message is misleading). Run `df -h $HOME` to confirm, then `rm -rf ~/lacework/aws/.terraform ~/lacework/aws/.terraform.lock.hcl /tmp/tfcache` and retry.
+> - `Error while installing ...: text file busy`: a stale terraform process is holding the provider binary open. Run `pkill -f terraform`, then `rm -rf /tmp/tfcache` and retry.
+> - `Could not download module ...: not a git repository (or any parent up to mount point /home)`: the env vars above (`TMPDIR` and `GIT_DISCOVERY_ACROSS_FILESYSTEM`) fix this. Make sure both are exported in the same shell as `terraform init`.
+
+### Step 6: Review Terraform Plan
+
+Review what Terraform will create before applying:
+
+```bash
+terraform plan
+```
+
+This shows you:
+- Resources that will be created (IAM roles, CloudTrail, S3 buckets, etc.)
+- Any changes that will be made
+- Output values that will be generated
+
+The plan output will display in your terminal. Review it carefully to understand what will be deployed.
+
+**What will be created (around 25 resources):**
+
+**AWS CloudTrail Integration:**
+- 1 CloudTrail - AWS CloudTrail for API activity logging
+- 2 S3 Buckets - One for CloudTrail logs, one for CloudTrail log delivery
+- 2 S3 Bucket Policies - Access policies for the buckets
+- 2 S3 Bucket Versioning - Enable versioning on both buckets
+- 2 S3 Bucket Encryption - Server-side encryption configuration
+- 2 S3 Bucket Public Access Block - Block public access to buckets
+- 2 S3 Bucket Ownership Controls - Bucket ownership settings
+- 1 S3 Bucket Logging - Access logging configuration
+- 1 S3 Bucket ACL - Access control list for log bucket
+- 1 KMS Key - Encryption key for CloudTrail logs
+- 1 SNS Topic - Topic for CloudTrail notifications
+- 1 SNS Topic Policy - Access policy for SNS topic
+- 1 SNS Topic Subscription - Subscription to forward notifications
+- 1 SQS Queue - Queue to receive CloudTrail notifications
+- 1 SQS Queue Policy - Access policy for SQS queue
+- 1 IAM Policy - Cross-account policy for CloudTrail access
+- 1 IAM Role Policy Attachment - Attaching policy to IAM role
+- 1 Lacework Integration (`lacework_integration_aws_ct`) - CloudTrail integration
+- 1 IAM Role - Cross-account role for FortiCNAPP to read the trail
+- 1 Lacework External ID - Security identifier for the IAM role
+- 1 Random ID - Unique identifier for resource naming
+- 1 Time Sleep - Wait period for resource propagation
 
 > [!NOTE]
-> **It does not touch IAM.** The roles in these accounts belong to whoever runs the account
-> pool, and some of them drive cost management and automated cleanup. The workshop's own
-> cross-account role is owned by a CloudFormation stack and goes when the stack does.
+> No Configuration resources appear in this plan. Lab 3 created that integration through
+> the wizard, and it is still in place. Check **Settings** > **Integrations** >
+> **Cloud accounts** if you want to confirm before applying.
+>
+> After this applies, the account carries all three: Configuration and Agentless from the
+> wizard, CloudTrail from Terraform.
 
+**Optional: Save the plan to a file:**
 
-## Why both sides need cleaning
+If you want to save the plan output for later review or documentation:
 
-Labs 2 and 3 create the integration record in the FortiCNAPP console **first**, then launch CloudFormation to build the AWS side. CloudFormation never owns that record.
-
-That means deleting the CloudFormation stack removes the S3 bucket, the cross-account IAM role and the ECS scanner, but leaves the FortiCNAPP integration in place. It keeps polling on schedule, finds a bucket that no longer exists, and reports:
-
+```bash
+terraform plan > plan-output.txt
 ```
-Data loading error: Unable to access scan results within storage bucket
+
+Then view it with:
+
+```bash
+cat plan-output.txt
 ```
 
-Lab 11 does not have this problem, because Terraform owns its integrations in state and `terraform destroy` removes both sides.
+### Step 7: Apply Terraform Configuration
 
-Deleting the stack is not enough. The FortiCNAPP integration has to be deleted through FortiCNAPP, which is what Step 2 of the script does.
+If the plan looks correct, apply the Terraform configuration to deploy the integration:
 
-## Instructions
+```bash
+terraform apply
+```
 
-1. Open AWS CloudShell in your browser.
+When prompted, type `yes` to confirm the deployment.
 
-2. Copy the entire contents of [cloudshell_cleanup.sh](cloudshell_cleanup.sh) using the copy button.
+**Note**: This process may take several minutes as it creates 46 resources including:
+- IAM roles and policies (for both Config and CloudTrail integrations)
+- CloudTrail with encryption and logging
+- S3 buckets for CloudTrail logs (with versioning, encryption, and access controls)
+- KMS key for encryption
+- SNS topic and SQS queue for CloudTrail notifications
+- Lacework integrations (Configuration and CloudTrail)
+- Supporting resources (random IDs, time delays for propagation)
 
-![Copy script to clipboard from GitHub](images/github-copy-script-to-clipboard.png)
+### Step 8: Verify Integration Deployment
 
-3. Paste the script into the CloudShell terminal and press Enter.
+After the Terraform apply completes successfully, verify the integration:
 
-4. Wait for the script to complete. It may take several minutes, especially when deleting CloudFormation stacks and S3 buckets. Sweeping every region adds time even when most regions are empty.
+1. **Using Lacework CLI:**
+```bash
+lacework cloud-account list
+```
 
-5. **Verify in the FortiCNAPP console.** Navigate to **Settings** > **Integrations** > **Cloud accounts** and confirm your AWS account is no longer listed. If anything remains, select it and click **Delete**.
+You should see entries for:
+- `AwsCfg` (Configuration integration)
+- `AwsCtSqs` (CloudTrail integration)
 
-## What the script does, in order
+2. **In FortiCNAPP Console:**
+   - Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
+   - Ensure tenant is set to **FORTINETAPACDEMO**
+   - Navigate to **Settings** > **Integrations** > **Cloud accounts**
+   - Verify that your AWS account appears with both Configuration and CloudTrail integrations active
 
-The order matters. The FortiCNAPP integrations are removed while the Lacework CLI and its credentials still exist, and the local CloudShell artifacts are only cleaned up at the very end.
+### Step 9: Clean Up Resources
 
-| Step | Action |
-|---|---|
-| 1 | `terraform destroy` for the Lab 11 deployment, which removes its own integrations and AWS resources |
-| 2 | Delete any remaining FortiCNAPP cloud integrations for this AWS account (Labs 2 and 3) |
-| 3 | Per region: terminate EC2 instances, delete CloudFormation stacks, delete CloudTrail trails, delete key pairs, delete non-default security groups |
-| 4 | Empty and delete Lacework-related S3 buckets, resolving each bucket's own region |
-| 5 | Remove CloudShell artifacts: Terraform and Lacework binaries, cloned repos, config files, `.bashrc` edits |
+After completing the lab, clean up the resources created by Terraform:
 
-## Notes
+1. **Review what will be destroyed:**
+```bash
+terraform plan -destroy
+```
 
-- The script runs non-interactively and disables the AWS CLI pager to prevent prompts.
-- It continues past individual failures rather than aborting, so one stuck resource does not strand the rest of the cleanup.
-- CloudFormation stack deletions wait for completion before proceeding.
-- Stack matching is case-insensitive, handles names containing spaces, and deletes every matching root stack rather than just one. Lab 3 lets you name the stack freely, and a redeploy after a failed attempt leaves two.
-- Nested stacks are skipped, since deleting the root stack removes them.
-- S3 bucket deletion handles versioned objects and delete markers.
-- The default security group is preserved.
+This shows you what resources will be removed.
 
-## Troubleshooting
+2. **Destroy the resources:**
+```bash
+terraform destroy
+```
 
-**An integration is still listed in FortiCNAPP after the script runs.**
-The script needs the Lacework CLI (installed in Labs 4 and 8) and valid credentials to deregister integrations. If you skipped those labs, or the CLI could not authenticate, delete the integration manually: **Settings** > **Integrations** > **Cloud accounts** > select > **Delete**.
+When prompted, type `yes` to confirm the destruction.
 
-**A CloudFormation stack failed to delete.**
-Usually a non-empty S3 bucket blocking it. The script retries while retaining the blocked resource, then Step 4 sweeps the bucket. Re-run the script once to clear the remainder.
+**Note**: This will:
+- Remove the FortiCNAPP integrations from your AWS account
+- Delete IAM roles and policies created by Terraform
+- Remove S3 buckets created for CloudTrail (if created by Terraform)
+- Remove SNS topics created for notifications (if created by Terraform)
+- **Note**: If you're using an existing CloudTrail, it will not be deleted, only the integration will be removed
 
-**A security group would not delete.**
-It is still attached to an instance that has not finished terminating. Wait a minute and re-run the script.
+3. **Verify cleanup:**
+```bash
+lacework cloud-account list
+```
 
-**Other failures.**
-Check AWS permissions for the CloudShell user, and verify the resources exist before cleanup. Some resources need manual deletion if dependencies prevent automated removal.
+The AWS integrations should no longer appear in the list.
+
+4. **Clean up Terraform files:**
+```bash
+rm -rf ~/lacework/aws
+```
+
+## What did we do here?
+
+We deployed the same CloudTrail and Configuration integrations from Lab 3, but this time with Terraform we own instead of the console wizard. The Lacework CLI generated the Terraform code, and `terraform apply` created 46 resources - IAM roles, S3 buckets, KMS encryption, SNS/SQS notifications, and the FortiCNAPP integrations themselves.
+
+This is how you'd do it in production. The Terraform configuration can be checked into version control, reviewed in pull requests, and deployed through CI/CD pipelines. Need to integrate 50 AWS accounts? Fortinet provides organization-level Terraform modules that deploy across all accounts in your AWS Organization in one go. And when you're done, `terraform destroy` cleanly removes everything.
+
+
+## Additional Resources
+
+- <a href="https://docs.fortinet.com/document/forticnapp/latest/administration-guide/283460/aws-integration-terraform-from-aws-cloudshell" target="_blank">FortiCNAPP Documentation: AWS Integration Terraform from AWS CloudShell</a>
 
 ---
 
-That is everything. Back to the [workshop overview](../README.md).
+Next: [Lab 13: Scripted Cleanup of All Workshop Resources](../lab-13/README.md).

@@ -61,7 +61,7 @@ one of them.
 |---|---|---|
 | **Threat alert overview** | Something is happening that looks like an attack | Lab 3, AWS CloudTrail and agentless |
 | **Non-compliant resources** | Configuration that fails a benchmark | Lab 3, AWS configuration |
-| **Exposed Fixable Hosts** | Internet-reachable hosts with a patchable vulnerability | Labs 3 to 5 |
+| **Exposed Fixable Hosts** | Internet-reachable hosts with a patchable vulnerability | Labs 3 to 6 |
 
 **Checkpoint:** you can read a number off each of the three widgets.
 
@@ -131,7 +131,7 @@ Look at the tabs: **Applications**, **Files**, **Machines**, **Networks**, **Pro
 > signature for an attack it has never seen. It needs to know that this machine has never
 > done this before.
 >
-> That is why the agent in Labs 4 and 5 matters. A scan tells you what is installed. Only
+> That is why the agent in Labs 5 and 6 matters. A scan tells you what is installed. Only
 > something watching continuously can tell you that behaviour changed.
 
 ## Step 6: What is happening right now?
@@ -163,7 +163,7 @@ those is a Tuesday. Together, on the same host, in the same window, they are how
 compromise actually looks.
 
 > This is the polygraph from Step 5 doing its job. You cannot assemble a composite alert
-> without knowing what normal looked like first, which is what the agent in Labs 4 and 5
+> without knowing what normal looked like first, which is what the agent in Labs 5 and 6
 > gives you.
 
 ### Another one, if you want to see it
@@ -284,7 +284,7 @@ infrastructure.
 **Checkpoint:** find a Log4j CVE in the Applications list. You already know that one.
 
 Everything up to this point finds problems that are already running. This finds them in the
-code, before they exist in AWS. You do both in Labs 7 and 8.
+code, before they exist in AWS. You do both in Labs 8 and 9.
 
 ## What did we do here?
 
@@ -296,8 +296,8 @@ Hold on to those questions, because the rest of the workshop answers them:
 | Question | You built it in |
 |---|---|
 | What have I got, and is it compliant | Lab 3 |
-| What is happening on my workloads | Labs 4 and 5 |
-| Could I have caught it in code | Labs 7 and 8 |
+| What is happening on my workloads | Labs 5 and 6 |
+| Could I have caught it in code | Labs 8 and 9 |
 
 ---
 

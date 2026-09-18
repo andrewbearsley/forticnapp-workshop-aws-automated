@@ -1,244 +1,217 @@
-# Lab 4: Install Linux Agent
+# Lab 4: Add CloudTrail with CloudFormation
 
 ## Objectives
 
-Lab 3 turned on agentless scanning. That reads your account from the outside: it takes a
-snapshot of each disk, finds the packages and the secrets, and tells you what is
-vulnerable. It never touches the running machine.
+Lab 3 onboarded Configuration and Agentless from the wizard and deliberately left
+CloudTrail off. This lab adds it, using a different method.
 
-This lab installs the **agent**, which sits inside the machine and watches it work.
+CloudTrail is what gives FortiCNAPP **threat detection**: who called which API, from where,
+and whether that is normal for this account. Configuration tells you a bucket is public.
+CloudTrail tells you who made it public, at 3am, from an IP the account has never seen.
 
-| | Agentless, Lab 3 | Agent, this lab |
+| | Automated Configuration, Lab 3 | CloudFormation, this lab |
 |---|---|---|
-| Where it runs | Outside, on a copy of the disk | On the host itself |
-| What it sees | What is installed | What is actually happening: processes, connections, file changes, logins |
-| How often | Periodic snapshot | Continuously, reporting hourly |
-| To install | Nothing | One script |
+| Who builds the resources | FortiCNAPP, from credentials you hand over | You, from a template, in your own console |
+| What it needs from you | Short-lived credentials | Nothing. You are already signed in |
+| Where it runs | FortiCNAPP's side | Your AWS account |
+| Best for | Fast onboarding of a whole account | Estates where CloudFormation is the standard, and any account the wizard cannot read |
 
-Neither replaces the other. Agentless tells you a host **could** be exploited. The agent
-tells you something **is** behaving strangely on it, which is what a baseline and an
-anomaly alert are built from.
-
-You will launch a Linux EC2 instance, install the agent on it, and confirm both ends agree
-it is running.
+You will run a CloudFormation template that creates a new CloudTrail trail and registers it
+with FortiCNAPP in one pass.
 
 ## Prerequisites
 
 - Completed [Lab 3](../lab-03/README.md)
-- AWS account with permission to launch EC2 instances
+- AWS Console access to the same account, with permission to create IAM resources
 - FortiCNAPP console access, tenant **FORTINETAPACDEMO**
+
+## Why this account needs CloudFormation
+
+Your student account is a member of an AWS Organization, and that organization has its own
+**organization trail**. You can see it, but you cannot manage it. Run this from CloudShell:
+
+```bash
+aws cloudtrail describe-trails --region ap-southeast-1 \
+  --query "trailList[].[Name,IsOrganizationTrail]" --output text
+```
+
+```
+aws-controltower-BaselineCloudTrail   True
+```
+
+`True` means the trail belongs to the organization's management account, not to you.
+
+Automated Configuration inspects existing trails while it works out what to build, and it
+cannot read that one. So it stops, and nothing gets created:
+
+```
+TrailNotFoundException: Unknown trail: aws-controltower-BaselineCloudTrail
+```
+
+**CloudFormation takes a different route.** You run the template yourself, in your own
+console, so there is no inspection step and nothing to be blocked by. The organization
+trail is simply irrelevant.
+
+This is not a workshop-only situation. Most corporate AWS accounts sit inside an
+organization, and Control Tower creates an organization trail by default.
 
 ## Lab Steps
 
-### Step 1: Create Linux EC2 Instance
+### Step 1: Open the CloudFormation Method
 
-1. Open the **EC2** service. Check the region selector reads **Asia Pacific (Singapore)**
-   before you do anything else.
+1. In FortiCNAPP, go to **Settings** > **Integrations** > **Cloud accounts**.
+2. Confirm the tenant selector at the bottom left shows **FORTINETAPACDEMO**.
+3. Click **Add New**.
+4. Under **Cloud Service Provider**, select **Amazon Web Services**.
+5. Under **Integration Method**, select **AWS CloudFormation**.
+6. Click **Next**.
 
-![EC2 dashboard, with the region selector and Launch instance button highlighted](images/aws-ec2-pre-launch.png)
+**Checkpoint:** the header reads **Step 1 of 2**, not Step 1 of 4. Choosing CloudFormation
+removes the Authorize and Configure steps entirely, which is why the organization trail
+cannot stop it.
 
-2. Click **Launch instance**.
+### Step 2: Choose CloudTrail
 
-3. **Name**: `FortiCNAPP-Linux-Agent`
+1. On **CloudFormation Configuration - AWS**, open **Choose integration type**.
+2. Select **CloudTrail**.
 
-4. **Application and OS Images**: leave **Amazon Linux 2023** selected. It is the default,
-   and the agent installer does not care which distribution you pick.
+The list also offers **CloudTrail+Configuration (Control Tower)**. That one is the right
+answer when you are onboarding a whole Control Tower organization from its management
+account. Here it would create a second Configuration integration on top of the one Lab 3
+already made, so leave it alone.
 
-![Launch an instance page with the name entered and Amazon Linux 2023 selected](images/aws-ec2-launch-details.png)
+3. Click **Run CloudFormation Template**.
 
-5. **Instance type**: leave **t3.micro**.
+![FortiCNAPP CloudFormation Configuration step with CloudTrail selected as the integration type and the Run CloudFormation Template link below it](images/forticnapp-cloudformation-cloudtrail.png)
 
-6. **Key pair (login)**: open the dropdown and choose
-   **Proceed without a key pair (Not recommended)**.
+> [!IMPORTANT]
+> **This opens a new browser tab, in whichever AWS account and region your most recent
+> console session was using.** Check both before you go any further.
 
-   You will connect through EC2 Instance Connect in the browser, which issues its own
-   temporary key. There is nothing for you to download or keep.
+### Step 3: Check the Account and Region
 
-![Key pair dropdown open on Proceed without a key pair](images/aws-ec2-launch-no-keypair.png)
+In the new tab, look at the top right of the AWS console.
 
-![Instance type and key pair set, with Network settings below](images/aws-ec2-launch-details-2.png)
+1. Confirm the **account** is the same one you onboarded in Lab 3.
+2. Set the **region selector** to **Asia Pacific (Singapore) ap-southeast-1**.
 
-7. **Network settings**: leave them alone. The wizard creates a security group called
-   `launch-wizard-1` allowing SSH from anywhere, which is what Instance Connect needs.
+**Checkpoint:** the URL contains `region=ap-southeast-1` and the account number matches
+Lab 3.
 
-![Network settings with Create security group selected](images/aws-ec2-network-settings.png)
+Getting this wrong does not fail loudly. The stack builds successfully in the wrong region
+and your trail quietly logs somewhere nobody is looking.
+
+### Step 4: Create the Stack
+
+The template URL is already filled in.
+
+1. On **Create stack**, leave **Choose an existing template** and the prefilled **Amazon S3
+   URL** as they are. Click **Next**.
+2. In **Stack name**, enter `forticnapp-cloudtrail`.
+3. Review the parameters. The defaults are correct:
+
+| Parameter | Value | What it does |
+|---|---|---|
+| Resource name prefix | your tenant name | Prefixes every resource so names do not collide |
+| **Create new trail?** | **Yes** | Creates a new multi-region trail, plus its own S3 bucket and SNS topic |
+| API Token | prefilled | How the stack registers the integration back to FortiCNAPP |
+| Enable Kms Key Rotation | true | Rotates the KMS key that encrypts the logs |
+
+**Existing Trail Setup** stays blank. Those fields are for pointing FortiCNAPP at a trail
+you already have, which is not what we are doing.
+
+4. Click **Next**, leave **Configure stack options** as it is, and click **Next** again.
+
+### Step 5: Acknowledge and Submit
+
+At the bottom of the review page:
+
+1. Tick **I acknowledge that AWS CloudFormation might create IAM resources with custom
+   names.**
+2. Click **Submit**.
 
 > [!WARNING]
-> **This is the step that breaks the lab.** Do not switch to **Select existing security
-> group** and pick the VPC's `default` group. That one only allows traffic between
-> resources that share it, so Instance Connect cannot reach your instance and you get a
-> timeout with no useful error.
+> **Submit stays greyed out until that box is ticked.** It sits below the fold, so it is
+> easy to miss and easy to blame on something else.
 
-8. **Configure storage**: leave the default, 8 GiB gp3.
+The stack takes **one to two minutes**. Wait for **CREATE_COMPLETE**.
 
-9. Click **Launch instance**, then **View all instances**.
+**Checkpoint:** the stack status is `CREATE_COMPLETE` and no events show `CREATE_FAILED`.
 
-10. Wait for **Instance state** to read **Running**. Allow about a minute.
+### Step 6: Tell FortiCNAPP You Are Done
 
-![Instance list showing the new instance in the Running state](images/aws-ec2-instance-running.png)
+1. Return to the FortiCNAPP tab, still showing **Step 2 of 2**.
+2. Click **Exit**.
 
-**Checkpoint:** one instance, state **Running**, and it has a public IPv4 address.
+The integration does not appear instantly. The stack registers itself through a callback,
+so give it **up to a minute**.
 
-### Step 2: Get the Agent Install URL from FortiCNAPP
+### Step 7: Verify Both Sides
 
-1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
-2. Ensure tenant is set to **FORTINETAPACDEMO**
-3. Navigate to **Settings** > **Configuration** > **Agent tokens**
-4. Type `AWS Lab - Linux` in the search box. There are dozens of tokens on this tenant, so
-   searching beats scrolling.
-5. Click the **Actions** ellipsis (three dots) on that row.
+**In FortiCNAPP**, go to **Settings** > **Integrations** > **Cloud accounts**. Your account
+now shows **Configuration**, **Agentless** and **CloudTrail**.
 
-![Agent tokens filtered to AWS Lab - Linux, with the Actions menu open](images/forticnapp-agent-token-actions.png)
-
-You need **two** things from this menu, and the clipboard holds one at a time. Take them in
-this order, using each before you come back for the other.
-
-6. Click **Install**. **Lacework Script** is already expanded, so click **Copy URL**.
-
-   Copy the URL, not the script. The install command in the next step fetches it.
-
-![Install panel with the Lacework Script section expanded and Copy URL highlighted](images/forticnapp-agent-install-url.png)
-
-**Checkpoint:** you have a URL on your clipboard that starts with `https://`.
-
-### Step 3: Connect to the Instance
-
-1. Go to **EC2** > **Instances**.
-2. Tick the checkbox next to `FortiCNAPP-Linux-Agent`.
-3. Click **Connect** at the top of the page.
-4. Stay on the **In web browser** tab and leave **EC2 Instance Connect** selected. It is the
-   first of the four cards and it is already chosen.
-
-![Connect to Linux instance page, with EC2 Instance Connect selected](images/aws-ec2-instance-connect.png)
-
-5. Leave **Username** as `ec2-user`, then click **Connect**.
-
-   A terminal opens in the browser. No key pair, no SSH client, nothing to install.
-
-6. Confirm the shell can do what the installer needs:
+**In AWS**, run the same command from the top of this lab:
 
 ```bash
-sudo whoami        # must print: root
-ping -c 3 8.8.8.8  # the agent needs to reach the internet
+aws cloudtrail describe-trails --region ap-southeast-1 \
+  --query "trailList[].[Name,IsOrganizationTrail]" --output text
 ```
 
-**Checkpoint:** `sudo whoami` prints `root` and the pings come back.
-
-### Step 4: Install the Agent
-
-In the EC2 Instance Connect terminal, run the following commands:
-
-Paste the URL from Step 2 where shown. Keep the `-O install.sh`, which names the
-downloaded file for you rather than trusting whatever the URL ends in.
-
-```bash
-wget -O install.sh "<paste-the-copied-url-here>"
-chmod +x install.sh
-sudo ./install.sh
-```
-
-The script checks connectivity, then stops and asks:
+A new row has appeared, and the value in the second column is the point of this lab:
 
 ```
-Please enter access token:
+aws-controltower-BaselineCloudTrail   True
+forticnapp-cloudtrail-...             False
 ```
 
-That is the second thing you need from the Actions menu, and it is **not** the URL you just
-used. Go back to FortiCNAPP, click the **Actions** ellipsis on the same token, and choose
-**Copy**. That puts the 56-character agent token on your clipboard. Paste it at the prompt
-and press Enter.
-
-> [!CAUTION]
-> The token echoes on screen in the clear. Take care if you are sharing your screen.
-
-The rest runs on its own: it downloads the agent package, installs it, and registers with
-FortiCNAPP using that token. It ends with `Lacework successfully installed`.
-
-> [!TIP]
-> **Pasting into the browser terminal.** Use **Ctrl+V** (**Cmd+V** on a Mac). If the paste
-> arrives empty, your clipboard did not survive the tab switch. Go back and copy again.
-
-### Step 5: Verify on the Host
-
-Ask the agent how it is doing:
-
-```bash
-sudo /var/lib/lacework/datacollector -status
-```
-
-It answers in JSON. The field that matters is `Status`:
-
-```json
-{"Version":2,"Datacollector":{"Status":"ACTIVE", ...}}
-```
-
-`ACTIVE` means it is running and talking to FortiCNAPP.
-
-**Checkpoint:** `Status` reads `ACTIVE`.
-
-### Look at what it is logging
-
-```bash
-sudo tail -f /var/log/lacework/datacollector.log
-```
-
-`Ctrl+C` stops the tail. The file is readable by `root` only, so the `sudo` matters.
-
-![The datacollector log, ninety seconds after install](images/aws-agent-log.png)
-
-Three lines are worth finding:
-
-| Line | Means |
-|---|---|
-| `Setting transport for server URL https://api.lacework.net:443/` | Where it sends data |
-| `Connected to controller, version 7.9.0.28681` | It registered successfully |
-| `Payload Total : [5612], Curr : [1755]` | Data leaving the host, every 15 to 20 seconds |
-
-Watch for a minute and the `Payload` line repeats. That is your agent reporting.
-
-> [!NOTE]
-> **This log is the agent talking about itself, not a feed of what it sees.** The processes,
-> connections and file changes go to FortiCNAPP, not to this file. What the log proves is
-> that the pipe is open.
-
-Two lines look alarming and are not:
-
-- `level=warning ... describe tags ... NoCredentialProviders` means the instance has no IAM
-  role, which it does not need
-- `level=error msg="Failed to stop child ... no such process"` is startup noise
-
-### Step 6: Verify in FortiCNAPP
-
-> **The agent reports hourly, so it will not appear straight away.** That is expected, not a
-> failure. Carry on to Lab 5 and come back to this step later in the session.
-
-In the console, go to **Inventory** and look for the host by its instance ID.
-
-Once you have done [Lab 6](../lab-06/README.md) you can ask the same question from
-CloudShell instead:
-
-```bash
-lacework agent list
-```
-
-Look for your instance hostname. Nothing there yet means the first check-in has not landed.
-
-> **The two checks answer different questions.** `datacollector -status` on the host says
-> the agent is running. `lacework agent list` says FortiCNAPP has heard from it. You can
-> have the first without the second. That gap is almost always a security group or a route,
-> not the agent.
+`False` means this one is yours. Your account owns it, and FortiCNAPP can read it.
 
 ## What did we do here?
 
-The host now reports what it is doing, not just what is installed on it.
+We added the third integration type by a route that does not care about the organization
+trail, and we did it without handing FortiCNAPP any credentials.
 
-That is the whole difference. Agentless found the vulnerable package. The agent is what
-notices the package being exploited: a process that has never run before, a connection to
-somewhere this host has never talked to, a login at the wrong hour. You cannot alert on
-behaviour you are not watching.
+Two things worth taking away:
 
-The Windows install differs enough to be worth doing once.
+**The method matters as much as the product.** Same integration, same result, but
+Automated Configuration and CloudFormation reach it differently, and only one of them works
+in an account like this. When onboarding stalls, changing method is often faster than
+fixing the account.
+
+**One CloudFormation stack now owns everything it built**, including the FortiCNAPP
+integration record. [Lab 10](../lab-10/README.md) uses that: deleting the stack removes the
+AWS resources and deregisters the integration in a single operation.
+
+## Troubleshooting
+
+### Submit is greyed out
+
+The capabilities acknowledgement at the bottom of the review page is not ticked. See Step 5.
+
+### The stack built, but nothing appears in FortiCNAPP
+
+Give it a minute, then click **Exit** in the FortiCNAPP tab if you have not already. The
+registration happens through a callback from the stack, not from the console.
+
+If it still does not appear, check the stack's **Events** tab for a failure on
+`LaceworkSnsCustomResource`. That resource is the callback.
+
+### The stack is in the wrong region
+
+Delete it and run Step 3 again. Nothing else in the workshop depends on it yet, so this is
+cheap to fix now and annoying to fix later.
+
+### CREATE_FAILED on an IAM resource
+
+You do not have permission to create IAM roles in this account. The template needs it, and
+the acknowledgement in Step 5 is your confirmation that you expect it.
+
+## Reference
+
+- <a href="https://docs.fortinet.com/document/forticnapp/latest/administration-guide/123850/automated-configuration" target="_blank">FortiCNAPP Administration Guide: Automated configuration</a>
+- <a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-trail-organization.html" target="_blank">AWS: Creating a trail for an organization</a>
 
 ---
 
-Next: [Lab 5: Install Windows Agent](../lab-05/README.md).
+Next: [Lab 5: Install Linux Agent](../lab-05/README.md).

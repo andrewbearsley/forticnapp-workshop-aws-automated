@@ -1,248 +1,244 @@
-# Lab 5: Install Windows Agent
+# Lab 5: Install Linux Agent
 
 ## Objectives
 
-Same agent, same result, different road to get there. Almost every estate you will meet
-runs both, so it is worth doing Windows once rather than assuming it follows.
+Lab 3 turned on agentless scanning. That reads your account from the outside: it takes a
+snapshot of each disk, finds the packages and the secrets, and tells you what is
+vulnerable. It never touches the running machine.
 
-| | Linux, Lab 4 | Windows, this lab |
+This lab installs the **agent**, which sits inside the machine and watches it work.
+
+| | Agentless, Lab 3 | Agent, this lab |
 |---|---|---|
-| Get in | EC2 Instance Connect, in the browser | RDP, from your own machine |
-| Credential | None | A key pair you download, to decrypt the Administrator password |
-| Installer | One shell script | PowerShell script plus an MSI |
-| You need | A URL | Two URLs and an access token |
-| Runs as | `datacollector` | The `LWDataCollector` service |
+| Where it runs | Outside, on a copy of the disk | On the host itself |
+| What it sees | What is installed | What is actually happening: processes, connections, file changes, logins |
+| How often | Periodic snapshot | Continuously, reporting hourly |
+| To install | Nothing | One script |
+
+Neither replaces the other. Agentless tells you a host **could** be exploited. The agent
+tells you something **is** behaving strangely on it, which is what a baseline and an
+anomaly alert are built from.
+
+You will launch a Linux EC2 instance, install the agent on it, and confirm both ends agree
+it is running.
 
 ## Prerequisites
 
-- Completed [Lab 4](../lab-04/README.md)
+- Completed [Lab 3](../lab-03/README.md)
 - AWS account with permission to launch EC2 instances
-- An RDP client: Remote Desktop Connection on Windows, **Windows App** on a Mac
 - FortiCNAPP console access, tenant **FORTINETAPACDEMO**
 
 ## Lab Steps
 
-### Step 1: Create Windows EC2 Instance
+### Step 1: Create Linux EC2 Instance
 
-Same wizard as Lab 4. What differs: the image, and the key pair.
+1. Open the **EC2** service. Check the region selector reads **Asia Pacific (Singapore)**
+   before you do anything else.
 
-1. Open **EC2** and click **Launch instance**. Check the region still reads
-   **Asia Pacific (Singapore)**.
+![EC2 dashboard, with the region selector and Launch instance button highlighted](images/aws-ec2-pre-launch.png)
 
-2. **Name**: `FortiCNAPP-Windows-Agent`
+2. Click **Launch instance**.
 
-3. **Application and OS Images**: click the **Windows** tile. The AMI becomes
-   **Microsoft Windows Server 2025 Base**. Storage jumps to 30 GiB on its own.
+3. **Name**: `FortiCNAPP-Linux-Agent`
 
-![Launch an instance page with the Windows tile selected](images/aws-ec2-launch-details.png)
+4. **Application and OS Images**: leave **Amazon Linux 2023** selected. It is the default,
+   and the agent installer does not care which distribution you pick.
 
-4. **Instance type**: leave **t3.micro**.
+![Launch an instance page with the name entered and Amazon Linux 2023 selected](images/aws-ec2-launch-details.png)
 
-5. **Key pair (login)**: this time you do need one.
+5. **Instance type**: leave **t3.micro**.
 
-   > **Windows is different from Lab 4.** There is no Instance Connect for Windows. AWS
-   > encrypts the Administrator password with your public key, so without the private key
-   > you cannot log in at all, and there is no way to recover it later.
+6. **Key pair (login)**: open the dropdown and choose
+   **Proceed without a key pair (Not recommended)**.
 
-   - Click **Create new key pair**
-   - Name it `forticnapp-windows-key-<your initials>`, type **RSA**, format **.pem**
-   - Click **Create key pair**. The `.pem` file downloads. Keep it, you need it in Step 3.
+   You will connect through EC2 Instance Connect in the browser, which issues its own
+   temporary key. There is nothing for you to download or keep.
 
-   > [!IMPORTANT]
-   > **Put your initials in the name.** Key pair names are unique per region, so if anyone
-   > has run this workshop in this account before, a plain `forticnapp-windows-key` fails
-   > with `InvalidKeyPair.Duplicate`. You cannot reuse the old one either, because its
-   > private key was only ever downloadable once.
+![Key pair dropdown open on Proceed without a key pair](images/aws-ec2-launch-no-keypair.png)
 
-![Key pair section, explaining that the key decrypts the administrator password](images/aws-ec2-launch-details-2.png)
+![Instance type and key pair set, with Network settings below](images/aws-ec2-launch-details-2.png)
 
-6. **Network settings**: leave them alone. The wizard creates a `launch-wizard-N` group
-   allowing RDP from anywhere.
+7. **Network settings**: leave them alone. The wizard creates a security group called
+   `launch-wizard-1` allowing SSH from anywhere, which is what Instance Connect needs.
+
+![Network settings with Create security group selected](images/aws-ec2-network-settings.png)
 
 > [!WARNING]
-> As in Lab 4, do not switch to **Select existing security group** and pick `default`.
-> Your RDP client will not reach the instance.
+> **This is the step that breaks the lab.** Do not switch to **Select existing security
+> group** and pick the VPC's `default` group. That one only allows traffic between
+> resources that share it, so Instance Connect cannot reach your instance and you get a
+> timeout with no useful error.
 
-7. **Configure storage**: leave the default, 30 GiB gp3.
+8. **Configure storage**: leave the default, 8 GiB gp3.
 
-8. Click **Launch instance**, then wait for **Instance state** to read **Running**.
-   Windows takes longer to boot than Linux. Allow about four minutes before you try to
-   fetch the password.
+9. Click **Launch instance**, then **View all instances**.
 
-![Windows EC2 instance in Running state](images/aws-ec2-instance-running.png)
+10. Wait for **Instance state** to read **Running**. Allow about a minute.
 
-### Step 2: Get the Password and Connect
+![Instance list showing the new instance in the Running state](images/aws-ec2-instance-running.png)
 
-1. Go to **EC2** > **Instances**, tick your Windows instance, and click **Connect**.
-2. Choose the **RDP client** tab.
+**Checkpoint:** one instance, state **Running**, and it has a public IPv4 address.
 
-![RDP client tab with the Get password button](images/aws-ec2-rdp-connect.png)
+### Step 2: Get the Agent Install URL from FortiCNAPP
 
-3. Click **Get password**.
-4. Upload the `.pem` file you downloaded in Step 1. AWS uses it to decrypt the password and
-   shows it in the clear.
-5. Copy the **Administrator password**.
-6. Click **Download remote desktop file**.
-7. Open that file:
-   - **Windows**: double-click it
-   - **Mac**: right-click and open with **Windows App**
+1. Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
+2. Ensure tenant is set to **FORTINETAPACDEMO**
+3. Navigate to **Settings** > **Configuration** > **Agent tokens**
+4. Type `AWS Lab - Linux` in the search box. There are dozens of tokens on this tenant, so
+   searching beats scrolling.
+5. Click the **Actions** ellipsis (three dots) on that row.
 
-   > **If it does not connect, turn off FortiSASE and try again.** FortiSASE blocks RDP by
-   > default. So do most corporate VPN and secure-access agents. This is the commonest
-   > reason this step fails, and it has nothing to do with AWS or the instance.
+![Agent tokens filtered to AWS Lab - Linux, with the Actions menu open](images/forticnapp-agent-token-actions.png)
 
-8. Username is `Administrator`, capital A. Paste the password.
-9. A certificate warning is normal on an EC2 instance. Continue past it.
+You need **two** things from this menu, and the clipboard holds one at a time. Take them in
+this order, using each before you come back for the other.
 
-**Checkpoint:** you are looking at a Windows desktop in an RDP window.
+6. Click **Install**. **Lacework Script** is already expanded, so click **Copy URL**.
 
-#### If you cannot connect
+   Copy the URL, not the script. The install command in the next step fetches it.
 
-Work down this list. The first two are far more common than anything else.
+![Install panel with the Lacework Script section expanded and Copy URL highlighted](images/forticnapp-agent-install-url.png)
 
-| Symptom | Cause and fix |
-|---|---|
-| Times out, or "couldn't connect to the remote PC" | Turn off FortiSASE or your VPN first, as above. If that was not it, outbound TCP 3389 is blocked somewhere else. Confirm with `Test-NetConnection -ComputerName <public-ip> -Port 3389`: `TcpTestSucceeded : False` is your answer. Conference WiFi, hotel WiFi and some ISPs block it too, and tethering to a phone is the quickest way round. |
-| Password rejected | Windows may still be initialising. Wait and click **Get password** again. Check you used `Administrator`, capital A, and that the paste did not pick up a trailing space. |
-| No password offered yet | The instance has not finished its first boot. Give it four minutes from **Running**. |
+**Checkpoint:** you have a URL on your clipboard that starts with `https://`.
 
-10. Once you are in, open **PowerShell as Administrator**: right-click **Start**, then
-    **Terminal (Admin)** or **Windows PowerShell (Admin)**.
+### Step 3: Connect to the Instance
 
-    Without **Administrator**, the installer fails partway and leaves no useful message.
+1. Go to **EC2** > **Instances**.
+2. Tick the checkbox next to `FortiCNAPP-Linux-Agent`.
+3. Click **Connect** at the top of the page.
+4. Stay on the **In web browser** tab and leave **EC2 Instance Connect** selected. It is the
+   first of the four cards and it is already chosen.
 
-### Step 3: Get the Install Details from FortiCNAPP
+![Connect to Linux instance page, with EC2 Instance Connect selected](images/aws-ec2-instance-connect.png)
 
-Do this in your **own** browser, not inside the RDP session.
+5. Leave **Username** as `ec2-user`, then click **Connect**.
 
-1. In the FortiCNAPP console, confirm the tenant reads **FORTINETAPACDEMO**.
-2. Go to **Settings** > **Configuration** > **Agent tokens**.
-3. Search `AWS Lab - Windows`. Take care to pick the Windows token, not the Linux one from
-   Lab 4.
-4. Click the **Actions** ellipsis on that row, then **Install**.
+   A terminal opens in the browser. No key pair, no SSH client, nothing to install.
 
-![Agent tokens filtered to AWS Lab - Windows, with the Actions menu open on Install](images/forticnapp-agent-token-actions.png)
+6. Confirm the shell can do what the installer needs:
 
-5. The Windows panel offers different packages to the Linux one. You need three things from
-   it:
+```bash
+sudo whoami        # must print: root
+ping -c 3 8.8.8.8  # the agent needs to reach the internet
+```
 
-![Install panel showing Lacework Powershell Script, MSI Package, ARM Template and Packer for AWS](images/forticnapp-agent-install-url.png)
-
-| Take this | From | Used as |
-|---|---|---|
-| Script URL | **Lacework Powershell Script**, already expanded. **Copy URL** | what you download |
-| MSI URL | Expand **MSI Package**, then its **Copy URL** | `-MSIURL` |
-| Access token | Shown in the same panel | `-AccessToken` |
-
-Paste all three somewhere you can get at them from inside the RDP session. RDP copy and
-paste is unreliable, so a text file on the Windows desktop is easiest.
-
-**Checkpoint:** three values, each one labelled so you know which is which.
+**Checkpoint:** `sudo whoami` prints `root` and the pings come back.
 
 ### Step 4: Install the Agent
 
-In the RDP session, in **PowerShell as Administrator**.
+In the EC2 Instance Connect terminal, run the following commands:
 
-Download and unpack the script bundle:
+Paste the URL from Step 2 where shown. Keep the `-O install.sh`, which names the
+downloaded file for you rather than trusting whatever the URL ends in.
 
-```powershell
-Invoke-WebRequest -Uri "<script-url>" -OutFile "install.zip"
-Expand-Archive -Path "install.zip" -DestinationPath "install" -Force
-cd install\signed-scripts
+```bash
+wget -O install.sh "<paste-the-copied-url-here>"
+chmod +x install.sh
+sudo ./install.sh
 ```
 
-Then run it, substituting the access token and MSI URL from Step 3:
+The script checks connectivity, then stops and asks:
 
-```powershell
-.\Install-LWDataCollector.ps1 `
-  -AccessToken "<access-token>" `
-  -ServerURL "https://partner-demo.lacework.net" `
-  -MSIURL "<msi-url>"
+```
+Please enter access token:
 ```
 
-The script pulls the MSI, installs it, and registers the agent against your token. Nothing
-to configure afterwards.
+That is the second thing you need from the Actions menu, and it is **not** the URL you just
+used. Go back to FortiCNAPP, click the **Actions** ellipsis on the same token, and choose
+**Copy**. That puts the 56-character agent token on your clipboard. Paste it at the prompt
+and press Enter.
 
-> **These URLs are easily swapped.** The script URL ends in `.zip`, the MSI URL in `.msi`. Give
-> the installer them the wrong way round and it fails on a download error rather than
-> telling you they are reversed.
+> [!CAUTION]
+> The token echoes on screen in the clear. Take care if you are sharing your screen.
+
+The rest runs on its own: it downloads the agent package, installs it, and registers with
+FortiCNAPP using that token. It ends with `Lacework successfully installed`.
+
+> [!TIP]
+> **Pasting into the browser terminal.** Use **Ctrl+V** (**Cmd+V** on a Mac). If the paste
+> arrives empty, your clipboard did not survive the tab switch. Go back and copy again.
 
 ### Step 5: Verify on the Host
 
-The agent runs as a Windows service, so ask Windows:
+Ask the agent how it is doing:
 
-```powershell
-Get-Service -Name LWDataCollector
+```bash
+sudo /var/lib/lacework/datacollector -status
 ```
 
-`Status` should read `Running`.
+It answers in JSON. The field that matters is `Status`:
 
-```powershell
-ls C:\ProgramData\Lacework\
-ls C:\ProgramData\Lacework\Logs\
+```json
+{"Version":2,"Datacollector":{"Status":"ACTIVE", ...}}
 ```
 
-**Checkpoint:** `LWDataCollector` is `Running`.
+`ACTIVE` means it is running and talking to FortiCNAPP.
+
+**Checkpoint:** `Status` reads `ACTIVE`.
 
 ### Look at what it is logging
 
-```powershell
-Get-Content C:\ProgramData\Lacework\Logs\LWDataCollector_0.log -Tail 40 -Wait
+```bash
+sudo tail -f /var/log/lacework/datacollector.log
 ```
 
-`Ctrl+C` stops it.
+`Ctrl+C` stops the tail. The file is readable by `root` only, so the `sudo` matters.
 
-![The Windows agent log, a few minutes after install](images/aws-agent-log.png)
+![The datacollector log, ninety seconds after install](images/aws-agent-log.png)
 
-**This is worth more of your time than the Linux one.** The Windows agent writes what it is
-observing, not just that it is connected:
+Three lines are worth finding:
 
-| Line | What it is watching |
+| Line | Means |
 |---|---|
-| `Process statistics: eventsQueued 118, procStatsSent 34` | Processes starting and stopping |
-| `Connections statistics: eventsQueued 205, sentNetDetails 98` | Network connections |
-| `UserLogon Refresh. UserLogons = 1 FailedLogons = 0` | Who logged in, and who failed |
-| `DNS Refresh. Cache size: 26` | Name lookups the host made |
-| `Begin PowerShell::Refresh` / `Sending script blocks` | PowerShell being run |
-| `ReportEvents: Success in http post. bytes sent: 6985` | All of it going to FortiCNAPP |
+| `Setting transport for server URL https://api.lacework.net:443/` | Where it sends data |
+| `Connected to controller, version 7.9.0.28681` | It registered successfully |
+| `Payload Total : [5612], Curr : [1755]` | Data leaving the host, every 15 to 20 seconds |
 
-Read that list again. Processes, connections, logons, DNS and PowerShell, from one host,
-continuously. **That is the polygraph from [Lab 1](../lab-01/README.md), on a machine you
-built twenty minutes ago.** It is also why a composite alert can exist: no single line
-there is suspicious, and the combination can be.
+Watch for a minute and the `Payload` line repeats. That is your agent reporting.
 
-Plenty of lines say `level=error` and are routine:
+> [!NOTE]
+> **This log is the agent talking about itself, not a feed of what it sees.** The processes,
+> connections and file changes go to FortiCNAPP, not to this file. What the log proves is
+> that the pipe is open.
 
-- `No process found for the pidhash: 0` and `Failed to find process for pid 0`
-- `could not open process handle for further details ... ErrorCode = 5`, which is Windows
-  refusing access to protected system processes
+Two lines look alarming and are not:
+
+- `level=warning ... describe tags ... NoCredentialProviders` means the instance has no IAM
+  role, which it does not need
+- `level=error msg="Failed to stop child ... no such process"` is startup noise
 
 ### Step 6: Verify in FortiCNAPP
 
-> **The agent reports hourly**, so it will not appear straight away. Carry on and come back.
+> **The agent reports hourly, so it will not appear straight away.** That is expected, not a
+> failure. Carry on to Lab 6 and come back to this step later in the session.
 
 In the console, go to **Inventory** and look for the host by its instance ID.
 
-After [Lab 6](../lab-06/README.md) you can ask from CloudShell instead:
+Once you have done [Lab 7](../lab-07/README.md) you can ask the same question from
+CloudShell instead:
 
 ```bash
 lacework agent list
 ```
 
-Both your Linux and Windows hosts should be listed there by the end of the session.
+Look for your instance hostname. Nothing there yet means the first check-in has not landed.
+
+> **The two checks answer different questions.** `datacollector -status` on the host says
+> the agent is running. `lacework agent list` says FortiCNAPP has heard from it. You can
+> have the first without the second. That gap is almost always a security group or a route,
+> not the agent.
 
 ## What did we do here?
 
-The same agent, reached a harder way.
+The host now reports what it is doing, not just what is installed on it.
 
-That is the useful part. A Windows estate is where agent rollout actually stalls,
-and almost never because of the agent: it stalls on RDP being blocked, on a lost key pair,
-on an installer run without Administrator. You have now hit those in a lab where it costs
-nothing.
+That is the whole difference. Agentless found the vulnerable package. The agent is what
+notices the package being exploited: a process that has never run before, a connection to
+somewhere this host has never talked to, a login at the wrong hour. You cannot alert on
+behaviour you are not watching.
 
-From here FortiCNAPP treats both hosts identically. The next labs move off hosts entirely
-and look at the code that builds them.
+The Windows install differs enough to be worth doing once.
 
 ---
 
-Next: [Lab 6: Install the Lacework CLI](../lab-06/README.md).
+Next: [Lab 6: Install Windows Agent](../lab-06/README.md).

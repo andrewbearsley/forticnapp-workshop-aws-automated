@@ -23,7 +23,7 @@ Work through the screens, then wait five to ten minutes while it builds.
 
 | | |
 |---|---|
-| It creates real AWS resources | IAM roles, and the ECS cluster and networking the agentless scanner needs. Lab 9 removes them. Lab 11 adds the CloudTrail trail, bucket, SNS topic and SQS queue. |
+| It creates real AWS resources | IAM roles, and the ECS cluster and networking the agentless scanner needs. Lab 10 removes them. Lab 12 adds the CloudTrail trail, bucket, SNS topic and SQS queue. |
 | The credential expires | One hour from when you made it. If the wizard sits idle, it will fail partway. |
 
 ## Prerequisites
@@ -73,7 +73,7 @@ You just picked one of three ways to do the same job. The end state is identical
 | AWS CloudFormation | Launch a stack per integration, set the parameters yourself | You want to read the template before anything is created |
 | Other Methods | Take the Terraform and run it yourself | You want onboarding in a pipeline, reviewed in a pull request |
 
-Labs 10 and 11 do the Terraform route, so you can compare the two directly.
+Labs 11 and 12 do the Terraform route, so you can compare the two directly.
 
 ### Step 3: Authorize (Step 2 of 4)
 
@@ -137,26 +137,15 @@ Turn on two toggles, and only two:
 
 **Leave the CloudTrail and EKS Audit Log toggles off.**
 
-> [!WARNING]
-> **Do not turn on CloudTrail in this lab.** Your student account is a member of an AWS
-> Organization that has an organization trail, and discovery aborts on it with
-> `TrailNotFoundException`. Most corporate accounts are in the same position, so this is
-> the normal case rather than a lab quirk.
->
-> You are not losing the capability. **Lab 11 adds CloudTrail using Terraform**, which
-> does not run the discovery step and is unaffected. You finish the workshop with all
-> three integration types either way.
->
-> Only an account with no organization trail can turn CloudTrail on here. If you are
-> running these labs on a standalone account, you may turn it on and skip the CloudTrail
-> step in Lab 11.
+> [!IMPORTANT]
+> **CloudTrail comes next, in [Lab 4](../lab-04/README.md).** It uses CloudFormation
+> instead, for reasons that lab explains. Leave the toggle off here.
 
 ![Configure step with the Agentless Workload Scanning and Configuration toggles boxed and numbered 1 and 2, CloudTrail and EKS Audit Log left off](images/forticnapp-configure-selected.png)
 
-> **Two toggles here, the third capability arrives in Lab 11.** Posture and vulnerability
-> scanning from the wizard, threat detection as code. That split is not a workaround: it is
-> a common production pattern, with the fast path for what the wizard does well and
-> Terraform for what belongs in a repository.
+> **Two toggles here, the third arrives in Lab 4.** Posture and vulnerability scanning
+> from the wizard, threat detection from a CloudFormation template. Mixing methods is a
+> common production pattern, not a workaround.
 
 #### Set the agentless scanning regions
 
@@ -172,11 +161,7 @@ completes, Task 3 asks for per-integration settings.
 
 2. On the **Configuration** tab, leave **Advanced options** alone.
 
-There is no CloudTrail tab, because you did not select CloudTrail. If you are on a
-standalone account and did turn it on, expand **Advanced options** on the CloudTrail tab and
-leave **Use an existing CloudTrail** off. Off is the default and off is what you want:
-FortiCNAPP then creates its own trail, S3 bucket, SNS topic and SQS queue, and nothing has
-to exist in the account beforehand.
+There is no CloudTrail tab, because CloudTrail is not selected.
 
 ![CloudTrail Advanced options showing Use an existing CloudTrail off by default](images/forticnapp-cloudtrail-advanced.png)
 
@@ -251,14 +236,14 @@ files, and commit them to your own repository.
 Every resource is tagged. The exact values appear on the deployment record, for example
 `lacework_tag: self-deployment` and `lacework_integration: aws_config`.
 
-Remember these tags. Lab 6 uses them for cleanup.
+Remember these tags. Lab 7 uses them for cleanup.
 
 ### Step 8: Verify the Integrations
 
 1. Return to **Settings** > **Integrations** > **Cloud accounts**.
 2. Confirm your AWS account ID appears in the list.
 3. Confirm the **Integrations** column shows **Configuration** and **Agentless**.
-   CloudTrail is not there yet. Lab 11 adds it.
+   CloudTrail is not there yet. Lab 12 adds it.
 
 ### Step 9: Confirm the AWS Side
 
@@ -278,7 +263,7 @@ but cannot manage. That is the one discovery cannot resolve:
 aws-controltower-BaselineCloudTrail   True
 ```
 
-You will run this command again at the end of Lab 11, where a trail with **False** in that
+You will run this command again at the end of Lab 12, where a trail with **False** in that
 column appears alongside it. That one is yours.
 
 1. Go to **IAM** > **Roles**. Find the cross-account role FortiCNAPP created.
@@ -301,9 +286,9 @@ for the user: <your account id>
 CloudTrail, often created by Control Tower. A member account sees that trail as a shadow
 trail, and AWS requires the full trail ARN to look one up rather than the name.
 
-**What to do**: this is why Step 4 has you leave the CloudTrail toggle off, and why Lab 11
-deploys it with Terraform instead. Terraform does not run the wizard's discovery step, so
-the organization trail does not affect it.
+**What to do**: this is why Step 4 has you leave the CloudTrail toggle off.
+[Lab 4](../lab-04/README.md) adds it with CloudFormation, which has no discovery step for
+the organization trail to break.
 
 For CloudTrail coverage across a whole organization, run an **organization level**
 integration from the management account.
@@ -341,11 +326,11 @@ Data does not appear instantly.
 
 | Data | First appears |
 |---|---|
-| CloudTrail events | Within 15 minutes of the trail being created in Lab 11 |
+| CloudTrail events | Within 15 minutes of the trail being created in Lab 12 |
 | Resource inventory and compliance | Up to 24 hours on the scheduled cycle |
 | Agentless scan results | After the first scan, on a 24 hour cycle by default |
 
-To avoid waiting for the inventory scan, Lab 7 triggers one on demand with the Lacework CLI.
+To avoid waiting for the inventory scan, Lab 8 triggers one on demand with the Lacework CLI.
 
 ## Where the data goes
 
@@ -359,8 +344,8 @@ Source: the Authorization Guide panel in the wizard, "Data privacy and security"
 ## What did we do here?
 
 We onboarded an AWS account into FortiCNAPP from one wizard: configuration assessment and
-agentless vulnerability scanning. Lab 11 adds CloudTrail threat detection as code, which is
-how it often runs in production anyway.
+agentless vulnerability scanning. Lab 4 adds CloudTrail threat detection with a
+CloudFormation template.
 
 Compare the work:
 
@@ -384,4 +369,4 @@ contained.
 
 ---
 
-Next: [Lab 4: Install Linux Agent](../lab-04/README.md).
+Next: [Lab 4: Add CloudTrail with CloudFormation](../lab-04/README.md).
