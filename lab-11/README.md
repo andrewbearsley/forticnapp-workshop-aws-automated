@@ -95,7 +95,7 @@ lacework version
 
 This should return the installed version, confirming the CLI is ready to use.
 
-**Note:** If you completed [Lab 10](../lab-10/README.md), the AWS integrations from Lab 3 have been cleaned up. We'll redeploy them using Terraform in the next lab.
+**Note:** If you completed [Lab 10](../lab-10/README.md), the integrations from Labs 3 and 4 have been cleaned up. We'll redeploy CloudTrail using Terraform in the next lab.
 
 ### Step 7: Install Terraform
 
