@@ -2,8 +2,8 @@
 
 ## Objectives
 
-This is the lab everything else depends on. You connect your AWS account to FortiCNAPP, so
-that the findings you toured in Lab 1 start appearing for **your** account.
+Everything else depends on this lab. You connect your AWS account to FortiCNAPP, so that
+the findings you toured in Lab 1 start appearing for **your** account.
 
 You hand over the hour-long credential from Lab 2. FortiCNAPP then does the work: it checks
 your permissions, writes a Terraform plan for your account, applies it, and registers the

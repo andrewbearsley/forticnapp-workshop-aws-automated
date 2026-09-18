@@ -13,10 +13,13 @@ in the console.
 - Your email address added to the FortiCNAPP demo environment
 
 > [!IMPORTANT]
-> Lab 1 takes you through a **read-only demo tenant**, populated with vulnerable
-> applications with signs of compromise. From Lab 3 onward you work in
-> **FORTINETAPACDEMO**, where you onboard your own AWS account. Watch the tenant name at
-> the bottom of the left navigation.
+> FortiCNAPP is multi-tenanted. See the tenant name at the bottom left navigation.
+>
+> Lab 1 takes you through a **read-only tenant** (**FORTIDEMO**), populated with vulnerable
+> applications and signs of compromise.
+>
+> Lab 3 onwards is a **sandpit tenant** (**FORTINETAPACDEMO**), where you onboard your own
+> AWS account.
 
 ## Step 1: Sign in and pick the tenant
 
@@ -49,25 +52,19 @@ tenant.
 > Repeat this in **Lab 3**, the first time you enter FORTINETAPACDEMO. The setting is per
 > tenant.
 
-## Step 3: How bad is it?
+## Step 3: Let's explore FortiCNAPP!
 
-Go to **Dashboard**.
-
-The widgets across the top are where you start. Everything else in the console drills into
-one of them.
+For a high-level view, go to **Dashboard**.
 
 ![Dashboard showing threat alerts, non-compliant resources and exposed fixable hosts](images/forticnapp-dashboard.png)
 
-| Widget | What it counts | Which lab creates it |
-|---|---|---|
-| **Threat alert overview** | Something is happening that looks like an attack | Lab 4, AWS CloudTrail |
-| **Non-compliant resources** | Configuration that fails a benchmark | Lab 3, AWS configuration |
-| **Exposed Fixable Hosts** | Internet-reachable hosts with a patchable vulnerability | Labs 3 to 6 |
+| Widget | What it counts |
+|---|---|
+| **Threat alert overview** | Something is happening that looks like an attack |
+| **Non-compliant resources** | Configuration that fails a benchmark |
+| **Exposed Fixable Hosts** | Internet-reachable hosts with a patchable vulnerability |
 
 **Checkpoint:** you can read a number off each of the three widgets.
-
-The widgets sit **empty for around twenty seconds** while they load. That is normal, not a
-broken tenant.
 
 > Worth pausing on **Exposed Fixable Hosts**. Not "hosts with vulnerabilities", which is
 > every host. Exposed, and fixable. That is the list you would actually work through on a
@@ -85,9 +82,6 @@ broken tenant.
 4. Click **Add clause** again, choose **Internet Exposed**, leave **is equal to** set to
    **True**, and click **Add clause**.
 5. Click **Search Results**.
-
-> The Query Builder opens **empty** even when a query is already running. Selecting the
-> return type is a step, not a confirmation.
 
 ![Explorer query results, showing internet exposed hosts with alert, attack path and compliance counts](images/forticnapp-explorer-query.png)
 
@@ -107,10 +101,11 @@ then the host. That red line **is** the exposure, drawn as the actual chain of A
 resources that permits it. Hanging underneath are the host's vulnerabilities, compliance
 violations and alerts.
 
-Everything on one screen, including why those findings matter together rather than
-separately.
+This is the context an exposed host needs before you can act on it. A vulnerability list
+tells you what to patch. This tells you what is reachable, by which route, and which link
+in that chain you could break instead.
 
-## Step 5: What have I got?
+## Step 5: What do we have in our cloud estate?
 
 What exists is one question. What it actually does is another. Separate views for each.
 
@@ -120,13 +115,13 @@ Go to **Inventory** > **Resource Inventory**.
 
 ![Resource Inventory listing cloud resources with alerts, compliance violations and attack paths](images/forticnapp-resource-inventory.png)
 
-Nobody typed this in. FortiCNAPP asked AWS what exists. In a data centre you know what is
-in the rack because you put it there. In a cloud account, anyone with credentials can
-create something at three in the morning, so asking the provider is the only way to know.
+In a data centre you know what is in the rack because you put it there. In a cloud account,
+anyone with credentials can create something at three in the morning, so asking the provider
+is the only way to know.
 
 ### What it does
 
-Go to **Inventory** > **Hosts**, then the **Machines** tab. Give it a moment to load.
+Go to **Inventory** > **Hosts**, then the **Machines** tab.
 
 ![Hosts Machines view showing unique machines, users, bytes and connections over time, with alerts alongside](images/forticnapp-hosts-machines.png)
 
@@ -219,7 +214,7 @@ Go to **Risk Center** > **Findings** > **Compliance** > **Cloud**.
 ![Cloud Compliance dashboard showing frameworks including CIS, ISO 27001, NIST CSF and SOC 2](images/forticnapp-cloud-compliance.png)
 
 The **Frameworks** tab scores the same findings against CIS, ISO/IEC 27001, NIST CSF, SOC 2
-and the rest. You do not re-scan for each one.
+and the rest.
 
 Now find a specific failure.
 
@@ -248,8 +243,8 @@ while you are here. Confidence is not a control.
 **Checkpoint:** you are reading the **Description** and a numbered **Remediation** for that
 exact policy.
 
-This is the part people miss. Every policy links straight to what it means and the steps to
-fix it, so a finding is never just a red number. Hand this page to whoever owns the bucket.
+Every policy links straight to what it means and the steps to fix it, so a finding is never
+just a red number. Hand this page to whoever owns the bucket.
 
 ## Step 9: What do I fix first: identities
 

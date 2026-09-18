@@ -240,7 +240,7 @@ Look for your instance hostname. Nothing there yet means the first check-in has 
 
 The host now reports what it is doing, not just what is installed on it.
 
-That is the whole difference. Agentless found the vulnerable package. The agent is what
+Agentless found the vulnerable package. The agent is what
 notices the package being exploited: a process that has never run before, a connection to
 somewhere this host has never talked to, a login at the wrong hour. You cannot alert on
 behaviour you are not watching.

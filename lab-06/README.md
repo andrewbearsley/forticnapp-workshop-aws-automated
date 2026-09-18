@@ -239,7 +239,7 @@ Both your Linux and Windows hosts should be listed there by the end of the sessi
 
 The same agent, reached a harder way.
 
-That is the useful part. A Windows estate is where agent rollout actually stalls,
+A Windows estate is where agent rollout actually stalls,
 and almost never because of the agent: it stalls on RDP being blocked, on a lost key pair,
 on an installer run without Administrator. You have now hit those in a lab where it costs
 nothing.

@@ -1,8 +1,6 @@
 # FortiCNAPP Workshop: AWS Integration
 
-Connect FortiCNAPP to an AWS account, then see what it finds. It runs in a browser and AWS
-CloudShell. Lab 6 also uses an RDP client to practise installing an agent on a Windows
-machine.
+Let's connect FortiCNAPP to an AWS account, then see what it finds!
 
 ## What FortiCNAPP is
 

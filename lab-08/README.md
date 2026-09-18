@@ -5,8 +5,8 @@
 Labs 3 to 6 found problems in a **running** account. This lab finds them in the Terraform
 that would have created it, before anything exists.
 
-That is the whole idea behind shift left. A public S3 bucket found in production is an
-incident with a clock on it. The same bucket found in a pull request is a two-line change
+Shift left means moving the finding earlier, not finding more. A public S3 bucket in
+production is an incident with a clock on it. The same bucket found in a pull request is a two-line change
 nobody outside the team hears about.
 
 The scanner reads Terraform, CloudFormation and the other IaC formats, and checks them
