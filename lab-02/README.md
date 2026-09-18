@@ -54,8 +54,8 @@ Read the ARN it prints:
 
 | If it says | You are | Go to |
 |---|---|---|
-| `arn:aws:iam::<id>:user/<name>` | A plain IAM user, which is the lab setup | **Method B** |
 | `arn:aws:sts::<id>:assumed-role/AWSReservedSSO_...` | Signed in through Identity Center | **Method A** |
+| `arn:aws:iam::<id>:user/<name>` | A plain IAM user | **Method B** |
 
 **Checkpoint:** you know which of the two methods you are following.
 
@@ -89,15 +89,9 @@ Nobody needs to provision it for you.
 Run all of this in CloudShell.
 
 > [!WARNING]
-> **Only run Method B if the ARN said `:user/`.** If you are signed in through Identity
-> Center, Method B fails in a way that is hard to read: the role is created successfully,
-> the policy attaches successfully, and only the final `assume-role` fails with
-> `is not authorized to perform: sts:AssumeRole`.
->
-> It gets that far because `awk` pulls your login name off the end of the Identity Center
-> ARN, and on these lab accounts that name matches a real IAM user. The trust policy is
-> therefore valid, it just does not trust *you*. Two steps succeed before the third tells
-> you that you were on the wrong path.
+> **Only run Method B if the ARN said `:user/`.** The trust policy below names an IAM user,
+> and an Identity Center session is not one, so `assume-role` is denied. The role and the
+> policy get created first, so you only find out on the third command.
 
 ### 1. Create the role
 
@@ -138,9 +132,6 @@ read -r AK SK ST < <(aws sts assume-role \
 
 printf '\n=== Access key ID ===\n%s\n\n=== Secret access key ===\n%s\n\n=== Session token ===\n%s\n\n' "$AK" "$SK" "$ST"
 ```
-
-The `printf` exists only to label the output. Without it AWS returns three values separated
-by tabs, and the session token is long enough that you cannot tell where it starts.
 
 ![CloudShell showing three labelled credential blocks, values blacked out](images/aws-cloudshell-credentials.png)
 

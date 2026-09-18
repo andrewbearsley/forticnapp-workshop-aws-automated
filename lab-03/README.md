@@ -2,8 +2,8 @@
 
 ## Objectives
 
-Everything else depends on this lab. You connect your AWS account to FortiCNAPP, so that
-the findings you toured in Lab 1 start appearing for **your** account.
+In this lab, you connect your AWS account to FortiCNAPP, so that the findings you toured
+in Lab 1 start appearing for **your** account.
 
 You hand over the hour-long credential from Lab 2. FortiCNAPP then does the work: it checks
 your permissions, writes a Terraform plan for your account, applies it, and registers the
@@ -23,7 +23,7 @@ Work through the screens, then wait five to ten minutes while it builds.
 
 | | |
 |---|---|
-| It creates real AWS resources | IAM roles, and the ECS cluster and networking the agentless scanner needs. Lab 10 removes them. Lab 12 adds the CloudTrail trail, bucket, SNS topic and SQS queue. |
+| It creates real AWS resources | IAM roles, and the ECS cluster and networking the agentless scanner needs. |
 | The credential expires | One hour from when you made it. If the wizard sits idle, it will fail partway. |
 
 ## Prerequisites
@@ -39,10 +39,6 @@ Work through the screens, then wait five to ten minutes while it builds.
 1. Log into the FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
 2. Confirm the tenant selector at the bottom left shows **FORTINETAPACDEMO**.
 > [!IMPORTANT]
-> **This is a different tenant to Lab 1.** Lab 1 ran in `FORTIDEMO-2026-04`. From here on
-> you work in `FORTINETAPACDEMO`, because that is where you onboard your own account. If
-> your screen looks unexpectedly empty, check the tenant name first.
->
 > **If the switch does not take, refresh the browser.** The selector sometimes reports the
 > new tenant while the page still shows the old one's data. A reload settles it.
 
@@ -122,10 +118,6 @@ problem, not the form. See the failure table at the end of
 
 ### Step 4: Configure (Step 3 of 4)
 
-Task 1 of 3 is **Select Integration**. Each integration type is a **toggle**, and all four
-start off. The console lists them in this order, each tagged with the CNAPP capability it
-provides:
-
 | Toggle | Tagged as | What it gives you |
 |---|---|---|
 | **Agentless Workload Scanning** | Cloud Vulnerability Management | Vulnerability and secret scanning with no agent on the instance |
@@ -147,13 +139,9 @@ Turn on two toggles, and only two:
 ![Configure step with the Agentless Workload Scanning and Configuration toggles boxed and numbered 1 and 2, CloudTrail and EKS Audit Log left off](images/forticnapp-configure-selected.png)
 
 > **Two toggles here, the third arrives in Lab 4.** Posture and vulnerability scanning
-> from the wizard, threat detection from a CloudFormation template. Mixing methods is a
-> common production pattern, not a workaround.
+> from the wizard, threat detection from a CloudFormation template.
 
 #### Set the agentless scanning regions
-
-The Configure step runs three tasks. After you select the integration types and discovery
-completes, Task 3 asks for per-integration settings.
 
 1. On the **Agentless Workload Scanning** tab, set **Scanning regions** to the region where
    your workloads run, for example **ap-southeast-1**.
@@ -208,11 +196,6 @@ moment to stretch.
 **Checkpoint:** every integration type you selected reads **SUCCEEDED**. If any reads
 **FAILED**, read the next box before you retry anything.
 
-> **Read the status per integration type.** Rollback applies to the integration type that
-> failed, not to the others. In our test run Agentless completed and stayed deployed while
-> Configuration rolled back its own 18 resources. So check each row on the deployment
-> record rather than assuming the run was all-or-nothing.
-
 Every run is recorded under **Settings** > **Integrations** > **Cloud accounts** >
 **Deployment History**, successes and failures alike. That is where you troubleshoot a
 failed onboarding.
@@ -244,9 +227,6 @@ files, and commit them to your own repository.
 Every resource is tagged with two keys, `lacework_tag` and `lacework_integration`. The
 deployment record shows the values for your run.
 
-Read the keys, not the values. The values move between product versions, so Lab 10 searches
-on the key alone.
-
 Remember these tags. Lab 10 uses them for cleanup.
 
 ### Step 8: Verify the Integrations
@@ -259,26 +239,6 @@ Remember these tags. Lab 10 uses them for cleanup.
 ### Step 9: Confirm the AWS Side
 
 Switch to the AWS Console and confirm the resources exist.
-
-First, see the trail that caused you to skip CloudTrail in Step 4. From CloudShell:
-
-```bash
-aws cloudtrail describe-trails --region ap-southeast-1 \
-  --query "trailList[].[Name,IsOrganizationTrail]" --output text
-```
-
-Any row with `IsOrganizationTrail` **True** is an organization trail your account can see
-but cannot manage. Those are the ones discovery cannot resolve:
-
-```
-aws-controltower-BaselineCloudTrail   True
-```
-
-You may see more than one. A Control Tower landing zone creates its own baseline trail, and
-many organizations add a second trail of their own on top.
-
-You will run this command again at the end of Lab 12, where a trail with **False** in that
-column appears alongside it. That one is yours.
 
 1. Go to **IAM** > **Roles** and search for `lw-`. The Configuration integration's
    cross-account role is named `lw-iam-` plus a random suffix. Searching for `lacework`
