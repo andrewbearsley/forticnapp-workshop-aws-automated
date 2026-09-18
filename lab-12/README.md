@@ -126,7 +126,7 @@ This shows you:
 
 The plan output will display in your terminal. Review it carefully to understand what will be deployed.
 
-**What will be created (around 25 resources):**
+**What will be created (29 resources):**
 
 **AWS CloudTrail Integration:**
 - 1 CloudTrail - AWS CloudTrail for API activity logging
@@ -149,16 +149,16 @@ The plan output will display in your terminal. Review it carefully to understand
 - 1 Lacework Integration (`lacework_integration_aws_ct`) - CloudTrail integration
 - 1 IAM Role - Cross-account role for FortiCNAPP to read the trail
 - 1 Lacework External ID - Security identifier for the IAM role
-- 1 Random ID - Unique identifier for resource naming
+- 2 Random IDs - Unique identifiers for resource naming
 - 1 Time Sleep - Wait period for resource propagation
 
 > [!NOTE]
-> No Configuration resources appear in this plan. Lab 3 created that integration through
-> the wizard, and it is still in place. Check **Settings** > **Integrations** >
-> **Cloud accounts** if you want to confirm before applying.
+> No Configuration or Agentless resources appear in this plan, and none should. Lab 10
+> removed everything Labs 3 and 4 built. This plan creates CloudTrail and nothing else.
 >
-> After this applies, the account carries all three: Configuration and Agentless from the
-> wizard, CloudTrail from Terraform.
+> After this applies the account carries one integration, `AwsCtSqs`. Check
+> **Settings** > **Integrations** > **Cloud accounts** before applying if you want to
+> confirm you are starting from empty.
 
 **Optional: Save the plan to a file:**
 
@@ -184,14 +184,16 @@ terraform apply
 
 When prompted, type `yes` to confirm the deployment.
 
-**Note**: This process may take several minutes as it creates 46 resources including:
-- IAM roles and policies (for both Config and CloudTrail integrations)
+**Note**: This takes two to three minutes. It ends with
+`Apply complete! Resources: 29 added, 0 changed, 0 destroyed.` and creates:
+- An IAM role and policy for the CloudTrail integration
 - CloudTrail with encryption and logging
-- S3 buckets for CloudTrail logs (with versioning, encryption, and access controls)
-- KMS key for encryption
-- SNS topic and SQS queue for CloudTrail notifications
-- Lacework integrations (Configuration and CloudTrail)
-- Supporting resources (random IDs, time delays for propagation)
+- Two S3 buckets, one for the trail and one for its access logs, both with versioning,
+  encryption and public access blocked
+- A KMS key for encryption
+- An SNS topic and SQS queue for CloudTrail notifications
+- One Lacework integration, `lacework_integration_aws_ct`
+- Supporting resources: random IDs, an external ID, and a time delay for propagation
 
 ### Step 8: Verify Integration Deployment
 
@@ -202,15 +204,17 @@ After the Terraform apply completes successfully, verify the integration:
 lacework cloud-account list
 ```
 
-You should see entries for:
-- `AwsCfg` (Configuration integration)
-- `AwsCtSqs` (CloudTrail integration)
+You should see one entry for this account:
+- `AwsCtSqs` (CloudTrail integration), named **TF cloudtrail**
+
+It reads `Pending` at first, not `Ok`. The integration exists before any log data has
+arrived through the queue.
 
 2. **In FortiCNAPP Console:**
    - Log into FortiCNAPP console at <a href="https://partner-demo.lacework.net/" target="_blank">https://partner-demo.lacework.net/</a>
    - Ensure tenant is set to **FORTINETAPACDEMO**
    - Navigate to **Settings** > **Integrations** > **Cloud accounts**
-   - Verify that your AWS account appears with both Configuration and CloudTrail integrations active
+   - Verify that your AWS account appears with the CloudTrail integration
 
 ### Step 9: Clean Up Resources
 
@@ -251,7 +255,7 @@ rm -rf ~/lacework/aws
 
 ## What did we do here?
 
-We deployed the same CloudTrail and Configuration integrations from Lab 3, but this time with Terraform we own instead of the console wizard. The Lacework CLI generated the Terraform code, and `terraform apply` created 46 resources - IAM roles, S3 buckets, KMS encryption, SNS/SQS notifications, and the FortiCNAPP integrations themselves.
+We built the CloudTrail integration a third way, with Terraform we own rather than a console wizard or a template someone else launched. The Lacework CLI generated 25 lines of `main.tf`, and `terraform apply` turned that into 29 resources: an IAM role, S3 buckets, KMS encryption, SNS and SQS notifications, and the FortiCNAPP integration itself.
 
 This is how you'd do it in production. The Terraform configuration can be checked into version control, reviewed in pull requests, and deployed through CI/CD pipelines. Need to integrate 50 AWS accounts? Fortinet provides organization-level Terraform modules that deploy across all accounts in your AWS Organization in one go. And when you're done, `terraform destroy` cleanly removes everything.
 

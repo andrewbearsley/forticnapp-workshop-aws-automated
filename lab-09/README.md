@@ -79,8 +79,11 @@ Work through the same three questions as Lab 8:
    dependencies are the ones teams are surprised by.
 3. Were any secrets found? That is the finding to act on today.
 
+The scan reports **19** third-party vulnerabilities and **12** critical secrets, the secrets
+sitting in `data/users.yml` and `index.js`. Two of the secrets are recognised as AWS keys.
+
 **Checkpoint:** you can say whether the worst vulnerability is in a direct or a transitive
-dependency.
+dependency. Both kinds are present, so the answer is worth working out rather than guessing.
 
 ### Step 5: Generate an SBOM
 
@@ -88,16 +91,25 @@ dependency.
 lacework sca scan ./ -f cdx-json -o sbom.json
 ```
 
-That writes CycloneDX JSON, one of the two formats regulators and auditors ask for. Have a
-look at how much is in there:
+That writes CycloneDX JSON, one of the two formats regulators and auditors ask for.
+
+> [!IMPORTANT]
+> **The repository already ships an `sbom.json` at its root, and this command overwrites
+> it.** That is fine here. It does mean that if the scan fails you can still read a file
+> called `sbom.json` and think it worked, so check the timestamp inside it.
+
+Count what is in there, and what the application actually asked for:
 
 ```bash
-head -40 sbom.json
-grep -c '"name"' sbom.json
+jq '.components | length' sbom.json
+jq '.dependencies | length' swiss-cheese-app/package.json
 ```
 
-**Checkpoint:** the count is far larger than the number of packages the application
-directly imports. That gap is the point of the exercise.
+The application declares **2** dependencies, `express` and `lodash`. The SBOM lists **53**
+components.
+
+**Checkpoint:** the component count is far larger than the number of packages the
+application directly imports. That gap is the point of the exercise.
 
 ## What did we do here?
 

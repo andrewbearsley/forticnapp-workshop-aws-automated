@@ -126,13 +126,17 @@ Do this in your **own** browser, not inside the RDP session.
 5. The Windows panel offers different packages to the Linux one. You need three things from
    it:
 
-![Install panel showing Lacework Powershell Script, MSI Package, ARM Template and Packer for AWS](images/forticnapp-agent-install-url.png)
+![Install panel showing Lacework Powershell Script, MSI Package, ARM Template, Terraform script for Azure and Packer for AWS](images/forticnapp-agent-install-url.png)
 
 | Take this | From | Used as |
 |---|---|---|
-| Script URL | **Lacework Powershell Script**, already expanded. **Copy URL** | what you download |
-| MSI URL | Expand **MSI Package**, then its **Copy URL** | `-MSIURL` |
-| Access token | Shown in the same panel | `-AccessToken` |
+| Script URL | **Install** tab. **Lacework Powershell Script**, already expanded. **Copy URL** | what you download |
+| MSI URL | **Install** tab. Expand **MSI Package**, then its **Copy URL** | `-MSIURL` |
+| Access token | **Detail** tab, the **Token** field | `-AccessToken` |
+
+> **The package sections are an accordion.** Expanding **MSI Package** collapses
+> **Lacework Powershell Script**. Take the script URL first, paste it somewhere, then come
+> back for the MSI one.
 
 Paste all three somewhere you can get at them from inside the RDP session. RDP copy and
 paste is unreliable, so a text file on the Windows desktop is easiest.

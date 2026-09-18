@@ -5,6 +5,13 @@ This lab provides a cleanup script that removes every workshop resource, on both
 > [!CAUTION]
 > This script assumes a disposable workshop AWS account. It sweeps every enabled region and removes all EC2 instances, key pairs and non-default security groups in the account, not only the ones the workshop created, along with every FortiCNAPP integration pointing at that AWS account. Do not run it in an account that hosts anything you want to keep.
 
+> [!CAUTION]
+> **Run it in CloudShell, not on your own machine.** Step 5 clears the home directory it
+> runs in. It deletes `~/.lacework.toml`, `~/.lacework`, `~/.terraform.d`, `~/bin/lacework`
+> and any top-level folder whose name contains `Terraform`. In CloudShell that is exactly
+> what you want. On a laptop it removes the Lacework CLI configuration you use for every
+> other tenant.
+
 > [!NOTE]
 > **It does not touch IAM.** The roles in these accounts belong to whoever runs the account
 > pool, and some of them drive cost management and automated cleanup. The workshop's own
@@ -13,17 +20,24 @@ This lab provides a cleanup script that removes every workshop resource, on both
 
 ## Why both sides need cleaning
 
-Lab 3 creates its integrations through the wizard, and CloudFormation never owns those records.
+Who owns the integration record decides what a delete actually removes, and the three
+methods in this workshop do not agree.
 
-That means deleting the CloudFormation stack removes the S3 bucket, the cross-account IAM role and the ECS scanner, but leaves the FortiCNAPP integration in place. It keeps polling on schedule, finds a bucket that no longer exists, and reports:
+| Created by | Deleting the AWS side removes the FortiCNAPP record? |
+|---|---|
+| Lab 3, the wizard | No. The record is held in FortiCNAPP and nothing in AWS points back at it |
+| Lab 4, CloudFormation | Yes. Its template registers the integration itself, through `LaceworkSnsCustomResource`, and deregisters it on delete |
+| Lab 12, Terraform | Yes. Terraform holds the integration in state, so `terraform destroy` removes both sides |
+
+Lab 3 is the case that strands. Remove its AWS resources and the integration stays,
+polling on schedule, finding a bucket that no longer exists, and reporting:
 
 ```
 Data loading error: Unable to access scan results within storage bucket
 ```
 
-Lab 12 does not have this problem, because Terraform owns its integrations in state and `terraform destroy` removes both sides.
-
-Deleting the stack is not enough. The FortiCNAPP integration has to be deleted through FortiCNAPP, which is what Step 2 of the script does.
+So the AWS sweep is not enough on its own. Any integration FortiCNAPP still owns has to be
+deleted through FortiCNAPP, which is what Step 2 of the script does.
 
 ## Instructions
 
@@ -48,6 +62,20 @@ The order matters. The FortiCNAPP integrations are removed while the Lacework CL
 | 1 | `terraform destroy` for the Lab 12 deployment, which removes its own integrations and AWS resources |
 | 2 | Delete any remaining FortiCNAPP cloud integrations for this AWS account |
 | 3 | Per region: terminate EC2 instances, delete CloudFormation stacks, delete CloudTrail trails, delete key pairs, delete non-default security groups |
+
+> [!IMPORTANT]
+> **Step 3 does not cover agentless scanner infrastructure.** It leaves the ECS cluster,
+> its EventBridge schedule, the scanner VPC and the Secrets Manager secret in place. In the
+> normal order that does not matter, because Lab 10 removed them before you got here. If
+> you skipped Lab 10, check the two that keep costing you:
+>
+> ```bash
+> aws ecs describe-clusters --clusters <cluster-name> --query 'clusters[0].status' --output text
+> aws events describe-rule --name <rule-name> --query 'State' --output text
+> ```
+>
+> `ACTIVE` and `ENABLED` mean the scanner is still scheduled. Go back to
+> [Lab 10](../lab-10/README.md) and finish the tag sweep.
 | 4 | Empty and delete Lacework-related S3 buckets, resolving each bucket's own region |
 | 5 | Remove CloudShell artifacts: Terraform and Lacework binaries, cloned repos, config files, `.bashrc` edits |
 

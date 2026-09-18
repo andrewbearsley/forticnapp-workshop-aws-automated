@@ -295,8 +295,8 @@ hourly trigger.
 
 ### A tag search will still return a few resources, and that is normal
 
-Re-run the Tag Editor search and you may still see four or five entries. Check their state
-before chasing them:
+Re-run the Tag Editor search and you will still see a dozen or so entries, plus the IAM
+policies in the global index. Check their state before chasing them:
 
 | Resource | Expected state after cleanup |
 |---|---|
@@ -304,15 +304,23 @@ before chasing them:
 | Secrets Manager secret | Deleted, inside its recovery window |
 | ECS cluster | `INACTIVE` |
 | ECS task definition | `INACTIVE`. Deregistered task definitions stay in the account permanently. |
-| Security group, subnet, VPC | Often already gone. The tag index lags. |
+| IAM roles and policies | Still there. Nothing in this lab deletes IAM. |
+| Security group, subnet, route table, VPC | Gone once the agentless stack is removed. The tag index lags behind by minutes. |
 
 ```bash
 aws kms describe-key --key-id <key-id> --query 'KeyMetadata.[KeyState,DeletionDate]' --output text
 aws ecs describe-clusters --clusters <name> --query 'clusters[0].status' --output text
+aws events describe-rule --name <rule-name> --query 'State' --output text
 ```
 
-None of these are running or scanning. The one to watch is the KMS key, which carries a
-small monthly charge until its deletion date passes.
+> [!WARNING]
+> **Two of these tell you the cleanup did not finish.** An ECS cluster reading `ACTIVE`,
+> or an EventBridge rule reading `ENABLED`, means the agentless scanner is still scheduled.
+> That is the one thing on this page worth acting on straight away. Everything else is
+> inert.
+
+Nothing else here is running or scanning. The one to watch on cost is the KMS key, which
+carries a small monthly charge until its deletion date passes.
 
 ## Why this lab matters more than it looks
 

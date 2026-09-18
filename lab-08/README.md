@@ -56,6 +56,12 @@ lacework iac scan
 It reads every Terraform file below the current directory, checks each against policy, and
 prints what failed. Uploading to the platform is on by default, controlled by `--upload`.
 
+> [!NOTE]
+> **The command exits non-zero and that is the point.** It ends with
+> `violations exceeded a configured exit condition threshold` and an exit code in the
+> hundreds. Nothing went wrong. That exit code is what fails a pipeline build when the
+> code breaks policy.
+
 ### Step 4: Read the Output
 
 You will get a lot of findings. Do not try to read them all. Work through these three
@@ -71,7 +77,8 @@ Each finding gives you a policy ID, a severity, and a **file and line number**. 
 part is what makes this useful: it points a developer at the exact line, in their own
 editor, in their own language.
 
-**Checkpoint:** you can name the single most common category of finding in this repo.
+**Checkpoint:** you can name the single most common category of finding in this repo, and
+the file that carries the most.
 
 > **Why your scan does not show up in the console.** Look under **Risk Center** >
 > **Findings** > **Code Security** > **Infrastructure (IaC)** and you will not find it. That is expected. A
@@ -86,7 +93,7 @@ editor, in their own language.
 
 We ran the platform's policies against code instead of against cloud.
 
-Same checks, different moment. The scanner found well over a hundred issues in a repo that
+Same checks, different moment. The scanner found 77 issues in four Terraform files that
 would have deployed perfectly happily. It named the file and the line for every one.
 
 Wired into a pipeline, these findings arrive as comments on a pull request, before the plan
