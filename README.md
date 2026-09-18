@@ -29,8 +29,8 @@ get a short list worth investigating.
 
 ```mermaid
 flowchart LR
-    CT["AWS CloudTrail<br/>who did what"] -->|Lab 3| F
-    CFG["AWS Config<br/>what resources exist,<br/>and how they are set up"] -->|Lab 3| F
+    CT["AWS CloudTrail<br/>who did what"] -->|Lab 4| F
+    CFG["AWS resource configuration<br/>what resources exist,<br/>and how they are set up"] -->|Lab 3| F
     AL["AWS agentless scans<br/>vulnerabilities, secrets"] -->|Lab 3| F
     AG["Agent telemetry<br/>processes, connections, files"] -->|Labs 5 and 6| F
     SC["Code scans<br/>Terraform, dependencies"] -->|Labs 8 and 9| F

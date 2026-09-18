@@ -60,7 +60,7 @@ one of them.
 
 | Widget | What it counts | Which lab creates it |
 |---|---|---|
-| **Threat alert overview** | Something is happening that looks like an attack | Lab 3, AWS CloudTrail and agentless |
+| **Threat alert overview** | Something is happening that looks like an attack | Lab 4, AWS CloudTrail |
 | **Non-compliant resources** | Configuration that fails a benchmark | Lab 3, AWS configuration |
 | **Exposed Fixable Hosts** | Internet-reachable hosts with a patchable vulnerability | Labs 3 to 6 |
 
@@ -192,7 +192,7 @@ Composite alerts are rare by design, so you have to go looking:
 1. Set **Alert category** to **Composite** only.
 2. Set the date range to the **last 6 months**. A month will not find one.
 
-That one comes from CloudTrail, which is why Lab 3 onboards it.
+That one comes from CloudTrail, which is why Lab 4 onboards it.
 
 There is a second inbox at **Risk Center** > **Alerts**. Threat alerts say something is
 happening. Risk alerts say something is dangerous. Worth knowing both exist.
