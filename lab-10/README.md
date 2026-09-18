@@ -206,8 +206,8 @@ For reference, a full run on one account destroyed:
 
 ## Remove the CLI credential
 
-Both routes need this, and it is the step people forget. [Lab 7](../lab-07/README.md) put a
-downloaded **API key** onto your CloudShell home directory. Nothing above removes it.
+Both routes need this. [Lab 7](../lab-07/README.md) put a downloaded **API key** onto your
+CloudShell home directory. Nothing above removes it.
 
 CloudShell keeps your home directory for 120 days, so the key outlives the workshop.
 

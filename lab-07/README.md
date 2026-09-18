@@ -96,8 +96,8 @@ It asks four questions. The answers all come from that JSON file, which looks li
 | API Secret | `secret` |
 | Sub-Account | `subAccount` |
 
-The **sub-account** is the one people miss. It is the tenant, `fortinetapacdemo`. Leave it
-blank and the CLI talks to the wrong place and shows you nothing.
+The **sub-account** is the tenant, `fortinetapacdemo`. Leave it blank and the CLI talks to
+the wrong place and shows you nothing.
 
 ### Step 5: List Your Integrations
 

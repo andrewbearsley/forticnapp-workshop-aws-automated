@@ -65,11 +65,6 @@ organization, and Control Tower creates an organization trail by default.
 3. Click **Add New**.
 4. Under **Cloud Service Provider**, select **Amazon Web Services**.
 5. Under **Integration Method**, select **AWS CloudFormation**.
-
-**Checkpoint:** the header changes from **Step 1 of 4** to **Step 1 of 2** the moment you
-select it. Choosing CloudFormation removes the Authorize and Configure steps entirely,
-which is why the organization trail cannot stop it.
-
 6. Click **Next**. The header now reads **Step 2 of 2 - CloudFormation Configuration -
    AWS**.
 

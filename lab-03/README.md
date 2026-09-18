@@ -19,7 +19,7 @@ flowchart LR
 
 Work through the screens, then wait five to ten minutes while it builds.
 
-**Worth knowing before you start**, because both of these catch people out:
+**Worth knowing before you start:**
 
 | | |
 |---|---|
@@ -335,7 +335,6 @@ Compare the work:
 
 | | CloudFormation path | Automated configuration |
 |---|---|---|
-| Labs | 2 | 1 |
 | CloudFormation stacks you launch | 2 | 0 |
 | Stack parameters you set by hand | Several, including a quota check | 0 |
 | Preflight permission check | None | Yes, including SCPs and permission boundaries |
