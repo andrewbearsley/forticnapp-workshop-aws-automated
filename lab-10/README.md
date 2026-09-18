@@ -52,7 +52,9 @@ applied, for example:
 > stable. The administration guide documents `lacework_tag: self-deployment` and
 > `lacework_integration: configuration`. A 2026 deployment record shows
 > `lacework_integration: aws_config`. Resources deployed in March 2025 carry
-> `lacework_tag: lacework-self-deploy`. All three are real, seen in the same tenant.
+> `lacework_tag: lacework-self-deploy`. All of these are real, seen in the same tenant.
+> The console and the AWS tag can even disagree on the same deployment: one September 2026
+> run showed `aws_agentless` on the deployment record and `agentless` on the resources.
 >
 > Search on the key `lacework_tag` with any value. Filter on a value and you will miss
 > resources and leave them running.
@@ -205,9 +207,8 @@ For reference, a full run on one account destroyed:
 
 ## Remove the CLI credential
 
-Both routes need this, and it is the step people forget. [Lab 7](../lab-07/README.md)
-created an **API key** and a **service user** in the tenant, then wrote that key into
-CloudShell. Neither is removed by anything above.
+Both routes need this, and it is the step people forget. [Lab 7](../lab-07/README.md) put a
+downloaded **API key** onto your CloudShell home directory. Nothing above removes it.
 
 CloudShell keeps your home directory for 120 days, so the key outlives the workshop.
 
@@ -222,16 +223,23 @@ rm -rf ~/bin/lacework ~/.config/lacework
 Check the second line matches before you run it. `rm ~/*.json` would take anything else you
 had in there.
 
-Then in FortiCNAPP, revoke the key so it cannot be used even if a copy escaped:
+> [!CAUTION]
+> **Do not delete the `AWS Lab` service user or its key.** You did not create it. Lab 7
+> had you download a key that already existed and is shared by everyone in the room.
+> Deleting it revokes it for every other student at the same time.
+>
+> Only delete a key in the console if **you** created it. If you are unsure, you did not.
+>
+> The key is shared because **FortiCNAPP caps how many API keys a tenant can hold**. One
+> key for the room is a deliberate choice, not an oversight, and it cannot be replaced with
+> one key per student.
 
-1. Go to **Settings** > **Configuration** > **API keys**.
-2. Find the key you created in Lab 7.
-3. Delete it.
-4. If you created a service user for the workshop, delete that too under
-   **Settings** > **Access control** > **Users**.
+Removing the local copies above is the part that matters to you. The key is shared, so the
+risk you control is the copy sitting in your own CloudShell home directory, which survives
+for 120 days.
 
-> A leaked API key is worth more to an attacker than any resource in this lab. It reads
-> your whole tenant. Treat this step as mandatory, not optional tidying.
+> A leaked API key is worth more to an attacker than any resource in this lab. It reads the
+> whole tenant. Treat deleting your local copies as mandatory, not optional tidying.
 
 ## Terminate the EC2 Instances
 

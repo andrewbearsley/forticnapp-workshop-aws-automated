@@ -46,7 +46,7 @@ it is running.
 
 ![Launch an instance page with the name entered and Amazon Linux 2023 selected](images/aws-ec2-launch-details.png)
 
-5. **Instance type**: leave **t3.micro**.
+5. **Instance type**: leave the default, **t2.micro**. It is free tier eligible.
 
 6. **Key pair (login)**: open the dropdown and choose
    **Proceed without a key pair (Not recommended)**.
@@ -149,7 +149,8 @@ used. Go back to FortiCNAPP, click the **Actions** ellipsis on the same token, a
 and press Enter.
 
 > [!CAUTION]
-> The token echoes on screen in the clear. Take care if you are sharing your screen.
+> The token echoes on screen in the clear. Take care if you are sharing your screen. The
+> install URL from Step 2 carries the same token in its path, so treat both as secrets.
 
 The rest runs on its own: it downloads the agent package, installs it, and registers with
 FortiCNAPP using that token. It ends with `Lacework successfully installed`.
@@ -191,7 +192,7 @@ Three lines are worth finding:
 | Line | Means |
 |---|---|
 | `Setting transport for server URL https://api.lacework.net:443/` | Where it sends data |
-| `Connected to controller, version 7.9.0.28681` | It registered successfully |
+| `Connected to controller, version 8.2.0.30827` | It registered successfully. The version moves, the line does not |
 | `Payload Total : [5612], Curr : [1755]` | Data leaving the host, every 15 to 20 seconds |
 
 Watch for a minute and the `Payload` line repeats. That is your agent reporting.
@@ -201,11 +202,19 @@ Watch for a minute and the `Payload` line repeats. That is your agent reporting.
 > connections and file changes go to FortiCNAPP, not to this file. What the log proves is
 > that the pipe is open.
 
-Two lines look alarming and are not:
+Several `level=warning` lines look alarming and are not. On a stock Amazon Linux 2023
+instance, agent 8.2, you get seven of them:
 
-- `level=warning ... describe tags ... NoCredentialProviders` means the instance has no IAM
-  role, which it does not need
-- `level=error msg="Failed to stop child ... no such process"` is startup noise
+- `describe tags inst 'i-...' failed: not found` means the instance has no IAM role, so the
+  agent cannot read its own tags. It does not need to
+- `Failed to connect to docker engine ... Is the docker daemon running?` means there is no
+  Docker on the host, which is true
+- `child death (0: 8.2.0.30827)` and `lwtime config changed ... requires datacollector
+  restart` are startup noise. The agent restarts itself and carries on
+- `CAA: unknown FMODE_NONOTIFY value` is a kernel constant the agent does not recognise
+
+The wording moves between agent versions. Judge by `Status: ACTIVE` and a repeating
+`Payload` line, not by a clean log.
 
 ### Step 6: Verify in FortiCNAPP
 

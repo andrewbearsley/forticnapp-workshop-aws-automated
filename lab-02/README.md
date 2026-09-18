@@ -35,6 +35,11 @@ with your credentials already loaded.
 CloudShell opens as a panel across the bottom. First launch takes a minute, and the panel
 stays black until it is ready.
 
+> [!IMPORTANT]
+> **The first launch in a region shows a "Welcome to AWS CloudShell" dialog.** Close it
+> before you type. Anything typed while it is open is swallowed, and the command appears
+> to have done nothing.
+
 ### Who are you?
 
 At the `~ $` prompt:
@@ -82,6 +87,17 @@ You are an administrator in your own lab account, so you can create the role you
 Nobody needs to provision it for you.
 
 Run all of this in CloudShell.
+
+> [!WARNING]
+> **Only run Method B if the ARN said `:user/`.** If you are signed in through Identity
+> Center, Method B fails in a way that is hard to read: the role is created successfully,
+> the policy attaches successfully, and only the final `assume-role` fails with
+> `is not authorized to perform: sts:AssumeRole`.
+>
+> It gets that far because `awk` pulls your login name off the end of the Identity Center
+> ARN, and on these lab accounts that name matches a real IAM user. The trust policy is
+> therefore valid, it just does not trust *you*. Two steps succeed before the third tells
+> you that you were on the wrong path.
 
 ### 1. Create the role
 
@@ -133,6 +149,12 @@ by tabs, and the session token is long enough that you cannot tell where it star
 To copy a value, select it with the mouse and press **Cmd+C**, or **Ctrl+Shift+C** on
 Windows and Linux. Select from the start of the value to the end of the line, not the label.
 
+> [!IMPORTANT]
+> **Go straight into Lab 3.** The clock starts now, not when you open the wizard. If you
+> stop for a break between here and the Configure step, the credentials expire and you
+> start Lab 2 again. The failure surfaces as `ExpiredToken` two steps into Lab 3, not when
+> you paste.
+
 > [!CAUTION]
 > **Paste these into the Lab 3 wizard only.** Not into chat, not into a shared document,
 > and take care if your screen is being shared. They are live credentials for an hour.
@@ -169,6 +191,8 @@ If you plan to use **Simulate IAM permissions** in Lab 3, the credentials also n
 | `InvalidClientTokenId` at Configure, Task 2 | You used plain `aws sts get-session-token`. AWS blocks IAM API calls from those credentials unless MFA was included, and discovery calls IAM. Use a role session. |
 | `Session token is required` | You pasted a long-lived `AKIA` key. The wizard needs a session token; static keys are rejected. |
 | `Cannot call GetSessionToken with session credentials` | You are federated. Use Method A. |
+| `is not authorized to perform: sts:AssumeRole` at Method B step 3 | You are signed in through Identity Center and ran Method B. Use Method A. See the warning below. |
+| `ExpiredToken: The security token included in the request is expired` at Configure, Task 2 | Your credentials aged out between Lab 2 and discovery. Run Method A or B again and restart the wizard. |
 | Credentials expired mid-wizard | They last an hour. Run Method A or B again. |
 
 ## What did we do here?

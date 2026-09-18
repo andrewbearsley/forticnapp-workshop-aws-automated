@@ -39,7 +39,8 @@ aws cloudtrail describe-trails --region ap-southeast-1 \
 aws-controltower-BaselineCloudTrail   True
 ```
 
-`True` means the trail belongs to the organization's management account, not to you.
+`True` means the trail belongs to the organization's management account, not to you. You
+may see more than one such row.
 
 Automated Configuration inspects existing trails while it works out what to build, and it
 cannot read that one. So it stops, and nothing gets created:
@@ -64,11 +65,13 @@ organization, and Control Tower creates an organization trail by default.
 3. Click **Add New**.
 4. Under **Cloud Service Provider**, select **Amazon Web Services**.
 5. Under **Integration Method**, select **AWS CloudFormation**.
-6. Click **Next**.
 
-**Checkpoint:** the header reads **Step 1 of 2**, not Step 1 of 4. Choosing CloudFormation
-removes the Authorize and Configure steps entirely, which is why the organization trail
-cannot stop it.
+**Checkpoint:** the header changes from **Step 1 of 4** to **Step 1 of 2** the moment you
+select it. Choosing CloudFormation removes the Authorize and Configure steps entirely,
+which is why the organization trail cannot stop it.
+
+6. Click **Next**. The header now reads **Step 2 of 2 - CloudFormation Configuration -
+   AWS**.
 
 ### Step 2: Choose CloudTrail
 
@@ -120,19 +123,24 @@ The template URL is already filled in.
 **Existing Trail Setup** stays blank. Those fields are for pointing FortiCNAPP at a trail
 you already have, which is not what we are doing.
 
-4. Click **Next**, leave **Configure stack options** as it is, and click **Next** again.
+**New Trail Options** stays blank too. **Log file prefix** only renames the log files.
 
-### Step 5: Acknowledge and Submit
+4. Click **Next**.
 
-At the bottom of the review page:
+### Step 5: Acknowledge, Then Submit
 
-1. Tick **I acknowledge that AWS CloudFormation might create IAM resources with custom
-   names.**
-2. Click **Submit**.
+On **Configure stack options**, leave every setting alone and scroll to the bottom.
+
+1. Under **Capabilities**, tick **I acknowledge that AWS CloudFormation might create IAM
+   resources with custom names.**
+2. Click **Next**.
+3. On **Review and create**, scroll to the bottom and click **Submit**.
 
 > [!WARNING]
-> **Submit stays greyed out until that box is ticked.** It sits below the fold, so it is
-> easy to miss and easy to blame on something else.
+> **The acknowledgement is on Configure stack options, not on the review page.** It sits
+> below the fold at the bottom of a page that otherwise needs no input, so it is easy to
+> scroll past. Click **Next** without it and the page answers `Please acknowledge all
+> checkboxes before proceeding`.
 
 The stack takes **one to two minutes**. Wait for **CREATE_COMPLETE**.
 
@@ -149,7 +157,13 @@ so give it **up to a minute**.
 ### Step 7: Verify Both Sides
 
 **In FortiCNAPP**, go to **Settings** > **Integrations** > **Cloud accounts**. Your account
-now shows **Configuration**, **Agentless** and **CloudTrail**.
+now carries three integrations, so the **Integrations** column shows two and collapses the
+rest behind **+1 more**. Open it and confirm **Configuration**, **Agentless** and
+**CloudTrail** are all listed.
+
+> [!NOTE]
+> **The CloudTrail chip is grey at first, not green.** Registration lands before any log
+> data does. It turns green once events start arriving, within about 15 minutes.
 
 **In AWS**, run the same command from the top of this lab:
 
@@ -162,10 +176,13 @@ A new row has appeared, and the value in the second column is the point of this 
 
 ```
 aws-controltower-BaselineCloudTrail   True
-forticnapp-cloudtrail-...             False
+fortinetapacdemo-laceworkcws          False
 ```
 
 `False` means this one is yours. Your account owns it, and FortiCNAPP can read it.
+
+The trail is named from the **Resource name prefix** parameter, not from the stack name, so
+it reads `fortinetapacdemo-laceworkcws` rather than `forticnapp-cloudtrail`.
 
 ## What did we do here?
 
@@ -185,9 +202,10 @@ AWS resources and deregisters the integration in a single operation.
 
 ## Troubleshooting
 
-### Submit is greyed out
+### Next does nothing on Configure stack options
 
-The capabilities acknowledgement at the bottom of the review page is not ticked. See Step 5.
+The page shows `Please acknowledge all checkboxes before proceeding` under the
+**Capabilities** panel. Tick the acknowledgement. See Step 5.
 
 ### The stack built, but nothing appears in FortiCNAPP
 

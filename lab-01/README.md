@@ -65,6 +65,9 @@ one of them.
 
 **Checkpoint:** you can read a number off each of the three widgets.
 
+The widgets sit **empty for around twenty seconds** while they load. That is normal, not a
+broken tenant.
+
 > Worth pausing on **Exposed Fixable Hosts**. Not "hosts with vulnerabilities", which is
 > every host. Exposed, and fixable. That is the list you would actually work through on a
 > Monday morning.
@@ -74,11 +77,17 @@ one of them.
 **Explorer** answers questions about how things connect, rather than listing them.
 
 1. Go to **Explorer**.
-2. Click **Or use the Query Builder**.
-3. Leave **SHOW** set to **Hosts**.
-4. Click **Add clause**, choose **Internet Exposed**, leave it **True**, and click
+2. Click the **query button** to the right of the search bar. It is labelled with the
+   current query, so it usually reads **Show Hosts**. That opens the **Query Builder**.
+3. Under **SHOW**, click **Select a return type**, choose **Hosts**, then click
    **Add clause**.
+4. Click **Add clause** again, choose **Internet Exposed**, leave **is equal to** set to
+   **True**, and click **Add clause**.
 5. Click **Search Results**.
+
+> [!NOTE]
+> The Query Builder opens **empty** even when a query is already running. Selecting the
+> return type is a step, not a confirmation.
 
 ![Explorer query results, showing internet exposed hosts with alert, attack path and compliance counts](images/forticnapp-explorer-query.png)
 
@@ -172,6 +181,12 @@ compromise actually looks.
 credentials rather than hosts. A key used from somewhere new is odd. A key used from
 somewhere new, at an unusual hour, to list resources it has never touched, is how a stolen
 credential behaves.
+
+> [!NOTE]
+> This one may not be in the demo tenant on the day. The default view shows Critical and
+> High for the last month, and that window often contains only **Potentially Compromised
+> Host** and **Workload created with privileged containers**. If you cannot find it, widen
+> the severity filter or the time range. Nothing is broken.
 
 Composite alerts are rare by design, so you have to go looking:
 

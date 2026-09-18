@@ -42,6 +42,9 @@ Work through the screens, then wait five to ten minutes while it builds.
 > **This is a different tenant to Lab 1.** Lab 1 ran in `FORTIDEMO-2026-04`. From here on
 > you work in `FORTINETAPACDEMO`, because that is where you onboard your own account. If
 > your screen looks unexpectedly empty, check the tenant name first.
+>
+> **If the switch does not take, refresh the browser.** The selector sometimes reports the
+> new tenant while the page still shows the old one's data. A reload settles it.
 
 3. **Turn off email notifications for this tenant too.** Go to **Settings** >
    **My profile**, then turn **off** **Default email notification** and **Receive monthly
@@ -159,33 +162,37 @@ completes, Task 3 asks for per-integration settings.
    > **Scanning regions is required and starts empty.** The wizard will not let you leave
    > this step until you set it, and the error only appears once you try to advance.
 
-2. On the **Configuration** tab, leave **Advanced options** alone.
-
-There is no CloudTrail tab, because CloudTrail is not selected.
-
-![CloudTrail Advanced options showing Use an existing CloudTrail off by default](images/forticnapp-cloudtrail-advanced.png)
-
 ![Agentless Workload Scanning tab with the scanning regions selector](images/forticnapp-configure-agentless-regions.png)
 
-> The same **Advanced options** panel holds a **Use an existing IAM role** toggle, shown in
-> the screenshot above. Use it when the account already has a Lacework cross-account role
-> you want to keep. Automated configuration does not detect an existing role on its own.
+2. On the **Configuration** tab, leave **Advanced options** alone.
+
+There are only two tabs. A tab appears per selected integration type, so CloudTrail and
+EKS Audit Log have none here.
+
+> The **Configuration** tab's **Advanced options** panel holds one setting, a **Use an
+> existing IAM role** toggle, off by default. Turn it on when the account already has a
+> Lacework cross-account role you want to keep. Automated configuration does not detect an
+> existing role on its own.
 
 ### Step 5: Review and Deploy (Step 4 of 4)
 
-FortiCNAPP runs preflight validation against your account. It confirms the required
-permissions exist, checks the prerequisite services are enabled, and discovers existing
-resources it can reuse rather than duplicate.
+This step is a read-only summary. **Account Overview** repeats your credentials, region
+and integration level, then one panel per selected integration type repeats its settings.
 
-1. Review the discovery summary.
-2. Expand an integration if you want to change its settings before deploying.
+1. Read **Account Overview** and confirm the region and integration level.
+2. Read each integration panel.
 3. Click **Deploy**.
 
 ![Review and Deploy step showing account overview, scanning regions and configuration](images/forticnapp-review-deploy.png)
 
+> [!NOTE]
+> **The panels collapse, they do not edit.** Clicking a value does nothing. To change a
+> setting, click **Back** and return to the Configure step.
+
 > **Nothing has been created yet.** Everything up to this point was a dry run against your
-> account. If a permission is missing, you find out here, with an empty account, rather
-> than halfway through a deployment with half the resources built.
+> account. The permission check already ran, in Task 2 of the Configure step, so a missing
+> permission stops you there with an empty account rather than halfway through a deployment
+> with half the resources built.
 
 ### Step 6: Watch the Deployment
 
@@ -213,13 +220,15 @@ failed onboarding.
 
 ### Step 7: Review What Was Created
 
-1. Click each integration type to view the cloud resources created for it.
-2. Click **Exit**.
+The wizard closes on its own and leaves you on the deployment record.
+
+1. Expand each integration type to view the cloud resources created for it.
+2. Click **Cloud Accounts** in the breadcrumb when you have finished reading.
 
 You can return to this record at any time. Go to **Settings** > **Integrations** >
 **Cloud accounts** and select the **Deployment History** tab.
 
-![Deployment record showing all three integrations SUCCEEDED with Terraform files links](images/forticnapp-deployment-succeeded.png)
+![Deployment record showing both integrations SUCCEEDED with Terraform files links](images/forticnapp-deployment-succeeded.png)
 
 The record repays reading properly:
 
@@ -233,17 +242,20 @@ That last one matters. **Automated configuration is not a black box.** It writes
 and you can take that Terraform away. Onboard with the wizard, download the generated
 files, and commit them to your own repository.
 
-Every resource is tagged. The exact values appear on the deployment record, for example
-`lacework_tag: self-deployment` and `lacework_integration: aws_config`.
+Every resource is tagged with two keys, `lacework_tag` and `lacework_integration`. The
+deployment record shows the values for your run.
 
-Remember these tags. Lab 7 uses them for cleanup.
+Read the keys, not the values. The values move between product versions, so Lab 10 searches
+on the key alone.
+
+Remember these tags. Lab 10 uses them for cleanup.
 
 ### Step 8: Verify the Integrations
 
 1. Return to **Settings** > **Integrations** > **Cloud accounts**.
 2. Confirm your AWS account ID appears in the list.
 3. Confirm the **Integrations** column shows **Configuration** and **Agentless**.
-   CloudTrail is not there yet. Lab 12 adds it.
+   CloudTrail is not there yet. Lab 4 adds it with CloudFormation.
 
 ### Step 9: Confirm the AWS Side
 
@@ -257,19 +269,30 @@ aws cloudtrail describe-trails --region ap-southeast-1 \
 ```
 
 Any row with `IsOrganizationTrail` **True** is an organization trail your account can see
-but cannot manage. That is the one discovery cannot resolve:
+but cannot manage. Those are the ones discovery cannot resolve:
 
 ```
 aws-controltower-BaselineCloudTrail   True
 ```
 
+You may see more than one. A Control Tower landing zone creates its own baseline trail, and
+many organizations add a second trail of their own on top.
+
 You will run this command again at the end of Lab 12, where a trail with **False** in that
 column appears alongside it. That one is yours.
 
-1. Go to **IAM** > **Roles**. Find the cross-account role FortiCNAPP created.
-3. Open the role and select the **Trust relationships** tab. The trusted principal is the
-   FortiCNAPP AWS account, protected by an external ID.
-4. Go to **Amazon ECS** > **Clusters**. Confirm the agentless scanner cluster exists.
+1. Go to **IAM** > **Roles** and search for `lw-`. The Configuration integration's
+   cross-account role is named `lw-iam-` plus a random suffix. Searching for `lacework`
+   returns the four agentless roles instead.
+2. Open the `lw-iam-` role and select the **Trust relationships** tab. The trusted
+   principal is a role in the FortiCNAPP AWS account, and the `StringEquals` condition on
+   it is the external ID.
+3. Go to **Amazon ECS** > **Clusters**. Confirm the agentless scanner cluster exists. Its
+   name starts `lacework-agentless-scanning-cluster-`.
+
+> **Two integrations, two naming schemes.** Configuration creates one role and a set of
+> `lwaudit-policy-` policies. Agentless creates four roles, an ECS cluster, and its own
+> networking. Both carry the `lacework_tag` key, which is how Lab 10 finds them.
 
 ## Troubleshooting
 
@@ -330,7 +353,7 @@ Data does not appear instantly.
 | Resource inventory and compliance | Up to 24 hours on the scheduled cycle |
 | Agentless scan results | After the first scan, on a 24 hour cycle by default |
 
-To avoid waiting for the inventory scan, Lab 8 triggers one on demand with the Lacework CLI.
+To avoid waiting for the inventory scan, Lab 7 triggers one on demand with the Lacework CLI.
 
 ## Where the data goes
 
