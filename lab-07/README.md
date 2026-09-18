@@ -16,7 +16,7 @@ Labs 8 and 9 need this CLI, so this lab is not optional if you are continuing.
 - Completed [Lab 3](../lab-03/README.md), so there are integrations to list
 - FortiCNAPP console access, tenant **FORTINETAPACDEMO**
 
-## Lab Steps
+## Lab steps
 
 ### Step 1: Open CloudShell
 

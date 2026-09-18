@@ -28,7 +28,7 @@ it is running.
 - AWS account with permission to launch EC2 instances
 - FortiCNAPP console access, tenant **FORTINETAPACDEMO**
 
-## Lab Steps
+## Lab steps
 
 ### Step 1: Create Linux EC2 Instance
 
@@ -187,7 +187,7 @@ sudo tail -f /var/log/lacework/datacollector.log
 
 ![The datacollector log, ninety seconds after install](images/aws-agent-log.png)
 
-Three lines are worth finding:
+These lines are worth finding:
 
 | Line | Means |
 |---|---|

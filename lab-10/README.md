@@ -354,7 +354,7 @@ record. The roles, buckets, queues and scheduled triggers carry on without it. W
 agentless deployment in a Fortinet account still firing every hour eighteen months after
 its integration was deleted, with over 800,000 objects in its CloudTrail bucket.
 
-The three routes are three answers to that gap:
+Each route answers that gap differently:
 
 | Route | Who owns what | Result |
 |---|---|---|

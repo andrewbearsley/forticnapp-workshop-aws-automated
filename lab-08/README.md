@@ -16,7 +16,7 @@ against the same policies FortiCNAPP uses on live resources.
 
 - Completed [Lab 7](../lab-07/README.md), with the CLI working in CloudShell
 
-## Lab Steps
+## Lab steps
 
 You should still be in CloudShell from Lab 7. If it timed out, reopen it and run
 `source ~/.bashrc` to put the CLI back on your PATH.
@@ -99,7 +99,7 @@ Wired into a pipeline, these findings arrive as comments on a pull request, befo
 is ever applied. The fix costs a developer five minutes instead of costing you an incident
 review.
 
-## Additional Resources
+## Additional resources
 
 - <a href="https://docs.fortinet.com/document/lacework-forticnapp/latest/administration-guide/651014/getting-started-with-opal" target="_blank">Lacework IaC Scanning Documentation</a>
 - <a href="https://github.com/andrewbearsley/lacework-iac-scan-example" target="_blank">Example Repository</a>

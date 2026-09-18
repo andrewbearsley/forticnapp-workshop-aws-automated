@@ -32,7 +32,7 @@ Work through the screens, then wait five to ten minutes while it builds.
 - Temporary AWS credentials that have not expired
 - FortiCNAPP console access, tenant **FORTINETAPACDEMO**
 
-## Lab Steps
+## Lab steps
 
 ### Step 1: Open Cloud Accounts
 
@@ -346,7 +346,7 @@ because you launch each stack yourself. Automated configuration needs one bounde
 credential. Usually worth it, because temporary STS credentials keep the exposure
 contained.
 
-## Additional Resources
+## Additional resources
 
 - <a href="https://docs.fortinet.com/document/forticnapp/latest/administration-guide/123850/automated-configuration" target="_blank">FortiCNAPP Administration Guide: Automated configuration</a>
 

@@ -23,7 +23,7 @@ Like CloudFormation in Lab 4, Terraform talks to the FortiCNAPP API directly, so
 - AWS account with appropriate permissions
 - FortiCNAPP account access with API key configured
 
-## Lab Steps
+## Lab steps
 
 ### Step 1: Open AWS CloudShell
 
@@ -259,7 +259,7 @@ We built the CloudTrail integration a third way, with Terraform we own rather th
 This is how you'd do it in production. The Terraform configuration can be checked into version control, reviewed in pull requests, and deployed through CI/CD pipelines. Need to integrate 50 AWS accounts? Fortinet provides organization-level Terraform modules that deploy across all accounts in your AWS Organization in one go. And when you're done, `terraform destroy` cleanly removes everything.
 
 
-## Additional Resources
+## Additional resources
 
 - <a href="https://docs.fortinet.com/document/forticnapp/latest/administration-guide/283460/aws-integration-terraform-from-aws-cloudshell" target="_blank">FortiCNAPP Documentation: AWS Integration Terraform from AWS CloudShell</a>
 

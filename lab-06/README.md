@@ -20,7 +20,7 @@ runs both, so it is worth doing Windows once rather than assuming it follows.
 - An RDP client: Remote Desktop Connection on Windows, **Windows App** on a Mac
 - FortiCNAPP console access, tenant **FORTINETAPACDEMO**
 
-## Lab Steps
+## Lab steps
 
 ### Step 1: Create Windows EC2 Instance
 

@@ -11,7 +11,7 @@ In Lab 4 you used CloudFormation to deploy an integration, which is one infrastr
 
 **Note:** You installed and configured the Lacework CLI in [Lab 7](../lab-07/README.md), so skip Steps 1-6 and go straight to Step 7 (Install Terraform).
 
-## Lab Steps
+## Lab steps
 
 ### Step 1: Log into AWS Console and Open CloudShell
 

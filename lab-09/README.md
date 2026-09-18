@@ -18,7 +18,7 @@ SBOM turns that from a week of archaeology into a search.
 
 - Completed [Lab 7](../lab-07/README.md), with the CLI working in CloudShell
 
-## Lab Steps
+## Lab steps
 
 Still in CloudShell from Lab 8. If it timed out, reopen it and run `source ~/.bashrc`.
 
@@ -120,7 +120,7 @@ through dependencies nobody chose deliberately. That is why an SBOM is worth gen
 need it. The day a Log4j-scale CVE is announced, the teams that can answer "are we affected"
 in minutes are the ones that already had the parts list.
 
-## Additional Resources
+## Additional resources
 
 - <a href="https://docs.fortinet.com/document/lacework-forticnapp/latest/administration-guide/433465/software-composition-analysis-sca" target="_blank">Lacework SCA Scanning Documentation</a>
 - <a href="https://github.com/andrewbearsley/lacework-sca-scan-example" target="_blank">Example Repository</a>

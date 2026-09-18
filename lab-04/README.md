@@ -56,7 +56,7 @@ trail is simply irrelevant.
 This is not a workshop-only situation. Most corporate AWS accounts sit inside an
 organization, and Control Tower creates an organization trail by default.
 
-## Lab Steps
+## Lab steps
 
 ### Step 1: Open the CloudFormation Method
 
@@ -183,7 +183,7 @@ it reads `fortinetapacdemo-laceworkcws` rather than `forticnapp-cloudtrail`.
 We added the third integration type by a route that does not care about the organization
 trail, and we did it without handing FortiCNAPP any credentials.
 
-Two things worth taking away:
+Worth taking away:
 
 **The method matters as much as the product.** Same integration, same result, but
 Automated Configuration and CloudFormation reach it differently, and only one of them works
