@@ -152,7 +152,6 @@ The plan output will display in your terminal. Review it carefully to understand
 - 2 Random IDs - Unique identifiers for resource naming
 - 1 Time Sleep - Wait period for resource propagation
 
-> [!NOTE]
 > No Configuration or Agentless resources appear in this plan, and none should. Lab 10
 > removed everything Labs 3 and 4 built. This plan creates CloudTrail and nothing else.
 >

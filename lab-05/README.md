@@ -197,7 +197,6 @@ Three lines are worth finding:
 
 Watch for a minute and the `Payload` line repeats. That is your agent reporting.
 
-> [!NOTE]
 > **This log is the agent talking about itself, not a feed of what it sees.** The processes,
 > connections and file changes go to FortiCNAPP, not to this file. What the log proves is
 > that the pipe is open.

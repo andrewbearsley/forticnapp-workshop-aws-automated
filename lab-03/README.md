@@ -14,7 +14,7 @@ flowchart LR
     A[1 Select method] --> B[2 Authorize]
     B --> C[3 Configure]
     C --> D[4 Review and Deploy]
-    D --> E[FortiCNAPP builds<br/>roles, buckets, queues, trail]
+    D --> E[FortiCNAPP builds<br/>roles, buckets, scanner cluster]
 ```
 
 Work through the screens, then wait five to ten minutes while it builds.
@@ -158,9 +158,9 @@ completes, Task 3 asks for per-integration settings.
 1. On the **Agentless Workload Scanning** tab, set **Scanning regions** to the region where
    your workloads run, for example **ap-southeast-1**.
 
-   > [!IMPORTANT]
-   > **Scanning regions is required and starts empty.** The wizard will not let you leave
-   > this step until you set it, and the error only appears once you try to advance.
+> [!IMPORTANT]
+> **Scanning regions is required and starts empty.** The wizard will not let you leave this
+> step until you set it, and the error only appears once you try to advance.
 
 ![Agentless Workload Scanning tab with the scanning regions selector](images/forticnapp-configure-agentless-regions.png)
 
@@ -185,7 +185,6 @@ and integration level, then one panel per selected integration type repeats its 
 
 ![Review and Deploy step showing account overview, scanning regions and configuration](images/forticnapp-review-deploy.png)
 
-> [!NOTE]
 > **The panels collapse, they do not edit.** Clicking a value does nothing. To change a
 > setting, click **Back** and return to the Configure step.
 

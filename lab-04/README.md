@@ -161,7 +161,6 @@ now carries three integrations, so the **Integrations** column shows two and col
 rest behind **+1 more**. Open it and confirm **Configuration**, **Agentless** and
 **CloudTrail** are all listed.
 
-> [!NOTE]
 > **The CloudTrail chip is grey at first, not green.** Registration lands before any log
 > data does. It turns green once events start arriving, within about 15 minutes.
 

@@ -48,11 +48,11 @@ Same wizard as Lab 5. What differs: the image, and the key pair.
    - Name it `forticnapp-windows-key-<your initials>`, type **RSA**, format **.pem**
    - Click **Create key pair**. The `.pem` file downloads. Keep it, you need it in Step 3.
 
-   > [!IMPORTANT]
-   > **Put your initials in the name.** Key pair names are unique per region, so if anyone
-   > has run this workshop in this account before, a plain `forticnapp-windows-key` fails
-   > with `InvalidKeyPair.Duplicate`. You cannot reuse the old one either, because its
-   > private key was only ever downloadable once.
+> [!IMPORTANT]
+> **Put your initials in the name.** Key pair names are unique per region, so if anyone has
+> run this workshop in this account before, a plain `forticnapp-windows-key` fails with
+> `InvalidKeyPair.Duplicate`. You cannot reuse the old one either, because its private key
+> was only ever downloadable once.
 
 ![Key pair section, explaining that the key decrypts the administrator password](images/aws-ec2-launch-details-2.png)
 

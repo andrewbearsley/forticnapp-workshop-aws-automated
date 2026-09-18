@@ -12,7 +12,6 @@ This lab provides a cleanup script that removes every workshop resource, on both
 > what you want. On a laptop it removes the Lacework CLI configuration you use for every
 > other tenant.
 
-> [!NOTE]
 > **It does not touch IAM.** The roles in these accounts belong to whoever runs the account
 > pool, and some of them drive cost management and automated cleanup. The workshop's own
 > cross-account role is owned by a CloudFormation stack and goes when the stack does.

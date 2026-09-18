@@ -56,7 +56,6 @@ lacework iac scan
 It reads every Terraform file below the current directory, checks each against policy, and
 prints what failed. Uploading to the platform is on by default, controlled by `--upload`.
 
-> [!NOTE]
 > **The command exits non-zero and that is the point.** It ends with
 > `violations exceeded a configured exit condition threshold` and an exit code in the
 > hundreds. Nothing went wrong. That exit code is what fails a pipeline build when the

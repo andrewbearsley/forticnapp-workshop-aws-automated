@@ -90,7 +90,6 @@ aws cloudtrail describe-trails --region ap-southeast-1 \
 
 Only the organization trails remain, the ones you never owned.
 
-> [!NOTE]
 > **This is not how CloudFormation always behaves with FortiCNAPP.** Where an integration
 > is created in the console first and CloudFormation only builds the AWS side, the stack
 > does not own the record, and deleting the stack leaves the integration behind polling a

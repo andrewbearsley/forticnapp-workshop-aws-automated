@@ -85,7 +85,6 @@ broken tenant.
    **True**, and click **Add clause**.
 5. Click **Search Results**.
 
-> [!NOTE]
 > The Query Builder opens **empty** even when a query is already running. Selecting the
 > return type is a step, not a confirmation.
 
@@ -182,7 +181,6 @@ credentials rather than hosts. A key used from somewhere new is odd. A key used 
 somewhere new, at an unusual hour, to list resources it has never touched, is how a stolen
 credential behaves.
 
-> [!NOTE]
 > This one may not be in the demo tenant on the day. The default view shows Critical and
 > High for the last month, and that window often contains only **Potentially Compromised
 > Host** and **Workload created with privileged containers**. If you cannot find it, widen
