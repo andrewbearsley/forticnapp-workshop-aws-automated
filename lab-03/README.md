@@ -118,6 +118,8 @@ problem, not the form. See the failure table at the end of
 
 ### Step 4: Configure (Step 3 of 4)
 
+Task 1 of 3 lists four integration types, each a toggle that starts off:
+
 | Toggle | Tagged as | What it gives you |
 |---|---|---|
 | **Agentless Workload Scanning** | Cloud Vulnerability Management | Vulnerability and secret scanning with no agent on the instance |
