@@ -2,6 +2,8 @@
 
 Let's connect FortiCNAPP to an AWS account, then see what it finds!
 
+Reading offline? Download the whole workshop as one [PDF](forticnapp-workshop-aws.pdf).
+
 ## What FortiCNAPP is
 
 Fortinet's cloud-native application protection platform, formerly Lacework. One platform
