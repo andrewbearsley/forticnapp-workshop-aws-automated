@@ -90,9 +90,6 @@ it is running.
 
 ![Agent tokens filtered to AWS Lab - Linux, with the Actions menu open](images/forticnapp-agent-token-actions.png)
 
-You need **two** things from this menu, and the clipboard holds one at a time. Take them in
-this order, using each before you come back for the other.
-
 6. Click **Install**. **Lacework Script** is already expanded, so click **Copy URL**.
 
    Copy the URL, not the script. The install command in the next step fetches it.
@@ -137,23 +134,18 @@ chmod +x install.sh
 sudo ./install.sh
 ```
 
-The script checks connectivity, then stops and asks:
+The script reads the agent token from the URL, so it runs straight through. It checks
+connectivity, downloads the agent package, installs it, and registers with FortiCNAPP.
 
-```
-Please enter access token:
-```
+**Checkpoint:** the last line reads `Lacework successfully installed`.
 
-That is the second thing you need from the Actions menu, and it is **not** the URL you just
-used. Go back to FortiCNAPP, click the **Actions** ellipsis on the same token, and choose
-**Copy**. That puts the 56-character agent token on your clipboard. Paste it at the prompt
-and press Enter.
+If the script stops at `Please enter access token:` instead, it did not get the token from
+the URL. Go back to FortiCNAPP, click the **Actions** ellipsis on the same token, and choose
+**Copy**. Paste the 56-character token at the prompt and press Enter.
 
 > [!CAUTION]
-> The token echoes on screen in the clear. Take care if you are sharing your screen. The
-> install URL from Step 2 carries the same token in its path, so treat both as secrets.
-
-The rest runs on its own: it downloads the agent package, installs it, and registers with
-FortiCNAPP using that token. It ends with `Lacework successfully installed`.
+> The install URL from Step 2 carries the agent token in its path, so treat it as a secret.
+> Take care if you are sharing your screen.
 
 > [!TIP]
 > **Pasting into the browser terminal.** Use **Ctrl+V** (**Cmd+V** on a Mac). If the paste
