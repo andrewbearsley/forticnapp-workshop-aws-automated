@@ -124,16 +124,12 @@ already has an organization trail cannot deploy it. See the troubleshooting sect
 ### Step 6: Trigger an Inventory Scan
 
 FortiCNAPP collects resource inventory on its own cycle, up to 24 hours. The CLI can ask
-for one now:
-
-```bash
-lacework compliance aws scan
-```
+for one now.
 
 > [!WARNING]
 > **Your instructor runs this one, once. Do not all run it.**
 >
-> This command behaves unlike anything else in the lab:
+> The scan command behaves unlike anything else in the lab:
 >
 > - it is **tenant-wide**. There is no per-account form of it, so one person's scan covers
 >   every account integrated into this tenant, yours included
@@ -143,6 +139,12 @@ lacework compliance aws scan
 >
 > In a room this size that means one scan happens and everyone benefits. Forty of you
 > typing it changes nothing.
+
+This is the command your instructor runs:
+
+```bash
+lacework compliance aws scan
+```
 
 So treat this as something you have now **seen**. You will use it on a tenant of your own,
 where you are the only one driving. Do not expect fresh compliance data to land before the
