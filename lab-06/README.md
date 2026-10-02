@@ -3,7 +3,7 @@
 ## Objectives
 
 Same agent, same result, different road to get there. Almost every estate you will meet
-runs both, so it is worth doing Windows once rather than assuming it follows.
+runs both, so it is worth seeing Windows once rather than assuming it follows.
 
 | | Linux, Lab 5 | Windows, this lab |
 |---|---|---|
@@ -13,14 +13,110 @@ runs both, so it is worth doing Windows once rather than assuming it follows.
 | You need | A URL | Two URLs and an access token |
 | Runs as | `datacollector` | The `LWDataCollector` service |
 
+The lab has two parts:
+
+- **Part 1, everyone.** Create your own Windows agent token and build the install command
+  from it. In Lab 5 you used a token someone made for you. This time you make it.
+- **Part 2, optional.** Launch a Windows instance and run that command over RDP. RDP is
+  slow from a room full of laptops, so you can read this part and skip to Lab 7.
+
 ## Prerequisites
 
 - Completed [Lab 5](../lab-05/README.md)
-- AWS account with permission to launch EC2 instances
-- An RDP client: Remote Desktop Connection on Windows, **Windows App** on a Mac
 - FortiCNAPP console access, tenant **FORTINETAPACDEMO**
+- For Part 2 only:
+  - AWS account with permission to launch EC2 instances
+  - An RDP client: Remote Desktop Connection on Windows, **Windows App** on a Mac
 
-## Lab steps
+## Part 1: Create a Token and Build the Install Command
+
+### Step 1: Create a Windows Agent Token
+
+An agent token is the credential that joins an agent to this tenant. Anyone who holds it
+can register a host here, so treat it as a secret.
+
+1. In the FortiCNAPP console, confirm the tenant reads **FORTINETAPACDEMO**.
+2. Go to **Settings** > **Configuration** > **Agent tokens**, and click **Add New**.
+3. **Name**: `AWS Lab - Windows - <your initials>`
+4. **Operating System**: select **Windows**. Linux is selected by default.
+5. Click **Save**.
+
+![Create access token dialog with the name filled in, Windows selected, and Save](images/forticnapp-agent-token-create.png)
+
+> [!IMPORTANT]
+> **Put your initials in the name.** Everyone in the room makes a token in this step, on a
+> tenant that already holds dozens. Without your initials you cannot tell yours apart.
+
+**Checkpoint:** the console shows **Token is created**, and your token is in the list with
+OS **Windows**.
+
+### Step 2: Open the Install Panel
+
+1. Type your token's name in the search box.
+2. Click the **Actions** ellipsis on your row, then **Install**.
+
+![Agent tokens filtered to one Windows token, with the Actions menu open on Install](images/forticnapp-agent-token-actions.png)
+
+### Step 3: Collect the Three Install Values
+
+The Windows panel offers different packages to the Linux one. You need three things from
+it:
+
+![Install panel showing Lacework Powershell Script, MSI Package, ARM Template, Terraform script for Azure and Packer for AWS](images/forticnapp-agent-install-url.png)
+
+| Take this | From | Used as |
+|---|---|---|
+| Script URL | **Install** tab. **Lacework Powershell Script**, already expanded. **Copy URL** | what you download |
+| MSI URL | **Install** tab. Expand **MSI Package**, then its **Copy URL** | `-MSIURL` |
+| Access token | **Detail** tab, the **Token** field | `-AccessToken` |
+
+> **The package sections are an accordion.** Expanding **MSI Package** collapses
+> **Lacework Powershell Script**. Take the script URL first, paste it somewhere, then come
+> back for the MSI one.
+
+Paste all three into a text file on your own machine, each one labelled.
+
+**Checkpoint:** three values, each one labelled so you know which is which.
+
+### Step 4: Build the Install Command
+
+The install runs in two parts. The first downloads and unpacks the script bundle:
+
+```powershell
+Invoke-WebRequest -Uri "<script-url>" -OutFile "install.zip"
+Expand-Archive -Path "install.zip" -DestinationPath "install" -Force
+cd install\signed-scripts
+```
+
+The second runs the installer with your token and the MSI URL:
+
+```powershell
+.\Install-LWDataCollector.ps1 `
+  -AccessToken "<access-token>" `
+  -ServerURL "https://partner-demo.lacework.net" `
+  -MSIURL "<msi-url>"
+```
+
+Copy both blocks into your text file and replace each placeholder with its value from
+Step 3.
+
+> **These URLs are easily swapped.** The script URL ends in `.zip`, the MSI URL in `.msi`.
+> Give the installer them the wrong way round and it fails on a download error rather than
+> telling you they are reversed.
+
+The script pulls the MSI, installs it, and registers the agent against your token. Nothing
+to configure afterwards.
+
+**Checkpoint:** both blocks are in your text file, with no angle brackets left.
+
+## Part 2 (Optional): Install on a Windows Instance
+
+Part 2 launches a Windows instance and runs your command on it over RDP. Windows boots
+slowly, and RDP is slow on shared WiFi.
+
+**To skip it**, read the steps below so you know how the install goes, especially
+[Look at what it is logging](#look-at-what-it-is-logging). Then go to
+[Lab 7](../lab-07/README.md).
 
 ### Step 1: Create Windows EC2 Instance
 
@@ -46,7 +142,7 @@ Same wizard as Lab 5. What differs: the image, and the key pair.
 
    - Click **Create new key pair**
    - Name it `forticnapp-windows-key-<your initials>`, type **RSA**, format **.pem**
-   - Click **Create key pair**. The `.pem` file downloads. Keep it, you need it in Step 3.
+   - Click **Create key pair**. The `.pem` file downloads. Keep it, you need it in Step 2.
 
 > [!IMPORTANT]
 > **Put your initials in the name.** Key pair names are unique per region, so if anyone has
@@ -111,67 +207,15 @@ Work down this list. The first two are far more common than anything else.
 
     Without **Administrator**, the installer fails partway and leaves no useful message.
 
-### Step 3: Get the Install Details from FortiCNAPP
+11. Open **Notepad** on the Windows desktop and paste in your text file from Part 1. RDP
+    copy and paste is unreliable, so move everything across in one go, not value by value.
 
-Do this in your **own** browser, not inside the RDP session.
+### Step 3: Install the Agent
 
-1. In the FortiCNAPP console, confirm the tenant reads **FORTINETAPACDEMO**.
-2. Go to **Settings** > **Configuration** > **Agent tokens**.
-3. Search `AWS Lab - Windows`. Take care to pick the Windows token, not the Linux one from
-   Lab 5.
-4. Click the **Actions** ellipsis on that row, then **Install**.
+In **PowerShell as Administrator**, run the two blocks you built in Part 1, Step 4. Run the
+download block first, then the installer.
 
-![Agent tokens filtered to AWS Lab - Windows, with the Actions menu open on Install](images/forticnapp-agent-token-actions.png)
-
-5. The Windows panel offers different packages to the Linux one. You need three things from
-   it:
-
-![Install panel showing Lacework Powershell Script, MSI Package, ARM Template, Terraform script for Azure and Packer for AWS](images/forticnapp-agent-install-url.png)
-
-| Take this | From | Used as |
-|---|---|---|
-| Script URL | **Install** tab. **Lacework Powershell Script**, already expanded. **Copy URL** | what you download |
-| MSI URL | **Install** tab. Expand **MSI Package**, then its **Copy URL** | `-MSIURL` |
-| Access token | **Detail** tab, the **Token** field | `-AccessToken` |
-
-> **The package sections are an accordion.** Expanding **MSI Package** collapses
-> **Lacework Powershell Script**. Take the script URL first, paste it somewhere, then come
-> back for the MSI one.
-
-Paste all three somewhere you can get at them from inside the RDP session. RDP copy and
-paste is unreliable, so a text file on the Windows desktop is easiest.
-
-**Checkpoint:** three values, each one labelled so you know which is which.
-
-### Step 4: Install the Agent
-
-In the RDP session, in **PowerShell as Administrator**.
-
-Download and unpack the script bundle:
-
-```powershell
-Invoke-WebRequest -Uri "<script-url>" -OutFile "install.zip"
-Expand-Archive -Path "install.zip" -DestinationPath "install" -Force
-cd install\signed-scripts
-```
-
-Then run it, substituting the access token and MSI URL from Step 3:
-
-```powershell
-.\Install-LWDataCollector.ps1 `
-  -AccessToken "<access-token>" `
-  -ServerURL "https://partner-demo.lacework.net" `
-  -MSIURL "<msi-url>"
-```
-
-The script pulls the MSI, installs it, and registers the agent against your token. Nothing
-to configure afterwards.
-
-> **These URLs are easily swapped.** The script URL ends in `.zip`, the MSI URL in `.msi`. Give
-> the installer them the wrong way round and it fails on a download error rather than
-> telling you they are reversed.
-
-### Step 5: Verify on the Host
+### Step 4: Verify on the Host
 
 The agent runs as a Windows service, so ask Windows:
 
@@ -221,7 +265,7 @@ Plenty of lines say `level=error` and are routine:
 - `could not open process handle for further details ... ErrorCode = 5`, which is Windows
   refusing access to protected system processes
 
-### Step 6: Verify in FortiCNAPP
+### Step 5: Verify in FortiCNAPP
 
 > **The agent reports hourly**, so it will not appear straight away. Carry on and come back.
 
@@ -239,10 +283,13 @@ Both your Linux and Windows hosts should be listed there by the end of the sessi
 
 The same agent, reached a harder way.
 
-A Windows estate is where agent rollout actually stalls,
-and almost never because of the agent: it stalls on RDP being blocked, on a lost key pair,
-on an installer run without Administrator. You have now hit those in a lab where it costs
-nothing.
+You made the token that joins an agent to a tenant, and turned it into an install command.
+That FortiCNAPP side is where every Windows install starts.
+
+A Windows rollout rarely stalls on the agent itself. It stalls on RDP being blocked, on a
+lost key pair, on an installer run without Administrator. If you built the instance, you
+have now hit those in a lab where it costs nothing. If you skipped it, those are the three
+to plan for.
 
 From here FortiCNAPP treats both hosts identically. The next labs move off hosts entirely
 and look at the code that builds them.

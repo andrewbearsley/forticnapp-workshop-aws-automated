@@ -237,7 +237,7 @@ notices the package being exploited: a process that has never run before, a conn
 somewhere this host has never talked to, a login at the wrong hour. You cannot alert on
 behaviour you are not watching.
 
-The Windows install differs enough to be worth doing once.
+The Windows install differs enough to be worth seeing once.
 
 ---
 

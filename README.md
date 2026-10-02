@@ -54,7 +54,7 @@ flowchart LR
 | [3](lab-03/README.md) | Onboard the account with the wizard | Configuration and agentless in one pass |
 | [4](lab-04/README.md) | Add CloudTrail with CloudFormation | Threat detection, by a method the wizard cannot use here |
 | [5](lab-05/README.md) | Install the Linux agent | Continuous visibility, not periodic snapshots |
-| [6](lab-06/README.md) | Install the Windows agent | Same idea, different OS |
+| [6](lab-06/README.md) | Create a Windows agent token, then optionally install the agent | Same idea, different OS |
 | [7](lab-07/README.md) | Install the Lacework CLI | Needed by Labs 8 and 9 |
 | [8](lab-08/README.md) | Scan Terraform for misconfigurations | Catch it before it reaches AWS |
 | [9](lab-09/README.md) | Scan an app for vulnerable dependencies | Catch them before they reach AWS |
@@ -82,7 +82,7 @@ Take these to onboard through a pipeline rather than a wizard.
 - An AWS account with administrator access
 - FortiCNAPP console access, tenant **FORTINETAPACDEMO**
 - A browser
-- An RDP client for Lab 6: Remote Desktop Connection on Windows, **Windows App** on a Mac
+- An RDP client, for the optional part of Lab 6: Remote Desktop Connection on Windows, **Windows App** on a Mac
 
 ## Resources
 
