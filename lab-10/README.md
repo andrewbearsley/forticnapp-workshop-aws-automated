@@ -4,7 +4,7 @@
 
 Leaving workshop resources running in AWS costs money. In this lab, we'll remove everything
 the workshop created: the integrations from Labs 3 and 4, the resources they built in AWS,
-the EC2 instances from Labs 5 and 6, and the API key from Lab 7.
+the EC2 instances from Labs 5 and 6, and your copies of the shared API key from Lab 7.
 
 **How you remove something depends on how it was made.** That is the real lesson here, and
 it is why this lab has three routes rather than one.
@@ -110,6 +110,11 @@ sides by hand.
 2. Select the **Cloud Accounts** tab.
 3. Find your AWS account ID in the list.
 4. Delete each integration on that account: Configuration, CloudTrail and Agentless.
+
+> [!IMPORTANT]
+> **Use Delete, not the toggle.** The toggle beside each integration only disables it. A
+> disabled integration stays on the shared tenant until an instructor finds it and removes it.
+> After the Bangkok class, 6 disabled integrations were still there the next day.
 
 ### Step 2: Delete the AWS Resources by Tag
 
@@ -273,13 +278,20 @@ own.
 
 ![Terminate instance confirmation dialog](images/aws-ec2-terminate-instance.png)
 
-5. Repeat for the Lab 6 Windows instance.
+5. If you built the Windows instance in Lab 6, repeat for it.
 
 ## Verify
 
-1. In FortiCNAPP, confirm your AWS account no longer appears under **Cloud accounts**.
-2. In FortiCNAPP, confirm the Lab 7 API key is gone from **Settings** > **Configuration** > **API keys**.
-3. Confirm both EC2 instances show **terminated**.
+1. In FortiCNAPP, confirm your AWS account no longer appears under **Cloud accounts**, not even as disabled.
+2. In CloudShell, confirm your copies of the Lab 7 API key are gone. This command must print nothing:
+
+   ```bash
+   ls ~/.lacework.toml ~/*-api-key.json 2>/dev/null
+   ```
+
+   The key itself stays in FortiCNAPP. Everyone in the room shares it. See
+   [Remove the CLI credential](#remove-the-cli-credential).
+3. Confirm your EC2 instances show **terminated**: the Linux one, and the Windows one if you built it.
 4. In AWS, check that nothing is still running:
 
 ```bash

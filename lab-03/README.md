@@ -49,6 +49,9 @@ Work through the screens, then wait five to ten minutes while it builds.
    The setting is per tenant, so switching tenants does not carry it across. Skip this and
    your own onboarding will email you about itself for the rest of the day.
 
+   **Check: both toggles show Off before you go on.** This tenant is shared. With the setting
+   on, you also get the alert emails from every later class that onboards accounts here.
+
 4. Navigate to **Settings** > **Integrations** > **Cloud accounts**.
 5. Click **Add New**, top right.
 
